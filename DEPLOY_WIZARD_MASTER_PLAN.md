@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D41 cerradas; P26 abierta. `wizard`, `deploy` y `env` despachados; `goflare`, `github`, `app`, misitio escritos, esperan tags.
+> **Status:** IN PROGRESS · 2026-10-15 · D1–D42 cerradas; sin preguntas abiertas. `wizard`, `deploy`, `env` running; los demás planes escritos en disco, esperando sus prerequisitos.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -74,7 +74,8 @@ no la bloquea: §9 puede salir antes con su paso documentado y este wizard lo re
 | D31 (cierra P23) | Secretos de desarrollo de terceros: **credenciales propias por persona**. Un cofre compartido (`deploy.Vault`) solo en una ola futura, con un caso real. | Fuera de alcance. |
 | D32 (cierra P24) | **Permiso de despliegue = permiso de GitHub.** webtyp no tiene roles propios. Entorno `production` con revisores solo donde el plan de GitHub lo permita (en repos privados: Enterprise). | misitio (privado, GitHub Free): quien tiene escritura en el repo despliega. |
 | D33 (cierra P25) | **Aceptación con dos personas**: una segunda máquina, con otro usuario de GitHub y otro miembro de Cloudflare, aprovisiona y despliega misitio sin recibir ningún valor de la primera; la primera sigue desplegando después. | Ver «Aceptación». |
-| D41 (cierra P20) | Orden: `wizard` ‖ `deploy` → `goflare` ‖ `github` ‖ `env` → `keyring` (en sesión) → `app` → `misitio`. | Tabla de librerías. |
+| D41 (cierra P20) | Orden: `wizard` ‖ `deploy` ‖ `env` → `goflare` ‖ `github` ‖ `keyring` → `iam` (justo tras `goflare`) → `app` → `misitio`. | Tabla de librerías. |
+| D42 (cierra P26) | **Variables de runtime no secretas** se declaran en `deploy.Plan.Vars []deploy.Var{Key, Value}` con su valor literal de producción. `goflare` las pasa en el `Job` (input `vars`) y las envía como bindings `plain_text` en **cada** deploy, así un `PUT` de script nunca las borra. En desarrollo siguen en `.env`. | misitio declara `IAM_BASE_URL`, `MISITIO_BASE_URL`; iam declara `GOOGLE_REDIRECT_URL`, `IAM_PANEL_ORIGIN`. |
 
 ### Diseño derivado al revisar el código (2026-10-15)
 
@@ -86,7 +87,7 @@ Salió de leer el código al escribir los planes. Si alguno no te convence, dilo
 | D35 | Contrato de `deploy`: `Plan{Name, Domain, Target, CI, Databases, Buckets, Secrets}`, `Database{Binding, Name}`, `Bucket{Binding, Name}`, `Secret{Key, What, Source, Guide, To}`, `Source` (`Typed`, `Random`), `Place` (`ToRuntime`, `ToCI`, `ToLocal`), `Missing{Item, Why, Steps, Fix, Secret, Accept}`, `Fix` (`FixAutomatic`, `FixInput`, `FixManual`), interfaces `Target`, `CI`, `Destination`, y `Deployment{Plan, Target, CI}` con `Check`, `Provision`, `Rotate`, `Release`. | Es la "variable común" de D5: nombre, dominio, bases y buckets son conceptos de cualquier hosting; lo propio de cada uno queda dentro de su implementación. Firma exacta: plan de `deploy`. |
 | D36 | Un ítem que pide un valor (`FixInput`) trae su propio `Accept(value string) error`: quien lo pide decide dónde va (keyring personal, Worker directo, keyring del proyecto). `app` solo arma el paso `Sensitive` del wizard y llama `Accept`. | `app` no sabe dónde vive cada secreto (D2); el valor nunca pasa por MCP (D21). |
 | D37 | Si existe `cmd/migrate/main.go`, `goflare` agrega `pre-deploy: go run ./cmd/migrate` al workflow generado. Convención, no campo de la declaración. | Skill **app-rest-edge** ya fija esa ruta; iam la usa y misitio la está incorporando. |
-| D38 | `goflare` resuelve D1 y R2 **por nombre** y renombra campos engañosos: `D1DatabaseName` (era el binding) → `D1Binding`; `D1DatabaseID` → borrado (se resuelve por `D1Name`); `R2BucketName` → `R2Binding`; `R2BucketID` (era el nombre del bucket) → `R2Bucket`. Antes de `pre-deploy` exporta `D1_DATABASE_ID` ya resuelto, así `cmd/migrate` de iam y misitio no cambia. | `goflare/cloudflare.go:233-253`, `config.go:88-133`. iam deja de pasar `D1_DATABASE_ID` como secreto: ajuste de su workflow en sesión, tras publicar `goflare`. |
+| D38 | `goflare` resuelve D1 y R2 **por nombre** y renombra campos engañosos: `D1DatabaseName` (era el binding) → `D1Binding`; `D1DatabaseID` → borrado (se resuelve por `D1Name`); `R2BucketName` → `R2Binding`; `R2BucketID` (era el nombre del bucket) → `R2Bucket`. Antes de `pre-deploy` exporta `D1_DATABASE_ID` ya resuelto, así `cmd/migrate` de iam y misitio no cambia. | `goflare/cloudflare.go:233-253`, `config.go:88-133`. iam deja de pasar `D1_DATABASE_ID` como secreto: ajuste de su workflow en `iam/docs/PLAN_DEPLOY_WIZARD.md`, despachado justo tras publicar `goflare`. |
 | D39 | `github` usa la CLI `gh` (sesión del desarrollador, D11) a través de un ejecutor de comandos inyectable; los valores van por **stdin**, nunca por argumentos. El workflow generado incluye `workflow_dispatch` para que `Release` pueda dispararlo. | `gh secret set` cifra con la clave del repo (lo que exige la API); stdin evita que el valor quede en el historial o en `ps`. |
 | D40 | Si el token de arranque ve más de una cuenta de Cloudflare, el diagnóstico pide crearlo limitado a una sola (`FixManual`). La cuenta no se guarda en ningún lado: sale del token. | Evita una clave más en `.env` o en la declaración. |
 
@@ -94,36 +95,35 @@ Salió de leer el código al escribir los planes. Si alguno no te convence, dilo
 
 ## Preguntas abiertas
 
-Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
+Ninguna. Las que surjan al ejecutar los planes van aquí como P27 en adelante.
 
-### P26 — Variables de runtime que **no** son secretas
+## Agregados enviados a agentes en ejecución (textual)
 
-misitio lee `IAM_BASE_URL` y `MISITIO_BASE_URL` en el Worker (`misitio/config/backend.go:13-17`).
-No son secretas, pero hoy se cargan a mano en el dashboard, y `deploy.Plan` no tiene dónde
-declararlas: sin resolver esto, misitio sigue teniendo un paso manual. Cloudflare borra las
-variables `plain_text` que un `PUT` de script no declara (por eso `misitio/docs/DEPLOY.md:80-81`
-pide cargarlas como Secret).
+Regla (skill **master-plan**): todo lo que se le pide a un agente después de despacharlo queda aquí.
 
-- **A) (recomendada)** Campo `Vars []deploy.Var{Key, Value}` en `deploy.Plan`, con el valor literal
-  de producción en la declaración (no son secretas, pueden vivir en el repo). `goflare` las pasa en
-  el `Job` (input `vars`) y las incluye como bindings `plain_text` en cada deploy, así nunca se
-  pierden. En desarrollo siguen en `.env`, que sí admite valores no secretos. Es un plan corto
-  más en `deploy`, `goflare` y `app` cuando cierren los actuales.
-- B) Declararlas como `deploy.Secret` con `Source: Typed`. Funciona hoy sin cambios, pero obliga a
-  escribir una URL pública en un campo enmascarado y la trata como secreto, que no es.
+1. `webtyp/deploy`, sesión 7552631315228362006, 2026-10-15:
+   > Addition to Stage 4 (same plan, no other change): export func LocalMissing(p Plan, local Destination) ([]Missing, error) in deployment.go. It validates p, then returns exactly the Missing items of the ToLocal places (same construction as Check: Random -> FixAutomatic, Typed -> FixInput with Accept putting into local). It never touches a Target or CI, and a nil local is ErrNilTool. Deployment.Check must build its ToLocal items by calling LocalMissing (one implementation). Test: LM1 a plan with ToRuntime and ToLocal secrets, none present -> LocalMissing returns only the ToLocal ones; LM2 nil local -> ErrNilTool. Reason: webtyp/app blocks the local dev server until local secrets exist and must not call GitHub/Cloudflare for that.
+2. `webtyp/deploy`, misma sesión, 2026-10-15 (D42):
+   > Second addition (decision P26 of the master plan), same plan: (1) plan.go: add to Plan the field 'Vars []Var' and the type 'type Var struct { Key, Value string }' with doc comment: non-secret runtime variables, value written in config/deploy.go, delivered by the Target as plain-text bindings on every deploy. (2) Scan: Vars is a composite literal of Var elements whose Key and Value are string literals (same rules as other string fields). (3) validate: each Var has non-empty Key and Value; a Var Key must not repeat and must not equal any Secret Key -> new errors ErrIncompleteVar, ErrDuplicateVar ('<KEY> declared twice, as a Var or Secret'). (4) README example: add Vars: []deploy.Var{{Key: "IAM_BASE_URL", Value: "https://iam.velty.cl"}}. Tests: S1 includes Vars; V-tests for both new errors. Nothing else changes (Deployment does not deliver Vars: the Target puts them in its Job).
 
-## Pendientes fuera de los planes
+Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén implementados.
 
-- `veltylabs/misitio/docs/PLAN.md` es `cmd/migrate` (running, sesión 14819822264169824065); el plan de
-  esta ola es `docs/PLAN_DEPLOY_WIZARD.md` y se despacha al final, tras P26.
-- `webtyp/env/docs/PLAN.md` viejo ("Require names the .env path") nunca se despachó y ya estaba
-  implementado (`env/require_native.go:15-21`): se reemplazó por el de esta ola.
-- Tras `env`: borrar `keyring.Scheme`/`IsReference` en sesión (1 archivo + test) y actualizar la
-  skill **dev-autologin** (D20).
-- Tras `goflare`: ajustar `veltylabs/iam/.github/workflows/deploy.yml` (D38), en sesión.
-- Se pidió al agente de `deploy` (respuesta por `codejob reply`) exportar
-  `deploy.LocalMissing(plan, local)`: `app` lo necesita para bloquear el servidor local hasta tener
-  los secretos de desarrollo sin llamar a GitHub ni a Cloudflare.
+## Tareas que no son planes de código (instrucciones exactas)
+
+- **Skill `dev-autologin`** (`webtyp/devskills/skills/dev-autologin/SKILL.md`), **después** de que
+  `env` publique su plan de esta ola: reemplazar la sección "Configuration via `.env`" (líneas
+  24-41 hoy) por "Configuration": declarar `DEV_AUTOLOGIN` en `config/deploy.go` como
+  `deploy.Secret{Key: "DEV_AUTOLOGIN", What: "Credentials replayed to open a dev session automatically", Source: deploy.Typed, Guide: []lang.Text{"Type the JSON payload of your authenticator, e.g. {\"code\":\"12345678-5\"}"}, To: []deploy.Place{deploy.ToLocal}}`;
+  la persona lo escribe en la pestaña SECRETS de webtyp; `env` lo lee del keyring del proyecto.
+  Conservar los dos ejemplos de JSON como ejemplos de **valor**, sin `.env`. Sincronizar con
+  `devskills -f` y publicar devskills.
+- **Despacho de planes con `docs/PLAN.md` ocupado:** iam (`PLAN.md` = seguridad, espera `auth`) y
+  misitio (`PLAN.md` = `cmd/migrate`, running). Al despachar, si `docs/PLAN.md` sigue ocupado,
+  convertirlo en cola (skill **agents-workflow** → «execution queue») con `PLAN_DEPLOY_WIZARD.md`
+  primero en iam (rompe deploys mientras no se aplique) y último en misitio.
+- **Ventana de misitio:** cuando `goflare` publique el renombre de D1/R2, el workflow a mano de
+  misitio deja de crear sus bindings; no importa hoy porque cada deploy de misitio ya falla con 403.
+  Lo arregla `app` al regenerar el workflow durante la aceptación.
 
 ---
 
@@ -196,10 +196,10 @@ usuario de primera clase por MCP (D21).
 | `webtyp/goflare` | `deploy.Target` `goflare.Worker`: token de arranque (D27, D30, D40), token por proyecto, D1/R2 por nombre (D18, D38), secretos del Worker (D9), `Job` para CI (D37); `Dictionary()` | paralelo, tras `deploy` | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) · escrito, espera tag de `deploy` |
 | `webtyp/github` | `deploy.CI` `github.Actions`: diagnóstico de `gh`, workflow generado, secretos de Actions, `Release` + estado del run (D19, D39); `Dictionary()` | paralelo, tras `deploy` | [github/docs/PLAN.md](https://github.com/webtyp/github/blob/main/docs/PLAN.md) · escrito, espera tag de `deploy` |
 | `webtyp/env` | entorno → `.env` → keyring del proyecto (D15); deja de usar `keyring.Scheme` | paralelo | [env/docs/PLAN.md](https://github.com/webtyp/env/blob/main/docs/PLAN.md) · **running** (7810215043722152745) |
-| `webtyp/keyring` | borra `Scheme`/`IsReference` | en sesión, tras `env` | — |
+| `webtyp/keyring` | borra `Scheme`/`IsReference` | tras publicar `env` | [keyring/docs/PLAN.md](https://github.com/webtyp/keyring/blob/main/docs/PLAN.md) · escrito |
 | `webtyp/app` | pestaña DEPLOY (D17), MCP `deploy_*` (D21, D23, D26), SECRETS desde la declaración, diccionarios (D22), compilación del Worker con `goflare` directo | tras todos los anteriores | [app/docs/PLAN.md](https://github.com/webtyp/app/blob/main/docs/PLAN.md) · escrito, espera todos los anteriores |
-| `veltylabs/iam` | workflow sin `D1_DATABASE_ID` (D38) | en sesión, tras `goflare` | — |
-| `veltylabs/misitio` | `config/deploy.go`; borra pasos manuales de sus docs; rota secretos (D25) | último, aceptación | [misitio/docs/PLAN_DEPLOY_WIZARD.md](https://github.com/veltylabs/misitio/blob/main/docs/PLAN_DEPLOY_WIZARD.md) · escrito, espera `app` y P26 |
+| `veltylabs/iam` | workflow con `d1-name` (D38) y `config/deploy.go` con `Vars` (D42) | **inmediatamente** tras publicar `goflare` (sin él, iam despliega sin D1) | [iam/docs/PLAN_DEPLOY_WIZARD.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN_DEPLOY_WIZARD.md) · escrito |
+| `veltylabs/misitio` | `config/deploy.go` con `Vars` (D42); borra pasos manuales de sus docs; rota secretos (D25) | último, aceptación | [misitio/docs/PLAN_DEPLOY_WIZARD.md](https://github.com/veltylabs/misitio/blob/main/docs/PLAN_DEPLOY_WIZARD.md) · escrito, espera `app` |
 
 ## Aceptación de la ola
 
