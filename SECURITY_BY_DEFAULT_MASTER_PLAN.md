@@ -1,6 +1,6 @@
 # Security by default — master plan
 
-Status: IN PROGRESS · 2026-10-13 — every framework piece shipped except auth (running); then iam. Blocker: misitio (site_content still on github.com/tinywasm/model).
+> **Status:** IN PROGRESS · 2026-10-15 · every framework piece shipped except auth (running, test-suite plan); then iam. misitio: migration shipped (v0.0.7), `cmd/migrate` dispatched (D6), security plan (§9) waits for iam.
 
 Trigger: the API explorer in `veltylabs/iam` reports 22 of 25 routes as
 `public`. The framework's own rule (skill **api-design**, `webtyp/router`
@@ -233,7 +233,7 @@ self-contained `docs/PLAN.md` in that repo, ready for `codejob dispatch`.
 |---|---|---|---|
 | `webtyp/model` | in-session ✅ v0.2.3 | `model.Assurance` + `String()` + test | — |
 | `webtyp/crypto` | in-session ✅ v0.0.28 | `asym.SignCompact` / `asym.VerifyCompact` (64-byte r‖s, the JWS ES256 format) + tests | — |
-| `webtyp/app` | in-session ✅ v0.6.147 | Dev server compile args `-tags dev -p 1` | — |
+| `webtyp/app` | in-session ✅ v0.6.147 (+ v0.6.152: deps aligned to server v0.2.86 / router v0.4.3 / mcp v0.3.4 / webauthn v0.1.6 — it pinned server v0.2.80 against router v0.4.3 and did not compile) | Dev server compile args `-tags dev -p 1` | — |
 | `webtyp/devflow` | in-session ✅ v0.4.132 | `gotest`: when the module (submodules included) has any `//go:build dev` file, one extra `go test -tags dev ./...` pass so dev-only code is still tested | — |
 | `webtyp/router` | PLAN ✅ v0.4.3 | `Route.RequiresMFA()`, `RouteInfo.MFA`, `Context.SetAssurance/Assurance`, challenge constants, mock enforcement, conformance cases, `routertest.AssertPublicRoutes`, introspection `mfa` key | [router/docs/PLAN.md](https://github.com/webtyp/router/blob/main/docs/PLAN.md) |
 | `webtyp/server` | PLAN ✅ v0.2.86 | httpd: implement + enforce + startup validation | [server/docs/PLAN.md](https://github.com/webtyp/server/blob/main/docs/PLAN.md) |
@@ -246,7 +246,7 @@ self-contained `docs/PLAN.md` in that repo, ready for `codejob dispatch`.
 | `webtyp/auth` | PLAN · running (plan fixed 2026-10-13: the new type is `auth.Principal`; the `Identity` ORM model is not renamed) | DEV_AUTOLOGIN opt-in (`dev` tag); session policy (idle, absolute, domain, `__Host-`, assurance, revocation); `Identity`; step-up strategy; `auth/passkey`; `auth/clientassertion`; delete `session/jwt` | [auth/docs/PLAN.md](https://github.com/webtyp/auth/blob/main/docs/PLAN.md) |
 | `webtyp/goflare` | PLAN ✅ v0.5.39 (+ v0.5.40: deps and routes file = routescan.DefaultFile) | `RATE_LIMIT_PER_10S` (default 100) → zone `http_ratelimit` rule per deploy; fail the deploy if the token lacks permission | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) |
 | `veltylabs/iam` | PLAN | Back inside the framework: `RunServer` with `Authorize`; `.Requires` everywhere; `iam_admin`/`iam_client` roles; opaque sessions; admin step-up cookie; passkey panel UI; `private_key_jwt`; token exchange; protected `/_routes`; audit of machine mutations; public inventory test; e2e matrix | [iam/docs/PLAN.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN.md) |
-| `veltylabs/misitio` | PLAN (**blocked**) | `IAM_CLIENT_PRIVATE_KEY`; one `Consumer` (delete local `IAMAuthn`/`AuthzCache`/`authctx`); public inventory test. Blocked: misitio does not build today because `veltylabs/site_content` still imports `github.com/tinywasm/model` (pending WebTyp migration) | [misitio/docs/PLAN.md](https://github.com/veltylabs/misitio/blob/main/docs/PLAN.md) |
+| `veltylabs/misitio` | PLAN · migration ✅ v0.0.7 (PR #8); `cmd/migrate` (D6) **running** (session 14819822264169824065); security plan waits for iam's tag | `IAM_CLIENT_PRIVATE_KEY`; one `Consumer` (delete local `IAMAuthn`/`AuthzCache`/`authctx`); public inventory test | §9 below (copied to `misitio/docs/PLAN.md` at dispatch) |
 
 Every plan carries: the repo's `AGENTS.md` constraints inline (TinyGo/WASM:
 no maps, `webtyp/fmt`, tests in `tests/`, no API exported for tests); a
@@ -289,3 +289,131 @@ Against the local dev server **and** a staging Worker:
   default for passkeys, and attestation adds privacy cost with no gain here.
 - A formal pentest, WAF/bot management, secrets-rotation tooling. Recommended
   after this wave.
+
+---
+
+## 8. Follow-up (2026-10-14)
+
+- **auth** test-suite plan (session 10131758498708849312): second question (K3 passkey enrollment answered 401): answered with how to tell the three 401 paths apart (WWW-Authenticate header vs `EventPasskeyRejected.Reason`) and the envelope checklist; Jules stopped to ask whether to age session rows with raw SQL. Answered: `db.Update(&row, orm.Eq(<Model>_.Id, row.Id))`, as `authority/sessions.go:179` does; asked to finish every Task 2 scenario and open the PR. Feedback attempts on failure: 0/2.
+- **iam**: dispatch when auth publishes its tag. Before dispatch: refresh `iam/AGENTS.md` with the base block (skill **agents-md**) and change the plan header to "Read AGENTS.md at the repo root before any change."
+- **misitio**: migration closed 2026-10-15 — PR #8 merged, tag v0.0.7. Attempt 2 by the agent added `//go:build !wasm` to `config/{app,backend,iamauth,store}.go`; since TinyGo builds both `client.wasm` and `edge.wasm` with `-target wasm`, that also removed the backend from the edge (`TestEdgeSize`: `undefined: config.NewProductionBackend`). Fixed locally: browser code (`web/client.go`, `modules/{app,support,admin}`) imports the leaf `api` instead of `config`, and the image rules moved `config/images*.go` → `api/`. `client.wasm` 682 → 313 KB gzip (budget 512 KB), edge green. The agent's `db.RawConn().(ddl.Compiler)` branch in `config.NewDomain` silently skipped schema sync on `mem` and ran DDL on every Worker start on `d1` (`cloudflare/d1/adapter.go:36` implements `CompileDDL`); it was deleted, so nothing synced D1 until D6. No harm reached production: every misitio deploy since v0.0.7 fails before upload with Cloudflare `403 No access` on `PUT workers/scripts/misitio` (account infra, `misitio/docs/PLAN_INFRA_BLOQUEADA.md`). The security plan, previously parked as `misitio/docs/PLAN_SECURITY_IAM_CONSUMER.md`, now lives in §9 only (file deleted).
+- The 15-minute timer was stopped on 2026-10-14 at the user's request; in-flight plans (auth, misitio PR #8) are reviewed manually.
+
+---
+
+## 9. misitio — iam consumer (spec for `misitio/docs/PLAN.md`)
+
+Dispatch when `veltylabs/iam` publishes the tag that removes `client_secret`.
+At dispatch, copy this section into `misitio/docs/PLAN.md` with the
+frontmatter `PLAN: "feat(security)!: consume iam through one Consumer with private_key_jwt; delete the local duplicates of it"`,
+`EXECUTOR: jules`, `REVIEWER: none`, and the header "Read AGENTS.md at the
+repo root before any change."
+
+### Decisions
+
+- **D6 (cierra P1)** — misitio's D1 schema is synced by `cmd/migrate/main.go`
+  (`goflare.NewD1Migrator` + `sqlt.NewCompiler()` → `config.MigrateSchema`),
+  run as the deploy action's `pre-deploy`, as `veltylabs/iam` does. The Worker
+  never runs DDL. Dispatched on its own (`misitio/docs/PLAN.md`, 2026-10-15)
+  instead of inside this plan, because this plan waits for iam and D1 must not
+  stay without schema sync until then; it touches no file of the stages below
+  except `config/backend.go` (env-name constants only).
+
+### Why
+
+`veltylabs/iam` (new tag) removes `client_secret`. Consumers authenticate with
+**`private_key_jwt`** (RFC 7523, D1): misitio holds a P-256 private key
+(`IAM_CLIENT_PRIVATE_KEY`, base64url SEC 1 DER) and the iam client signs a
+short-lived assertion per request. iam keeps only the public key.
+
+`client.Consumer` becomes iam's only public client API: `New(cfg)`,
+`ConfigFromEnv(projectID)`, `Consumer.Authn()`, `Consumer.Scope(userID)`,
+`Consumer.ResolveUser(email, name)`, `Consumer.AssignRole(userID, roleCode)`,
+plus `client.FromContext(ctx)`. `FetchAuthzToken` and the package-level
+`ResolveUser` are gone.
+
+misitio re-implements that Consumer locally — three duplicates:
+`config/iamauth.go` `IAMAuthn` (≙ `Consumer.Authn()`), `config/authzcache.go`
+`AuthzCache` (≙ the Consumer's scope cache), `authctx/` (≙
+`client.SetIdentity`/`client.FromContext`). It also builds
+`iamclient.New(...)` inside handlers on every request (`routes/admin.go`).
+This plan deletes all of that and builds one Consumer at startup.
+
+### Stage 1 — bump and backend
+
+1. `go get github.com/veltylabs/iam@latest`. If `client.Consumer` has no
+   `ResolveUser` method or `client.Config` has no `PrivateKey`, **stop**.
+2. `config/backend.go`: delete `EnvIAMClientSecret`, `Backend.ClientSecret`,
+   `Backend.AuthzCache`; add `Backend.IAM *iamclient.Consumer`;
+   `NewProductionBackend` does
+   `iam, err := iamclient.New(iamclient.ConfigFromEnv(api.ProjectID))` and
+   returns the error (fail fast); `Backend.Authorize` reads
+   `b.IAM.Scope(userID)`; a missing scope still denies.
+3. Delete `config/iamauth.go`, `config/authzcache.go`, `authctx/`.
+4. `edge/main.go`, `web/server.go`: `Authn: backend.IAM.Authn()`.
+5. `routes`: every reader of `authctx.FromContext` uses
+   `iamclient.FromContext(ctx)`. `routes.Register` and the admin handlers take
+   `iam *iamclient.Consumer` instead of `iamBaseURL, iamClientSecret string`;
+   `iamclient.ResolveUser(...)` → `iam.ResolveUser(email, name)`;
+   `iamclient.New(...)` inside handlers → deleted. `config/app.go` passes
+   `backend.IAM`.
+6. Browser code keeps importing `api`, never `config` (`client.wasm` budget,
+   `tests/client_size_test.go`).
+
+### Stage 2 — public inventory and tests
+
+1. New `tests/public_routes_test.go`: build the router as
+   `tests/setup_test.go` does, then
+   `routertest.AssertPublicRoutes(t, r, "GET /api/health", "GET /api/me", <asset routes>)`.
+   `<asset routes>` = the `PublicAsset`/`PublicDir` routes from `r.Routes()`;
+   any other public entry is a finding to report in the PR, not to add.
+2. Tests that set `IAM_CLIENT_SECRET` (`tests/auth_test.go`, grep for others)
+   set `IAM_CLIENT_PRIVATE_KEY`, generated with `asym.GenerateKeyPair()` and
+   base64url-encoded. The fail-fast test checks `IAM_CLIENT_PRIVATE_KEY`.
+3. `tests/config_test.go` (`config.Backend{AuthzCache: ...}`): rewrite against
+   a real `iamclient.Consumer` whose `BaseURL` is an `httptest` fake of iam's
+   `/api/token`. Closed by default: no scope → deny.
+4. `tests/access_test.go`, `tests/admin_test.go`: the fake iam **requires**
+   `Authorization: Bearer <assertion>` and rejects a forwarded `Cookie`.
+
+```mermaid
+flowchart TD
+    A[request with SSO cookie] --> B[Consumer.Authn]
+    B --> C{iam answers 200?}
+    C -- no --> C1[anonymous · S1]
+    C -- yes --> D[identity + scope cached · S2]
+    D --> E{Authorize: scope grants resource/action?}
+    E -- no --> E1[403 · S3]
+    E -- yes --> E2[served · S4]
+```
+
+| Branch | Test |
+|---|---|
+| S1 | fake iam returns 401 → anonymous; guarded route → 403 |
+| S2 | fake iam returns scope `["site_admin"]` → `iamclient.FromContext` has it |
+| S3 | scope without the grant → 403 |
+| S4 | scope with the grant → 200 |
+| bearer contract | fake iam fails the test on a missing `Authorization: Bearer` or a `Cookie` header |
+| inventory | `tests/public_routes_test.go` |
+
+### Stage 3 — docs and deploy
+
+1. `README.md`, `AGENTS.md` (`## This repo`): env table — `IAM_CLIENT_SECRET`
+   gone; `IAM_CLIENT_PRIVATE_KEY` is a Worker secret from
+   `go run github.com/veltylabs/iam/cmd/keygen`, whose `public_key` line is
+   registered in the iam panel for project `misitio`.
+2. `docs/DEPLOY.md`, in order: iam deployed → key generated → secret set →
+   public key registered in iam → misitio deployed → old secret deleted.
+   Calls to iam fail with 403 until the public key is registered.
+
+| # | Files | Done when |
+|---|---|---|
+| 1 | `go.mod`, `go.sum`, `config/backend.go`, `config/app.go`, `edge/main.go`, `web/server.go`, `routes/routes.go`, `routes/admin.go`, every `routes` file importing `authctx`; delete `config/iamauth.go`, `config/authzcache.go`, `authctx/` | builds; one Consumer |
+| 2 | `tests/public_routes_test.go`, `tests/auth_test.go`, `tests/config_test.go`, `tests/access_test.go`, `tests/admin_test.go`, any test touched by the removals | S1–S4 green |
+| 3 | `README.md`, `AGENTS.md`, `docs/DEPLOY.md` | docs match |
+
+Acceptance: `gotest` green including `tests/edge_size_test.go` and
+`tests/client_size_test.go`;
+`grep -rn "IAM_CLIENT_SECRET\|ClientSecret\|IAMAuthn\|AuthzCache\|authctx" --include=*.go .`
+→ empty; `grep -rn "iamclient.New(" routes/` → empty; `git diff --stat main`
+lists every file of the stages table and deletes nothing else.
