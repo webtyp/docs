@@ -304,6 +304,8 @@ Against the local dev server **and** a staging Worker:
 ## 9. misitio — iam consumer (spec for `misitio/docs/PLAN.md`)
 
 Dispatch when `veltylabs/iam` publishes the tag that removes `client_secret`.
+**Merge rule (2026-10-15):** this section is not dispatched alone. It is merged with misitio's other
+pending plans into one `docs/PLAN.md`, per `DEPLOY_WIZARD_MASTER_PLAN.md` → «Plan siguiente de misitio».
 At dispatch, copy this section into `misitio/docs/PLAN.md` with the
 frontmatter `PLAN: "feat(security)!: consume iam through one Consumer with private_key_jwt; delete the local duplicates of it"`,
 `EXECUTOR: jules`, `REVIEWER: none`, and the header "Read AGENTS.md at the

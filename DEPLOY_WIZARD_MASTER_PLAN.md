@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D42 cerradas; sin preguntas abiertas. `wizard`, `deploy`, `env` running; los demás planes escritos en disco, esperando sus prerequisitos.
+> **Status:** IN PROGRESS · 2026-10-15 · D1–D42 cerradas; P27 abierta (misitio: hoja compartida). `wizard`, `deploy`, `env` running; los demás planes publicados sin despachar, esperando sus prerequisitos.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -95,7 +95,30 @@ Salió de leer el código al escribir los planes. Si alguno no te convence, dilo
 
 ## Preguntas abiertas
 
-Ninguna. Las que surjan al ejecutar los planes van aquí como P27 en adelante.
+Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
+
+### P27 — misitio: ¿quién es la hoja que comparten el navegador y el Worker?
+
+Al fusionar los planes pendientes de misitio (ver «Plan siguiente de misitio») aparece un choque.
+`misitio/docs/PLAN_ARQUITECTURA_MODULOS.md` etapa 1.1 **mueve `api/` adentro de `config/`** y la
+1.5 pone en `config/` la composición completa (`App` con `orm`, `iamclient.Consumer`,
+`sitemanager`, `sitecontent`). Pero `web/client.go` y los módulos del panel importan `config/`, y
+eso es exactamente lo que en v0.0.7 dejó `client.wasm` en **682 KB gzip contra un presupuesto de
+512 KB** (`misitio/tests/client_size_test.go`). Medido el 2026-10-15: importar solo `config`
+→ 549.952 B gzip; importar solo `api` → 118.032 B. TinyGo no descarta los paquetes que una
+importación arrastra aunque no se usen.
+
+- **A) (recomendada)** **`api/` sigue siendo la hoja compartida** (rutas, IDs, DTOs, reglas de
+  imagen; lo que hoy es) y **`config/` es la composición del servidor** (`App`, política, login
+  SSR). El navegador importa `api/` y `modules/panel/`, nunca `config/`. Se reescriben en el plan
+  fusionado las etapas 1.1 (no se absorbe `api/`; se borran los alias `config/api.go`) y la regla
+  de 1.6 ("`config/` no importa este repo" pasa a "`api/` no importa este repo; `config/` solo
+  importa `api/`"), y se agrega un test: `GOOS=js GOARCH=wasm go list -deps ./web/` no contiene
+  `webtyp.com/orm` ni `veltylabs/iam`.
+- B) `config/` es la hoja compartida (como dice el plan) y la composición sale a un paquete nuevo
+  (`app/`). Contradice la skill **project-layout** (`config/` es la única raíz de composición).
+- C) Seguir el plan tal cual y subir el presupuesto del cliente a ~700 KB. Paga en cada carga del
+  panel lo que A evita gratis.
 
 ## Agregados enviados a agentes en ejecución (textual)
 
@@ -108,6 +131,23 @@ Regla (skill **master-plan**): todo lo que se le pide a un agente después de de
 
 Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén implementados.
 
+## Plan siguiente de misitio (fusión, instrucciones exactas)
+
+`misitio/docs/PLAN.md` es `cmd/migrate` (running). Al cerrarse, **todo** lo pendiente de misitio se
+fusiona en un solo `docs/PLAN.md` (skill **agents-workflow** → «A repo that already has a plan»):
+
+| Orden | Origen | Qué entra | Inconsistencia que se corrige al fusionar |
+|---|---|---|---|
+| 1 | `docs/PLAN_ARQUITECTURA_MODULOS.md` | etapas 1–7 | 1.1 y 1.6 según P27; 1.2, 1.3 y la parte de `Consumer` de 1.5 se escriben **una sola vez** junto con §9 (fila 3); `sitecontent.Deps{Members: sm}` ya existe (`site_content@v0.2.21/module.go:50`) — hoy `config/store.go` no lo pasa y las operaciones de `site_content` deniegan con `Members` nil |
+| 2 | `docs/PLAN_RUTAS_PARAMETRIZADAS.md` | todo | su tabla de rutas reemplaza la etapa 4 de la fila 1 en vez de editarla dos veces |
+| 3 | `SECURITY_BY_DEFAULT_MASTER_PLAN.md` §9 | etapas 1–3 | requiere el tag de iam con `private_key_jwt`; si no está publicado al fusionar, esta fila queda fuera y se vuelve a fusionar cuando lo esté |
+| 4 | `docs/PLAN_DEPLOY_WIZARD.md` | etapas 1–3 | requiere tags de `deploy`, `goflare`, `github`; `config/deploy.go` declara `IAM_CLIENT_PRIVATE_KEY` en vez de `IAM_CLIENT_SECRET` si la fila 3 entró |
+| — | `PLAN_STAGE_5/6/7`, `PLAN_INFRA_BLOQUEADA.md` | no entran | bloqueados por infraestructura; la etapa 7 parte B (cortar el dominio de Pages al Worker) sigue siendo manual |
+
+Los archivos de las filas 1, 2 y 4 se borran al quedar fusionados. Escribir la fusión cuando P27
+esté cerrada (no depende de que `cmd/migrate` cierre: puede quedar escrita como
+`docs/PLAN_NEXT.md` y renombrarse a `PLAN.md` al cerrar).
+
 ## Tareas que no son planes de código (instrucciones exactas)
 
 - **Skill `dev-autologin`** (`webtyp/devskills/skills/dev-autologin/SKILL.md`), **después** de que
@@ -117,10 +157,11 @@ Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén
   la persona lo escribe en la pestaña SECRETS de webtyp; `env` lo lee del keyring del proyecto.
   Conservar los dos ejemplos de JSON como ejemplos de **valor**, sin `.env`. Sincronizar con
   `devskills -f` y publicar devskills.
-- **Despacho de planes con `docs/PLAN.md` ocupado:** iam (`PLAN.md` = seguridad, espera `auth`) y
-  misitio (`PLAN.md` = `cmd/migrate`, running). Al despachar, si `docs/PLAN.md` sigue ocupado,
-  convertirlo en cola (skill **agents-workflow** → «execution queue») con `PLAN_DEPLOY_WIZARD.md`
-  primero en iam (rompe deploys mientras no se aplique) y último en misitio.
+- **iam:** fusionado en su `docs/PLAN.md` (etapas 10–12) y publicado (iam v0.0.24); planes
+  obsoletos `PLAN_SECURITY_HARDENING.md`, `PLAN_STAGE_1..6` borrados.
+- **Planes obsoletos borrados el 2026-10-15:** `goflare/docs/PLAN_STAGE_1..7` (size gate,
+  diagnóstico, subcomando tinygo, skew, generador de action: implementados), `app/docs/PLAN_UPDATE.md`
+  (auto-actualización: implementada en `b78e68b`, evolucionó a `CheckAndInstall`/`UpdateAction`).
 - **Ventana de misitio:** cuando `goflare` publique el renombre de D1/R2, el workflow a mano de
   misitio deja de crear sus bindings; no importa hoy porque cada deploy de misitio ya falla con 403.
   Lo arregla `app` al regenerar el workflow durante la aceptación.
@@ -198,7 +239,7 @@ usuario de primera clase por MCP (D21).
 | `webtyp/env` | entorno → `.env` → keyring del proyecto (D15); deja de usar `keyring.Scheme` | paralelo | [env/docs/PLAN.md](https://github.com/webtyp/env/blob/main/docs/PLAN.md) · **running** (7810215043722152745) |
 | `webtyp/keyring` | borra `Scheme`/`IsReference` | tras publicar `env` | [keyring/docs/PLAN.md](https://github.com/webtyp/keyring/blob/main/docs/PLAN.md) · escrito |
 | `webtyp/app` | pestaña DEPLOY (D17), MCP `deploy_*` (D21, D23, D26), SECRETS desde la declaración, diccionarios (D22), compilación del Worker con `goflare` directo | tras todos los anteriores | [app/docs/PLAN.md](https://github.com/webtyp/app/blob/main/docs/PLAN.md) · escrito, espera todos los anteriores |
-| `veltylabs/iam` | workflow con `d1-name` (D38) y `config/deploy.go` con `Vars` (D42) | **inmediatamente** tras publicar `goflare` (sin él, iam despliega sin D1) | [iam/docs/PLAN_DEPLOY_WIZARD.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN_DEPLOY_WIZARD.md) · escrito |
+| `veltylabs/iam` | workflow con `d1-name` (D38) y `config/deploy.go` con `Vars` (D42) | **inmediatamente** tras publicar `goflare` (sin él, iam despliega sin D1) | etapas 10–12 de [iam/docs/PLAN.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN.md) (fusionadas con el plan de seguridad, que se despacha cuando `auth` publique; `d1-name` ya agregado al workflow, así que no hay ventana rota) · escrito |
 | `veltylabs/misitio` | `config/deploy.go` con `Vars` (D42); borra pasos manuales de sus docs; rota secretos (D25) | último, aceptación | [misitio/docs/PLAN_DEPLOY_WIZARD.md](https://github.com/veltylabs/misitio/blob/main/docs/PLAN_DEPLOY_WIZARD.md) · escrito, espera `app` |
 
 ## Aceptación de la ola
