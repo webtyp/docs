@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** PENDING · 2026-10-15 · D1–D22 cerradas (P1–P14 aceptadas + MCP + idioma); P15–P20 abiertas antes de escribir los planes por librería.
+> **Status:** PENDING · 2026-10-15 · D1–D22 cerradas; P15–P25 abiertas — P21 reabre D1/D9/D14 porque el diseño asume un solo desarrollador.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -123,6 +123,78 @@ mergearlo.
   Puller (D16).
 - B) Un solo plan grande en `app`. Viola D2/D3: `app` terminaría con el conocimiento de Cloudflare
   y GitHub adentro.
+
+### Equipos — el diseño actual asume un solo desarrollador
+
+webtyp es para equipos, no para una persona. Con D1, D9 y D14 tal como están, **dos
+desarrolladores rompen producción**: el keyring es una copia por máquina y los destinos son de solo
+escritura, así que la dev B no puede obtener el valor que tiene el dev A. Si B rota el secreto
+(P17), la copia de A queda vieja, y el siguiente `deploy_provision` de A **sobrescribe el destino
+con el valor viejo**. Para `IAM_CLIENT_PRIVATE_KEY`, eso deja a misitio sin poder hablar con iam.
+Tampoco hay forma de dar de baja a una persona sin rotarlo todo, ni de saber quién cambió qué.
+
+Cómo lo resuelve la industria: Vercel, Netlify y Fly guardan los secretos de producción **solo en
+la plataforma**, y el equipo accede por cuenta y rol: ningún desarrollador tiene una copia. Kamal 2
+y Doppler/Infisical/1Password usan un **cofre compartido** con permisos por persona. SOPS/age
+cifra los secretos en el repo con la clave pública de cada miembro.
+
+### P21 — ¿Un secreto de producción se guarda en el keyring de alguien? (reabre D1, D9, D14)
+
+- **A) (recomendada)** **No.** Un secreto de producción se crea (mintado, generado o pegado) y se
+  entrega **directo al destino**, sin copia local; recuperar es siempre rotar, que P17 ya establece
+  como el único camino. El keyring de cada persona guarda solo **lo suyo**: su sesión de `gh`, su
+  token de arranque de Cloudflare (P22) y los secretos de **su** entorno de desarrollo. La
+  "versión actual" deja de ser una huella local: se lee de los **metadatos no secretos del destino**
+  (GitHub devuelve `updated_at` de cada secreto; Cloudflare lista los nombres de los secretos del
+  Worker). Con esto cualquier persona autorizada puede aprovisionar o rotar, y nadie pisa a nadie
+  con un valor viejo, porque nadie tiene valores viejos. Al consolidar se reescriben D1, D9 y D14
+  y [diagrams/DEPLOY_SECRETS_FLOW.md](diagrams/DEPLOY_SECRETS_FLOW.md).
+- B) Mantener una copia por máquina (lo decidido hoy). Funciona solo con un desarrollador.
+- C) Cofre compartido obligatorio (1Password, Infisical, Doppler). Resuelve el compartir, pero agrega
+  un servicio y una credencial más, cuando la plataforma de destino ya es el almacén compartido.
+
+### P22 — Identidad: ¿de quién es el token de arranque de Cloudflare?
+
+- **A) (recomendada)** **De cada persona**: cada desarrollador es miembro de la cuenta de
+  Cloudflare con su propio rol y crea su propio token de arranque en su keyring. Los tokens por
+  proyecto que el wizard mintea son **del ámbito de la cuenta** (`POST /accounts/{id}/tokens`), no
+  del usuario: siguen funcionando cuando quien los creó deja el equipo. La baja de una persona es
+  quitarla de la cuenta de Cloudflare y de la organización de GitHub; no se rota nada.
+- B) Un token de arranque compartido por el equipo. No se puede revocar a una sola persona, y
+  compartirlo exige justamente el cofre que P21-A evita.
+
+### P23 — Secretos de desarrollo que vienen de terceros
+
+Por ejemplo, la clave de una API de prueba de un proveedor externo, que el equipo necesita en su
+entorno local.
+
+- **A) (recomendada)** Credenciales **propias por persona** cuando el proveedor lo permite (lo
+  normal: cada dev crea su clave de prueba). Cuando no lo permite, una interfaz `deploy.Vault`
+  inyectable desde `app` (adaptadores 1Password/Bitwarden/Infisical, como Kamal 2) en **una ola
+  posterior**, cuando aparezca el primer caso real. Hoy ningún proyecto lo necesita.
+- B) Cofre de equipo obligatorio en esta ola.
+
+### P24 — ¿Quién puede desplegar a producción?
+
+- **A) (recomendada)** **Permiso de despliegue = permiso de GitHub.** webtyp no inventa roles
+  propios (D2: es orquestador): quien puede hacer push a `main` puede desplegar (D8). Cuando el
+  plan de GitHub lo permita, un entorno `production` con revisores obligatorios, y `deploy_release`
+  respeta la aprobación pendiente. Límite real: en repos **privados** los revisores obligatorios de
+  entornos solo existen en GitHub Enterprise, y misitio está en GitHub Free
+  (`misitio/docs/DEPLOY.md:60-61`). En Free/Team, el control es a quién se da escritura en el repo.
+- B) Roles propios en webtyp (quién puede llamar `deploy_release`). No se puede hacer cumplir:
+  cualquiera con escritura despliega haciendo push, con o sin webtyp.
+
+### P25 — Incorporar a alguien nuevo
+
+Con P21-A, P22-A y P24-A: la persona nueva abre el proyecto en webtyp y el diagnóstico (D17) le
+muestra **solo lo personal** que le falta (`gh auth login`, su token de arranque, sus secretos de
+desarrollo). No tiene que pedirle nada a nadie. ¿Se agrega como criterio de aceptación de la ola?
+
+- **A) (recomendada)** Sí: segunda máquina con otro usuario de GitHub y otro miembro de
+  Cloudflare; aprovisiona y despliega misitio sin recibir ningún valor de la primera, y la primera
+  sigue desplegando después sin errores.
+- B) No; se prueba con una sola persona.
 
 ---
 

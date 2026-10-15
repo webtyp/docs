@@ -1,5 +1,7 @@
 # Flujo de un secreto de despliegue
 
+> STATUS (quitar esta nota al cerrar P21 de DEPLOY_WIZARD_MASTER_PLAN.md): este flujo supone un solo desarrollador. La propuesta para equipos elimina la copia local de los secretos de producción; si se acepta, este diagrama se reescribe.
+
 Un secreto tiene **tres lugares**, cada uno con un papel distinto:
 
 | Lugar | Qué es | Quién lo lee |
