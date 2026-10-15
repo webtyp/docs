@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D42 cerradas; P27 abierta (proyectos edge: etiqueta `edge`). `wizard`, `deploy`, `env` running; los demás planes publicados sin despachar, esperando sus prerequisitos.
+> **Status:** IN PROGRESS · 2026-10-15 · D1–D43 cerradas; sin preguntas abiertas (el layout de misitio sigue en CLOUD_PARITY_LAYOUT). `wizard`, `deploy`, `env` running; los demás planes publicados sin despachar, esperando sus prerequisitos.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -77,6 +77,8 @@ no la bloquea: §9 puede salir antes con su paso documentado y este wizard lo re
 | D41 (cierra P20) | Orden: `wizard` ‖ `deploy` ‖ `env` → `goflare` ‖ `github` ‖ `keyring` → `iam` (justo tras `goflare`) → `app` → `misitio`. | Tabla de librerías. |
 | D42 (cierra P26) | **Variables de runtime no secretas** se declaran en `deploy.Plan.Vars []deploy.Var{Key, Value}` con su valor literal de producción. `goflare` las pasa en el `Job` (input `vars`) y las envía como bindings `plain_text` en **cada** deploy, así un `PUT` de script nunca las borra. En desarrollo siguen en `.env`. | misitio declara `IAM_BASE_URL`, `MISITIO_BASE_URL`; iam declara `GOOGLE_REDIRECT_URL`, `IAM_PANEL_ORIGIN`. |
 
+| D43 (cierra P27) | **Rechazada la etiqueta `edge`**: no se agregan etiquetas de build. El problema de fondo (en un proyecto cloud el Worker y el navegador son wasm, y `config/` mezcla servidor y navegador) pasa a [CLOUD_PARITY_LAYOUT_MASTER_PLAN.md](CLOUD_PARITY_LAYOUT_MASTER_PLAN.md). Su P3 puede mover la declaración de `config/deploy.go` (con `//go:build deploy`, D34) a `config/deploy/deploy.go` sin etiqueta. | Si P3 de esa ola cierra en A: `codejob reply` al agente de `deploy` (o plan siguiente si ya cerró) y se corrigen `config/deploy.go` en la etapa 11 de `iam/docs/PLAN.md` y en `misitio/docs/PLAN_DEPLOY_WIZARD.md`. |
+
 ### Diseño derivado al revisar el código (2026-10-15)
 
 Salió de leer el código al escribir los planes. Si alguno no te convence, dilo antes de despachar.
@@ -95,9 +97,23 @@ Salió de leer el código al escribir los planes. Si alguno no te convence, dilo
 
 ## Preguntas abiertas
 
-Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
+Ninguna en esta ola. El layout de misitio se decide en [CLOUD_PARITY_LAYOUT_MASTER_PLAN.md](CLOUD_PARITY_LAYOUT_MASTER_PLAN.md).
 
-### P27 — Proyectos edge: ¿cómo queda el código del servidor fuera de `client.wasm`? (reescrita 2026-10-15)
+## Agregados enviados a agentes en ejecución (textual)
+
+Regla (skill **master-plan**): todo lo que se le pide a un agente después de despacharlo queda aquí.
+
+1. `webtyp/deploy`, sesión 7552631315228362006, 2026-10-15:
+   > Addition to Stage 4 (same plan, no other change): export func LocalMissing(p Plan, local Destination) ([]Missing, error) in deployment.go. It validates p, then returns exactly the Missing items of the ToLocal places (same construction as Check: Random -> FixAutomatic, Typed -> FixInput with Accept putting into local). It never touches a Target or CI, and a nil local is ErrNilTool. Deployment.Check must build its ToLocal items by calling LocalMissing (one implementation). Test: LM1 a plan with ToRuntime and ToLocal secrets, none present -> LocalMissing returns only the ToLocal ones; LM2 nil local -> ErrNilTool. Reason: webtyp/app blocks the local dev server until local secrets exist and must not call GitHub/Cloudflare for that.
+2. `webtyp/deploy`, misma sesión, 2026-10-15 (D42):
+   > Second addition (decision P26 of the master plan), same plan: (1) plan.go: add to Plan the field 'Vars []Var' and the type 'type Var struct { Key, Value string }' with doc comment: non-secret runtime variables, value written in config/deploy.go, delivered by the Target as plain-text bindings on every deploy. (2) Scan: Vars is a composite literal of Var elements whose Key and Value are string literals (same rules as other string fields). (3) validate: each Var has non-empty Key and Value; a Var Key must not repeat and must not equal any Secret Key -> new errors ErrIncompleteVar, ErrDuplicateVar ('<KEY> declared twice, as a Var or Secret'). (4) README example: add Vars: []deploy.Var{{Key: "IAM_BASE_URL", Value: "https://iam.velty.cl"}}. Tests: S1 includes Vars; V-tests for both new errors. Nothing else changes (Deployment does not deliver Vars: the Target puts them in its Job).
+
+Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén implementados.
+
+## Plan siguiente de misitio
+
+Espera [CLOUD_PARITY_LAYOUT_MASTER_PLAN.md](CLOUD_PARITY_LAYOUT_MASTER_PLAN.md). Fallas medidas
+(2026-10-15), que ese plan debe resolver:
 
 **Qué falla en misitio** (medido contra las skills **project-layout**, **app-modules**,
 **app-rest-edge**):
@@ -113,53 +129,13 @@ Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master
 | M7 | `sitecontent.New` sin `Members`: las operaciones de `site_content` deniegan | `config/store.go` |
 | M8 | `config/favicon.go` generado sin su dependencia | etapa 8 del plan de `app` |
 
-M1–M4 y M6 tienen la misma raíz: en un proyecto **edge**, el Worker y el navegador son **los dos
-`GOARCH=wasm`**, así que la etiqueta `!wasm` de **app-modules** (`server.go` → `//go:build !wasm`)
-no separa nada. Sin otra frontera, el código se amontonó en `config/` o en `api/`. Hoy `goflare`
-compila el Worker **sin tags** y el cliente se compila con `-tags dev`
-(`app/client_builder_init.go:33`). Medido: importar `config` cuesta 549.952 B gzip en el cliente
-contra 118.032 B importando solo `api` (TinyGo no descarta lo que una importación arrastra).
-
-- **A) (recomendada)** **Etiqueta de build `edge` para el Worker.** `goflare` compila `edge.wasm`
-  con `-tags edge` (en desarrollo y en CI). En un proyecto edge, el código solo de servidor lleva
-  `//go:build !wasm || edge` y el solo de navegador `//go:build wasm && !edge`. Con eso misitio
-  sigue el layout canónico **sin excepciones**: `config/` un solo paquete (`server.go`,
-  `routes.go`, `client.go`), `modules/<m>/{server,browser,module}.go`, sin `api/` ni `routes/`.
-  Precedentes: las condiciones de exportación de los bundlers (`"worker"`, `"browser"`) con que
-  Vercel Edge y Cloudflare separan código de servidor y de cliente, los paquetes `server-only` /
-  `client-only` de Next.js; en Go, la etiqueta es la herramienta equivalente. Cambia: `goflare`
-  (pasar `-tags edge`; etapa nueva de su plan, no despachado), skills **app-modules**,
-  **app-rest-edge**, **project-layout** (tabla de etiquetas para proyectos edge), y misitio se
-  reescribe con un plan nuevo (abajo).
-- B) Sin etiqueta: el navegador nunca importa `config/` y lo compartido vive en una hoja aparte.
-  Es el `api/` que webtyp eliminó, y contradice **project-layout** (`web/client.go` →
-  `config.BuildClient`).
-- C) Subir el presupuesto del cliente a ~700 KB. Cada carga del panel paga el código del servidor.
-
-## Agregados enviados a agentes en ejecución (textual)
-
-Regla (skill **master-plan**): todo lo que se le pide a un agente después de despacharlo queda aquí.
-
-1. `webtyp/deploy`, sesión 7552631315228362006, 2026-10-15:
-   > Addition to Stage 4 (same plan, no other change): export func LocalMissing(p Plan, local Destination) ([]Missing, error) in deployment.go. It validates p, then returns exactly the Missing items of the ToLocal places (same construction as Check: Random -> FixAutomatic, Typed -> FixInput with Accept putting into local). It never touches a Target or CI, and a nil local is ErrNilTool. Deployment.Check must build its ToLocal items by calling LocalMissing (one implementation). Test: LM1 a plan with ToRuntime and ToLocal secrets, none present -> LocalMissing returns only the ToLocal ones; LM2 nil local -> ErrNilTool. Reason: webtyp/app blocks the local dev server until local secrets exist and must not call GitHub/Cloudflare for that.
-2. `webtyp/deploy`, misma sesión, 2026-10-15 (D42):
-   > Second addition (decision P26 of the master plan), same plan: (1) plan.go: add to Plan the field 'Vars []Var' and the type 'type Var struct { Key, Value string }' with doc comment: non-secret runtime variables, value written in config/deploy.go, delivered by the Target as plain-text bindings on every deploy. (2) Scan: Vars is a composite literal of Var elements whose Key and Value are string literals (same rules as other string fields). (3) validate: each Var has non-empty Key and Value; a Var Key must not repeat and must not equal any Secret Key -> new errors ErrIncompleteVar, ErrDuplicateVar ('<KEY> declared twice, as a Var or Secret'). (4) README example: add Vars: []deploy.Var{{Key: "IAM_BASE_URL", Value: "https://iam.velty.cl"}}. Tests: S1 includes Vars; V-tests for both new errors. Nothing else changes (Deployment does not deliver Vars: the Target puts them in its Job).
-
-Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén implementados.
-
-## Plan siguiente de misitio (instrucciones exactas)
-
-`misitio/docs/PLAN.md` es `cmd/migrate` (running). Al cerrar P27 se escribe **un** plan nuevo,
-`docs/PLAN_NEXT.md` (se renombra a `PLAN.md` cuando cierre `cmd/migrate`), que contiene:
-
-| Orden | Qué | Origen |
-|---|---|---|
-| 1 | Re-layout canónico: M1–M4, M6, M7 según la respuesta de P27 (con A: `config/{config,server,routes,client,css,favicon}.go`, `modules/<m>/{server,browser,module}.go` + registros, borrar `api/`, `routes/`, `config/panel/`) | nuevo; reemplaza `docs/PLAN_ARQUITECTURA_MODULOS.md` (usa nombres que **app-modules** prohíbe: `backend.go`, `view.go`, `handler.go`) y `docs/PLAN_RUTAS_PARAMETRIZADAS.md` (edita `routes/`, que desaparece): **ambos se borran** al escribir el plan nuevo, recuperando de ellos solo los problemas medidos que sigan vigentes |
-| 2 | Cliente de iam con `private_key_jwt` (M5) | `SECURITY_BY_DEFAULT_MASTER_PLAN.md` §9, si iam ya publicó; si no, queda fuera y se fusiona después |
-| 3 | `config/deploy.go` | `docs/PLAN_DEPLOY_WIZARD.md` (se borra al fusionar); `IAM_CLIENT_PRIVATE_KEY` en vez de `IAM_CLIENT_SECRET` si entró la fila 2 |
-| — | `PLAN_STAGE_5/6/7`, `PLAN_INFRA_BLOQUEADA.md` | no entran: bloqueados por infraestructura |
-
-Mientras tanto, misitio no compila en local por M8: se repara solo cuando `app` publique su etapa 8.
+Cuando esa ola cierre sus preguntas se escribe **un** plan nuevo, `misitio/docs/PLAN_NEXT.md`
+(se renombra a `PLAN.md` cuando cierre `cmd/migrate`), con: el re-layout; el cliente de iam con
+`private_key_jwt` (§9 de seguridad, si iam ya publicó); y la declaración de despliegue
+(`docs/PLAN_DEPLOY_WIZARD.md`, que se borra al fusionar). `PLAN_ARQUITECTURA_MODULOS.md` y
+`PLAN_RUTAS_PARAMETRIZADAS.md` se borran al escribirlo (usan nombres prohibidos y editan `routes/`,
+que desaparece), recuperando solo los problemas medidos que sigan vigentes. `PLAN_STAGE_5/6/7` y
+`PLAN_INFRA_BLOQUEADA.md` no entran (bloqueados por infraestructura).
 
 ## Tareas que no son planes de código (instrucciones exactas)
 
