@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** PENDING · 2026-10-15 · D1–D6 fijadas por el usuario; P1–P14 abiertas, todas con recomendación.
+> **Status:** PENDING · 2026-10-15 · D1–D22 cerradas (P1–P14 aceptadas + MCP + idioma); P15–P20 abiertas antes de escribir los planes por librería.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -10,214 +10,119 @@ El último intento falló porque el token hecho a mano no tenía `Workers Script
 
 **Objetivo:** cada vez que se quiere desplegar, `webtyp/app` abre un wizard que **sabe qué falta**,
 lo pide (los secretos en `webtyp/keyring`), lo crea donde hay API, lo entrega a cada destino
-(CI, Worker) y despliega. El desarrollador nunca edita `.env`, nunca corre `gh secret set`, nunca
-crea un token a mano.
+(CI, Worker) y despliega. El agente ve lo mismo por MCP: sabe qué falta, guía al desarrollador paso a
+paso y despliega cuando no falta nada. El desarrollador nunca edita `.env`, nunca corre
+`gh secret set`, nunca crea un token a mano.
 
-**Alcance:** `webtyp/deploy`, `webtyp/app`, `webtyp/wizard`, `webtyp/goflare`, el destino GitHub,
-`webtyp/keyring` (consumo, sin cambios), y `veltylabs/misitio` como primer caso real.
+**Alcance:** `webtyp/wizard`, `webtyp/deploy`, `webtyp/goflare`, `webtyp/github` (nuevo),
+`webtyp/selfhost` (nuevo, condicional, D16), `webtyp/env`, `webtyp/keyring`, `webtyp/app`, y
+`veltylabs/misitio` como caso de aceptación.
 
 **Relación con otras olas:** independiente de UI_CONSISTENCY, API_SURFACE, NO_REFLECTION y
 SOURCE_SELECTION. Consume KEYRING_DEPENDENCY_FREE (keyring inyectable, ya publicado). Es el
 mecanismo con el que SECURITY_BY_DEFAULT §9 (misitio) entregará `IAM_CLIENT_PRIVATE_KEY` al Worker;
-no la bloquea.
+no la bloquea: §9 puede salir antes con su paso documentado y este wizard lo reemplaza después.
 
 ---
 
 ## Decisiones
 
-Fijadas por el usuario el 2026-10-15; no se reabren.
+### Fijadas por el usuario (2026-10-15)
 
 | # | Decisión | Consecuencia |
 |---|---|---|
-| D1 | **Los secretos viven solo en `webtyp/keyring`** y se ingresan una vez en el wizard de `webtyp/app`. Nunca en `.env`, repo, plan, shell ni chat. | Skill **secrets** creada (devskills v0.0.14). Se borra todo doc que diga `gh secret set X` o "pon X en `.env`". |
-| D2 | **`webtyp/app` es el orquestador**: no sabe *cómo* se despliega nada; recibe inyectadas las formas de desplegar y las configura. | `app` es la raíz de composición: es el único que importa `goflare` y el destino GitHub. |
-| D3 | **`webtyp/deploy` no depende de ninguna forma de desplegar.** Solo define el contrato. | Se borran de `deploy`: `providers/cloudflare/`, `pusher_cloudflare.go`, el registro global `RegisterPusher`/`init()`, las claves `CF_*` y `goflare/<proyecto>` de `store.go`, el mapeo heredado `"cloudflare"→"cloudflarePages"` de `wizard.go:48`. `deploy/go.mod` deja de requerir `goflare`. |
-| D4 | **Cada proyecto declara cómo se despliega y qué necesita.** webtyp no lo infiere ni lo trae en código. | Formato: P1. |
-| D5 | **Una sola interfaz común** para todas las herramientas involucradas (skill **api-design**). | Forma: P7. |
-| D6 | **El wizard dice qué falta** antes de desplegar, con el flujo ya establecido para cada caso. | Diagnóstico (estilo `doctor`) antes de cada deploy: P11. |
+| D1 | **Los secretos viven solo en `webtyp/keyring`** y se ingresan una vez en el wizard de `webtyp/app`. Nunca en `.env`, repo, plan, shell ni chat. | Skill **secrets** (devskills v0.0.14). Se borra todo doc que diga `gh secret set X` o "pon X en `.env`". |
+| D2 | **`webtyp/app` es el orquestador**: no sabe *cómo* se despliega nada; recibe inyectadas las formas de desplegar y las configura. | `app` es la raíz de composición: único que importa `goflare` y `github`. |
+| D3 | **`webtyp/deploy` no depende de ninguna forma de desplegar.** Solo define el contrato. | Se borran de `deploy`: `providers/cloudflare/`, `pusher_cloudflare.go`, el registro global `RegisterPusher`/`init()` (`pusher.go:21-27`), las claves `CF_*` y `goflare/<proyecto>` de `store.go`, el mapeo heredado `"cloudflare"→"cloudflarePages"` (`wizard.go:48`). `deploy/go.mod` deja de requerir `goflare`. |
+| D4 | **Cada proyecto declara cómo se despliega y qué necesita.** | Formato: D7. |
+| D5 | **Una sola interfaz común** para todas las herramientas involucradas (skill **api-design**). | Forma: D13. |
+| D6 | **El wizard dice qué falta** antes de desplegar. | Diagnóstico: D17. |
+
+### Cerradas al consolidar (P1–P14 → recomendación aceptada)
+
+| # | Decisión | Consecuencia |
+|---|---|---|
+| D7 (cierra P1) | La declaración es **`config/deploy.go`**, un valor literal `deploy.Plan` **leído por AST** (sin ejecutar el proyecto), como `config/routes.go` y `RenderImages()`. | `.github/workflows/deploy.yml` pasa a ser **generado** desde la declaración con `ghaction`; se borran `deploy.writeGHAWorkflow` (`deploy/wizard.go:113`), `deploy.CreateDefaultConfig` y `deploy.yaml` para este uso. |
+| D8 (cierra P2) | **Solo CI despliega** (push a `main` o `workflow run`). | El "Desplegar" del wizard y de MCP dispara el workflow y sigue el run; no hay deploy local. Se borra `deploy.Provider.Build/Deploy` como camino local. |
+| D9 (cierra P3) | Los secretos se **copian desde el keyring** a cada destino declarado mediante su API, solo cuando cambian (huella guardada en el keyring). | Implicación: un secreto de **runtime** (`To: Runtime`, p. ej. `IAM_CLIENT_PRIVATE_KEY`) va **directo al Worker**, nunca a GitHub; CI solo recibe el token de deploy. Un `PUT` de script conserva los bindings `secret_text` (`misitio/docs/DEPLOY.md:80-81`), así que el deploy no los borra. |
+| D10 (cierra P4) | **Token de arranque de Cloudflare** por cuenta (plantilla "Create additional tokens"), en el keyring global; el wizard **crea un token por proyecto** con exactamente los permisos que implica la declaración. | `goflare` deja de exigir un token hecho a mano; en CI sigue leyendo `CLOUDFLARE_API_TOKEN` (`goflare/auth.go:12`), ahora mintado. Vida del token: P18. |
+| D11 (cierra P5) | GitHub usa la sesión de **`gh`** (`gh auth token`); si falta, el wizard lanza `gh auth login`. | Sin PAT propio. |
+| D12 (cierra P6) | **GCP no es parte del deploy de misitio** (login vía iam, commit `ff120d0`). Para iam, el cliente OAuth de Google es un **paso guiado**: URL de consola + redirect URI calculado + validación contra el endpoint de token de Google. La IAP OAuth Admin API está obsoleta desde 2025-01-22: no hay API. | Se borra la tabla `GOOGLE_*` de `misitio/docs/DEPLOY.md:74-76`. Sin dependencia de `gcloud`. |
+| D13 (cierra P7) | `webtyp/deploy` = **solo contratos**: `deploy.Plan`, `deploy.Secret{Key, What, Source, To}`, `deploy.Target` (`Check`, `Provision`, `Release`), `deploy.Destination` (`Has`, `Put`), `deploy.Missing`. | Se borran `deploy.Provider`, `deploy.Pusher` y `deploy.Puller` del paquete raíz. Los textos de `Secret` y `Missing` son `lang.Text` (D22). |
+| D14 (cierra P8) | **Un solo almacén**: keyring por proyecto (`keyring/auto.OpenForModule`) + una entrada global por cuenta para el token de arranque. | Se borran `deploy.SecureStore`, `sensitiveKeys` y `KeyringServiceName` (`deploy/store.go`). |
+| D15 (cierra P9) | La declaración es la **única lista de secretos**; `.env` solo guarda preferencias no secretas. `webtyp/env` resuelve una clave declarada secreta desde el keyring. | Se borran `keyring.Scheme`/`IsReference` (`keyring/reference.go`) y la lectura de `.env` en `app.MissingSecrets` (`app/missing_secrets.go`), que pasa a leer la declaración. |
+| D16 (cierra P10) | Puller de Windows, SSH y webhook salen de `deploy` a **`webtyp/selfhost`**, que implementa `deploy.Target`, **solo si tienen un consumidor real**; si no, se borran (quedan en el historial de git). | Verificar consumidores en `veltylabs/*` y `webtyp/*` antes de despachar `deploy`. |
+| D17 (cierra P11) | La pestaña **DEPLOY** corre el diagnóstico al abrir el proyecto: checklist ✅/❌ con el texto de cada `deploy.Missing`; cada ❌ con solución automática se resuelve con un paso; "Desplegar" se habilita sin ❌; el run de CI se ve en vivo. | El agente ve la misma checklist por MCP (D21). |
+| D18 (cierra P12) | El `Target` **crea D1, R2, dominio y regla de rate limit si faltan** (idempotente) con los nombres de la declaración. | `D1_DATABASE_ID` y `R2_BUCKET_ID` dejan de ser secretos de GitHub: se resuelven por nombre. |
+| D19 (cierra P13) | Repo nuevo **`webtyp/github`**: secretos de Actions (`deploy.Destination`), `workflow run`, seguimiento del run. | `ghaction` sigue siendo solo generación de YAML. |
+| D20 (cierra P14) | `DEV_AUTOLOGIN` es un secreto declarado más: keyring + wizard. | Se actualiza la skill **dev-autologin** (`SKILL.md:24-26`) en el mismo cambio en que `env` lo resuelve. |
+
+### Agregadas por el usuario al consolidar
+
+| # | Decisión | Consecuencia |
+|---|---|---|
+| D21 | **El deploy es herramienta MCP de webtyp.** El agente puede ver qué falta, guiar al desarrollador paso a paso (incluido el paso de consola de Google de D12) y desplegar. **Los valores secretos solo se escriben en el wizard de la TUI**: ninguna herramienta MCP recibe ni devuelve un secreto (D1). | Herramientas en `app`, como `mcp.ToolProvider` en `buildProjectProviders` (`app/mcp_registry.go:25`): `deploy_status` (lectura: checklist sin valores); `deploy_guide` (lectura: pasos de un ítem que falta, con URLs y valores no secretos ya calculados, p. ej. el redirect URI); `deploy_provision` (escritura: corre lo automático que no necesita un secreto nuevo: crear recursos, mintar tokens, copiar secretos ya presentes); `deploy_release` (escritura: dispara el workflow y devuelve el estado del run). Las cuatro y la TUI usan el mismo diagnóstico (una sola implementación). |
+| D22 | **El wizard habla inglés y español.** | `wizard` no traduce hoy (no importa `webtyp/lang`). `Step.LabelText`, `deploy.Secret.What/Source` y `deploy.Missing` pasan a `lang.Text`; `wizard`, `deploy`, `goflare` y `github` publican su `Dictionary()` con la columna `es` completa, y `app/tui_lang.go:19` los carga junto a `devtui`, `devbrowser`, `server` y `sitec`. El idioma es el que ya elige la TUI (`TUI_LANG`). Las claves siguen la skill **translations** (inglés, sustantivo antes que adjetivo, sin género). La salida de MCP queda en inglés: el agente la transmite en el idioma del desarrollador. |
 
 ---
 
 ## Preguntas abiertas
 
-Responde inline con `respuesta: X` (o texto libre) bajo cada una; luego «consolida el master».
+Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
 
-### P1 — ¿Dónde declara el proyecto su despliegue?
+### P15 — ¿Puede el agente desplegar a producción sin confirmación en la TUI?
 
-- **A) (recomendada)** Archivo Go `config/deploy.go` con un valor literal tipado, **leído por AST**
-  (sin ejecutar el proyecto), igual que `config/routes.go` (routescan) y `RenderImages()` (skill
-  **ui-images**). Ejemplo misitio:
-  ```go
-  func Deploy() deploy.Plan {
-      return deploy.Plan{
-          Target: goflare.Worker{Name: "misitio", Domain: "misitio.velty.cl", D1: "DB", R2: "ASSETS"},
-          CI:     github.Actions{Repo: "veltylabs/misitio"},
-          Secrets: []deploy.Secret{
-              {Key: "IAM_CLIENT_PRIVATE_KEY", What: "clave con la que misitio firma sus llamadas a iam", Source: deploy.Generated, To: deploy.Runtime},
-          },
-      }
-  }
-  ```
-- B) `deploy.yaml` (hoy existe en `deploy/config.go` para el Puller). Sin tipos: un typo se
-  descubre al desplegar.
-- C) Inferirlo del `.github/workflows/deploy.yml` (inputs de la action `goflare`). Dos fuentes:
-  el workflow es una salida, no la declaración.
+- **A) (recomendada)** Sí: `deploy_release` es una herramienta MCP de escritura y el permiso lo da el
+  harness del agente (Claude Code pide aprobación para herramientas de escritura salvo que el dev la
+  haya autorizado). Un deploy es reversible (D8: CI; versiones del Worker en Cloudflare).
+- B) `deploy_release` solo deja el deploy "listo" y el dev confirma con una tecla en la TUI. Más
+  seguro, pero el agente no puede cerrar el ciclo solo, que es lo que pide D21.
 
-Evidencia: el ecosistema ya eligió "declaración Go leída por AST" dos veces; SST (`sst.config.ts`)
-y Encore (infra desde el código) son el mismo patrón en la industria. **Consecuencia de A:** el
-`.github/workflows/deploy.yml` pasa a ser **generado** desde la declaración (`ghaction` ya existe
-para eso, `ghaction/README.md`), y se borra `deploy.writeGHAWorkflow` (`deploy/wizard.go:113`).
+### P16 — Idiomas del diccionario más allá de inglés y español
 
-### P2 — ¿Quién ejecuta el deploy?
+Los diccionarios del ecosistema tienen 8 columnas (`es zh hi ar pt fr de ru`, p. ej.
+`devtui/lang.json`).
 
-- **A) (recomendada)** **Solo CI** (push a `main`). El wizard aprovisiona y entrega secretos; su
-  botón "Desplegar" hace push o `workflow run` y muestra el run en vivo en la TUI.
-- B) CI y también local desde webtyp. Dos caminos para lo mismo (ledger > 0).
-- C) Solo local. Pierde trazabilidad y repetibilidad; obliga a tener TinyGo y credenciales en cada
-  máquina.
+- **A) (recomendada)** `es` obligatorio en esta ola; las otras 7 columnas pueden quedar vacías (se
+  muestra la clave inglesa) y `lang_missing` las lista para completarlas después.
+- B) Las 8 completas en esta ola. Más trabajo por plan sin que nadie las use hoy.
 
-Evidencia: misitio e iam ya despliegan por `tinywasm/goflare@v1` en Actions; Vercel, Netlify y
-Cloudflare Pages hacen del push el deploy. Fly/Railway ofrecen ambos y su documentación empuja a CI
-para producción.
+### P17 — Secretos que hoy existen solo en GitHub
 
-### P3 — ¿Cómo llega un secreto del keyring a su destino?
+Los secretos de GitHub son de solo escritura: los valores actuales de misitio e iam no se pueden
+leer para pasarlos al keyring.
 
-- **A) (recomendada)** El wizard lo **copia desde el keyring** a cada destino declarado mediante la
-  API del destino: GitHub Actions secrets (cifrado sellado que exige la API de GitHub) y secretos
-  del Worker (API de Cloudflare). Vuelve a copiarlo solo cuando cambia en el keyring.
-- B) CI lo lee en cada run de un gestor externo (1Password, Doppler, Infisical), como los adaptadores
-  de Kamal 2 (`.kamal/secrets`). Agrega un servicio pago y otra credencial que proteger.
-- C) Manual (hoy). Es el origen del 403 de misitio.
+- **A) (recomendada)** **Rotarlos**: el wizard mintea tokens nuevos (D10), genera claves nuevas
+  donde la fuente es `Generated`, y pide de nuevo solo lo que viene de fuera (p. ej. el cliente
+  OAuth de Google de iam). El token de misitio está mal escopeado de todos modos.
+- B) Pedirle al dev que vuelva a pegar cada valor viejo. Requiere que los tenga guardados en algún
+  lado, que es justo lo que D1 prohíbe.
 
-Nota: los secretos de GitHub son de solo escritura. El wizard puede comprobar que **existen** por nombre,
-no su valor; para saber si están al día guarda en el keyring la huella (hash) de lo último que
-entregó.
+### P18 — Vida del token de arranque de Cloudflare
 
-### P4 — Credenciales de Cloudflare
+Cloudflare recomienda limitarlo con TTL o filtro de IP.
 
-- **A) (recomendada)** Un **token de arranque** por cuenta, creado una sola vez con la plantilla
-  oficial "Create additional tokens", guardado en el keyring (global, no por proyecto). Con él el
-  wizard **crea un token por proyecto con exactamente los permisos que la declaración implica**
-  (Worker → `Workers Scripts:Edit`; D1 → `D1:Edit`; R2 → `R2:Edit`; dominio → `Workers Routes` +
-  zona; rate limit → `Zone WAF:Edit`) y lo entrega a GitHub. Cloudflare recomienda limitar el de
-  arranque con TTL o filtro de IP.
-- B) El desarrollador crea cada token a mano con una checklist de permisos. Es el mecanismo actual;
-  ya falló.
-- C) Un token global con todos los permisos en cada repo. Un repo comprometido compromete la cuenta.
+- **A) (recomendada)** TTL de 90 días; el diagnóstico (D17) avisa 7 días antes y el wizard pide uno
+  nuevo. El filtro por IP no sirve con IP doméstica dinámica.
+- B) Sin TTL. Un token que puede crear tokens con cualquier permiso no debería ser eterno.
 
-Evidencia: el esqueleto de A ya existía (`CF_BOOTSTRAP_TOKEN`, `deploy/wizard.go:21`) pero nunca se
-implementó. `wrangler login` usa OAuth, que Cloudflare no ofrece a herramientas de terceros: el
-token de arranque es la alternativa que Cloudflare documenta.
+### P19 — Deploys de vista previa por PR
 
-### P5 — Credenciales de GitHub
+Versiones de Worker con URL propia por PR, como Vercel/Netlify: ver un PR de Jules funcionando sin
+mergearlo.
 
-- **A) (recomendada)** Reusar la sesión de `gh` (`gh auth token`); `devflow`/`codejob` ya dependen de
-  ella. Si falta, el wizard lanza `gh auth login` (flujo de dispositivo).
-- B) Un PAT propio en el keyring. Otra credencial que caduca y que hay que escopear a mano.
+- **A) (recomendada)** Siguiente ola. Necesita decidir qué D1/R2 usa una vista previa (¿copia?,
+  ¿la de producción en solo lectura?), que es una pregunta propia.
+- B) En esta ola.
 
-### P6 — ¿Para qué GCP?
+### P20 — Orden de los planes
 
-**Para misitio, para nada.** misitio ya no autentica con Google: delega en iam
-(commit `ff120d0` "consume veltylabs/iam remotely"; `grep -rn GOOGLE --include=*.go misitio` →
-vacío). La tabla `GOOGLE_*` de `misitio/docs/DEPLOY.md:74-76` está desactualizada y se borra.
-**Solo iam** necesita un cliente OAuth de Google, y **Google no tiene API pública para crear clientes
-OAuth web**: la IAP OAuth Admin API quedó obsoleta el 2025-01-22 y la consola es el único camino.
-
-- **A) (recomendada)** Paso guiado: el wizard muestra la URL exacta de la consola y el valor de
-  "Authorized redirect URI" (calculado desde el dominio declarado), pide el client id/secret
-  (`Sensitive`), los **valida** contra el endpoint de token de Google y los guarda en el keyring.
-- B) Integrar `gcloud` y automatizar lo automatizable (proyecto, APIs habilitadas). Agrega una
-  dependencia pesada para ahorrar un paso que igual es manual.
-
-### P7 — Forma de la interfaz común (D5)
-
-- **A) (recomendada)** `webtyp/deploy` contiene **solo tipos y contratos**, sin implementaciones:
-  - `deploy.Plan` — lo que el proyecto declara (P1).
-  - `deploy.Secret{Key, What, Source, To}` — los tres textos que exige la skill **documentation**
-    viajan en el tipo, así el wizard y los docs los muestran sin redactarlos de nuevo.
-  - `deploy.Target` — una forma de desplegar: `Check(plan) []deploy.Missing`, `Provision(plan, secrets)`,
-    `Release(plan)`. Lo implementan `goflare` (Worker), y mañana SSH, Pages, etc. **D3:** `deploy`
-    no importa ninguno.
-  - `deploy.Destination` — recibe secretos: `Has(key)`, `Put(key, value)`. Lo implementan
-    GitHub Actions y los secretos del Worker.
-  - `deploy.Missing` — un ítem pendiente con su texto para el usuario y el paso de wizard que lo
-    resuelve.
-- B) Un único `Provider` que lo hace todo (lo actual: `deploy/provider.go`, que mezcla build,
-  deploy, wizard y eventos de `devwatch`). Viola una preocupación por tipo y obliga a cada
-  implementación a todo.
-
-Nombres (prueba del novato): `Plan`, `Target`, `Destination`, `Missing` se leen como frases ("el
-plan", "el destino del secreto", "lo que falta"). Se descartan `Sink`, `Pusher` y `Puller`
-(jerga).
-
-### P8 — Dos almacenes de secretos hoy
-
-Hoy conviven el **`deploy.SecureStore`** (servicio `"webtyp-deploy"`, decide qué es secreto con una
-lista fija de nombres, `deploy/store.go:30`) y la **pestaña SECRETS de `app`** (keyring por módulo,
-`app/missing_secrets.go`). `CF_BOOTSTRAP_TOKEN` ni siquiera está en esa lista, así que acabaría en
-`.env`.
-
-- **A) (recomendada)** Uno solo: el keyring por proyecto de `keyring/auto.OpenForModule`, más una
-  entrada global por cuenta para el token de arranque de Cloudflare (P4). Se borran `SecureStore`,
-  `sensitiveKeys` y `KeyringServiceName`.
-- B) Mantener ambos. Dos formas de hacer lo mismo.
-
-### P9 — `KEY=keyring://` en `.env`
-
-- **A) (recomendada)** La declaración (P1) es la **única** lista de secretos. `.env` queda solo con
-  preferencias no secretas (`dev_mode`, `browser_*`…, como el `.env` actual de misitio). `webtyp/env`
-  resuelve una clave declarada como secreta directamente desde el keyring. Se borra el marcador
-  `keyring.Scheme` y `app.MissingSecrets` pasa a leer la declaración.
-- B) Mantener el marcador como declaración de secretos de runtime local, y la declaración Go solo
-  para despliegue. Dos listas de secretos por proyecto.
-
-### P10 — Puller de Windows, SSH y webhook dentro de `deploy`
-
-Son formas de desplegar; con D3 no pueden seguir en `deploy`. El Puller además no está implementado
-en Linux (`deploy/manager_default.go`: "not implemented on linux").
-
-- **A) (recomendada)** Moverlos a su propio repo (`webtyp/selfhost`), que implementa
-  `deploy.Target`; se mantienen solo si existe un consumidor real (verificar en
-  `veltylabs/*` antes de despachar).
-- B) Borrarlos si no hay consumidor. Recuperables desde el historial de git.
-
-### P11 — ¿Cuándo y dónde aparece el wizard?
-
-- **A) (recomendada)** La pestaña **DEPLOY** de la TUI corre el diagnóstico al abrir el proyecto y
-  muestra una checklist (✅ / ❌ con el texto de `deploy.Missing`). Cada ❌ con solución automática
-  se resuelve con un paso del wizard; "Desplegar" se habilita cuando no queda ninguno. Una
-  herramienta MCP `deploy_status` expone **la misma checklist sin valores**, para que el agente
-  diga qué falta sin pedir secretos (skill **secrets**).
-- B) Solo un comando `webtyp deploy` en la terminal.
-
-Precedente: `flutter doctor`, `brew doctor`, `fly launch` (detecta, pregunta solo lo que falta,
-crea lo que falta).
-
-### P12 — Recursos de infraestructura (D1, R2, dominio)
-
-- **A) (recomendada)** El `Target` los **crea si faltan** (idempotente) con los nombres de la
-  declaración, como `fly launch` y SST. `goflare` ya resuelve dominio y rate limit
-  (`goflare/cloudflare.go:306,360,426`); faltan D1 y R2.
-- B) Manual con instrucciones. Es lo que hoy obliga a copiar IDs a secretos de GitHub
-  (`D1_DATABASE_ID`, `R2_BUCKET_ID`), que **ni siquiera son secretos**: con A desaparecen como
-  secretos y se resuelven por nombre.
-
-### P13 — ¿Dónde vive el destino GitHub?
-
-- **A) (recomendada)** Un repo nuevo, `webtyp/github` (secretos de Actions, `workflow run`,
-  seguimiento del run), que implementa `deploy.Destination`. `devflow` es un conjunto de CLIs, y
-  `ghaction` declara expresamente que no tiene conocimiento de dominio (solo genera YAML).
-- B) Dentro de `devflow`, que ya usa `gh`. `app` arrastraría todo `devflow` para un solo concepto.
-
-### P14 — `DEV_AUTOLOGIN` en `.env`
-
-La skill **dev-autologin** indica poner credenciales JSON reales en `.env`
-(`dev-autologin/SKILL.md:24-26`). Contradice D1.
-
-- **A) (recomendada)** Pasa al keyring como cualquier secreto declarado (P9); el wizard lo pide.
-  Se actualiza la skill.
-- B) Excepción documentada por ser solo de desarrollo. Una excepción es la puerta por la que se
-  filtra el siguiente secreto.
+- **A) (recomendada)** `wizard` (pasos dinámicos + `lang.Text`) y `deploy` (contratos) primero, en
+  paralelo; luego `goflare`, `github`, `env`+`keyring` y `selfhost` en paralelo; luego `app`; al
+  final `misitio` como aceptación. Antes de despachar `deploy`, verificar los consumidores del
+  Puller (D16).
+- B) Un solo plan grande en `app`. Viola D2/D3: `app` terminaría con el conocimiento de Cloudflare
+  y GitHub adentro.
 
 ---
 
@@ -226,10 +131,15 @@ La skill **dev-autologin** indica poner credenciales JSON reales en `.env`
 | Hecho | Dónde |
 |---|---|
 | `deploy` importa `goflare` y tiene un proveedor Cloudflare dentro | `deploy/go.mod:8`, `deploy/providers/cloudflare/provider.go` |
-| Registro global de pushers en `init()` | `deploy/pusher.go:21`, `deploy/pusher_cloudflare.go:5` |
-| Wizard con menú impreso a mano y 5 pasos "proxy" fijos porque `wizard` no admite pasos dinámicos | `deploy/wizard.go:28-104` |
+| Registro global de pushers en `init()` | `deploy/pusher.go:21-27`, `deploy/pusher_cloudflare.go:5` |
+| Wizard con menú impreso a mano y 5 pasos "proxy" fijos porque `wizard` no admite pasos dinámicos | `deploy/wizard.go:28-104`, `wizard/step.go:7-11` |
+| `wizard` no traduce: `LabelText` es `string` y el paquete no importa `webtyp/lang` | `wizard/step.go` |
+| La TUI ya carga diccionarios por librería y guarda el idioma elegido | `app/tui_lang.go:19-35` |
+| Las herramientas MCP del proyecto se registran como `mcp.ToolProvider` | `app/mcp_registry.go:25`, `app/mcp-tools.go:20` (`lang_missing`) |
 | Lista fija de qué es secreto; el token de arranque no está | `deploy/store.go:30-42` |
+| Dos almacenes de secretos: `deploy.SecureStore` y la pestaña SECRETS | `deploy/store.go`, `app/section-secrets.go`, `app/missing_secrets.go` |
 | `goflare` solo lee el token desde la variable de entorno (CI) | `goflare/auth.go:12-24` |
+| `goflare` ya resuelve dominio y rate limit; no crea D1/R2 | `goflare/cloudflare.go:306,360,426` |
 | Los IDs de D1/R2 se copian a mano como "secretos" de GitHub | `misitio/docs/DEPLOY.md:54-57,107-108` |
 | Token de Cloudflare mal escopeado → 403 en cada deploy desde v0.0.7 | run 38746286153; `misitio/docs/PLAN_INFRA_BLOQUEADA.md` |
 | `GOOGLE_*` documentados para misitio, sin uso en el código | `misitio/docs/DEPLOY.md:74-76` |
@@ -247,49 +157,52 @@ La skill **dev-autologin** indica poner credenciales JSON reales en `.env`
 Patrón común: (1) **login una vez** con el proveedor, (2) un comando que **detecta, pregunta solo lo
 que falta y crea**, (3) secretos guardados en el almacén del destino, **nunca en archivos**, (4)
 diagnóstico antes de desplegar. Donde webtyp difiere: Cloudflare no ofrece OAuth a terceros (de ahí
-el token de arranque de P4), y webtyp declara en Go leído por AST (como SST/Encore, pero sin
-ejecutar el proyecto).
+D10); la declaración es Go leído por AST (como SST/Encore, sin ejecutar el proyecto); y el agente es
+un usuario de primera clase por MCP (D21), cosa que ninguna de las anteriores ofrece.
 
-## Sugerencias de experiencia de desarrollo (no bloquean esta ola)
+## Sugerencias (no bloquean esta ola)
 
 1. **Docs de despliegue generados desde la declaración.** `DEPLOY.md` de misitio quedó
    desactualizado (`GOOGLE_*`); si la tabla de secretos sale de `deploy.Secret.What/Source`, no
-   puede divergir.
-2. **Deploys de vista previa por PR** (versiones de Worker de Cloudflare con URL propia), como
-   Vercel/Netlify. Ver un PR de Jules funcionando sin mergearlo.
-3. **Rollback de un paso** desde la TUI (Cloudflare guarda las versiones del Worker).
-4. **Run de CI en vivo en la TUI** en vez de ir a GitHub a leer logs (lo que hubo que hacer hoy
-   para ver el 403).
+   puede divergir. Candidata a decisión al escribir el plan de `app`.
+2. **Rollback de un paso** desde la TUI y por MCP (Cloudflare guarda las versiones del Worker).
+3. **Vista previa por PR**: P19.
 
-## Puerta api-design (borrador, se completa al cerrar P1/P7)
+## Puerta api-design
 
 - **Precedentes:** SST, Encore, Fly, Kamal, Vercel (tabla anterior).
 - **Nombres:** `deploy.Plan`, `deploy.Target`, `deploy.Destination`, `deploy.Secret`,
-  `deploy.Missing` (P7).
-- **Balance de complejidad** (misitio, con todas las recomendaciones):
+  `deploy.Missing`; herramientas `deploy_status`, `deploy_guide`, `deploy_provision`,
+  `deploy_release`. Se leen como frases; se descartan `Sink`, `Pusher`, `Puller` (jerga).
+- **Balance de complejidad** (misitio):
   ```
   Conceptos a aprender            +2 (Plan, Secret)  / −4 (Pusher, Puller, SecureStore, keyring://)
   Archivos a tocar para desplegar +1 (config/deploy.go) / −2 (deploy.yml a mano, DEPLOY.md a mano)
   Pasos manuales                  0 / −9 (crear D1, R2, token, 4× gh secret set, 2× secretos de Worker)
-  Formas de hacer lo mismo        −2 (dos almacenes de secretos, dos listas de secretos)
+  Formas de hacer lo mismo        −3 (dos almacenes de secretos, dos listas de secretos, deploy local vs CI)
   ```
-- **Dónde va:** contrato en `deploy`; Cloudflare en `goflare`; GitHub en `webtyp/github` (P13);
-  composición en `app` (D2).
-- **Qué borra:** ver D3, P8, P9, P10, y en misitio las secciones manuales de `DEPLOY.md`,
-  `CI_TOKEN.md` y `PLAN_INFRA_BLOQUEADA.md` que el wizard reemplaza.
+- **Dónde va:** contratos en `deploy`; Cloudflare en `goflare`; GitHub en `webtyp/github`;
+  composición, TUI y MCP en `app`.
+- **Qué borra:** D3, D7, D8, D13, D14, D15, D16, y en misitio las secciones manuales de
+  `DEPLOY.md`, `CI_TOKEN.md` y `PLAN_INFRA_BLOQUEADA.md` que el wizard reemplaza.
 
-## Librerías (se detalla al cerrar las preguntas)
+## Librerías
 
-| Repo | Cambio | Tipo |
-|---|---|---|
-| `webtyp/wizard` | pasos agregados en tiempo de ejecución (elimina los 5 proxy de `deploy/wizard.go`) | **gate** de `app` |
-| `webtyp/deploy` | queda solo el contrato (P7); borra implementaciones (D3, P8, P10) | **gate** de goflare, github, app |
-| `webtyp/goflare` | implementa `deploy.Target` (Worker); token por proyecto desde el token de arranque (P4); D1/R2 si faltan (P12); `deploy.Destination` para secretos del Worker | paralelo con github |
-| `webtyp/github` (nuevo, P13) | `deploy.Destination` para secretos de Actions; `workflow run` y seguimiento | paralelo con goflare |
-| `webtyp/env` | resuelve claves declaradas como secretas desde el keyring (P9) | paralelo |
-| `webtyp/app` | pestaña DEPLOY: diagnóstico + wizard + run en vivo; MCP `deploy_status`; inyecta goflare y github | tras goflare y github |
-| `veltylabs/misitio` | `config/deploy.go`; borra los pasos manuales de sus docs | último, caso de aceptación |
+| Repo | Cambio | Tipo | Plan |
+|---|---|---|---|
+| `webtyp/wizard` | pasos agregados en tiempo de ejecución (elimina los 5 proxy de `deploy/wizard.go`); `LabelText lang.Text`; `Dictionary()` | **gate** de `app` | pendiente (P20) |
+| `webtyp/deploy` | solo contratos (D13); borra implementaciones y almacén (D3, D14, D16); `Dictionary()` | **gate** de goflare, github, selfhost, app | pendiente |
+| `webtyp/goflare` | `deploy.Target` (Worker); token por proyecto desde el de arranque (D10); D1/R2 si faltan (D18); `deploy.Destination` para secretos del Worker (D9); `Dictionary()` | paralelo | pendiente |
+| `webtyp/github` (nuevo) | `deploy.Destination` para secretos de Actions; `workflow run` + seguimiento (D19); `Dictionary()` | paralelo | pendiente |
+| `webtyp/selfhost` (nuevo, condicional) | Puller/SSH/webhook como `deploy.Target`, solo si hay consumidor (D16) | paralelo | pendiente |
+| `webtyp/env` | resuelve claves declaradas secretas desde el keyring (D15) | paralelo | pendiente |
+| `webtyp/keyring` | borra `Scheme`/`IsReference` (D15) | con `env` | pendiente |
+| `webtyp/app` | pestaña DEPLOY: diagnóstico + wizard + run en vivo (D17); MCP `deploy_*` (D21); carga de diccionarios (D22); inyecta goflare y github | tras los anteriores | pendiente |
+| `veltylabs/misitio` | `config/deploy.go`; borra pasos manuales de sus docs; rota secretos (P17) | último, aceptación | pendiente |
 
 **Aceptación de la ola:** en una máquina con solo `gh auth login` hecho y el token de arranque de
-Cloudflare en el keyring, abrir misitio en webtyp, pasar el wizard sin salir de la TUI, y ver el
-Worker respondiendo en `misitio.velty.cl`, sin ningún secreto en `.env`, en el repo ni en el chat.
+Cloudflare en el keyring: (1) un agente llama `deploy_status` sobre misitio y recibe la lista de lo
+que falta, sin valores; (2) con `deploy_guide` guía al dev, que escribe cada valor solo en el wizard
+de la TUI, en español o inglés según `TUI_LANG`; (3) `deploy_provision` y `deploy_release` dejan el
+Worker respondiendo en `misitio.velty.cl`; (4) ningún secreto queda en `.env`, en el repo ni en el
+chat (`grep` de los valores en repo y transcripción → vacío).
