@@ -1,135 +1,121 @@
-# Layout para proyectos cloud — master plan
+# Destinos de compilación — master plan
 
-> **Status:** PENDING · 2026-10-15 · D1–D3 fijadas por el usuario; P1–P4 abiertas, todas con recomendación.
+> **Status:** PENDING · 2026-10-15 · D1–D14 cerradas; P5 abierta (tests por plataforma). **Cambio sin retrocompatibilidad en todo webtyp.**
 
-**Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker), pero hay que probarlo
-en local con `web/server.go`. Para que eso compile, `config/` terminó con la composición del
-servidor, el cliente de iam, adaptadores y UI metidos a la fuerza, y aparecieron `api/` y
-`routes/` como parches. El navegador importa `config/` y arrastra el servidor: `client.wasm` llegó a
-682 KB gzip contra un presupuesto de 512 KB (2026-10-15). Detalle de las fallas: P27 de
-[DEPLOY_WIZARD_MASTER_PLAN.md](DEPLOY_WIZARD_MASTER_PLAN.md) (M1–M8).
+**Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker) que se prueba en local
+con `web/server.go`. `//go:build wasm`/`!wasm` no distingue el Worker del navegador (los dos son
+wasm), así que `config/` terminó mezclando servidor y navegador, aparecieron `api/` y `routes/`
+como parches, y `client.wasm` llegó a 682 KB gzip contra un presupuesto de 512 KB (2026-10-15).
+Fallas medidas: M1–M8 en «Plan siguiente de misitio» de
+[DEPLOY_WIZARD_MASTER_PLAN.md](DEPLOY_WIZARD_MASTER_PLAN.md).
 
-**Objetivo:** una ubicación de archivos que **por sí sola** sea la configuración correcta: cada
-binario (navegador, Worker, servidor local) compila solo lo suyo, lo de producción se prueba en
-local con el mismo código, y no hay etiquetas nuevas que aprender.
+**Objetivo:** que el **nombre del archivo diga a qué binario va**, igual en proyectos nativos y
+cloud, y que cada binario compile solo lo suyo.
 
-**Relación con otras olas:** reemplaza la regla de etiquetas de las skills **app-modules**
-(`server.go` → `//go:build !wasm`) y **project-layout** ("`config/` es la raíz de composición").
-Cambia D34 de DEPLOY_WIZARD (dónde vive la declaración de despliegue, P3). misitio es el caso de
-aceptación; su plan siguiente espera esta ola.
+**Relación con otras olas:** reemplaza las reglas de etiquetas de las skills **app-modules**,
+**project-layout**, **app-server-main**, **app-rest-edge**, **wasm** y la línea de etiquetas del
+bloque base de **agents-md**. Confirma D34 de DEPLOY_WIZARD (`config/deploy.go` con
+`//go:build deploy` ya sigue la regla). misitio es el primer caso; su plan siguiente espera esta ola.
 
 ---
 
 ## Decisiones
 
+### Fijadas por el usuario (2026-10-15)
+
 | # | Decisión | Consecuencia |
 |---|---|---|
-| D1 | **No se agregan etiquetas de build nuevas** (usuario, 2026-10-15). | P27 de DEPLOY_WIZARD (etiqueta `edge`) queda rechazada. |
-| D2 | **`config/` es la carpeta compartida y agnóstica del despliegue**: la importan el navegador, el Worker y el servidor local. | Lo que no es de los tres sale de `config/`. |
-| D3 | **Los `main` (`edge/main.go`, `web/server.go`, `web/client.go`) asumen cada uno su responsabilidad**: elegir el entorno y componer. | La composición deja de vivir en `config/`. |
+| D1 | **El destino es el nombre del archivo y su etiqueta de build.** `web/browser.go` lleva `//go:build browser`, `web/edge.go` lleva `//go:build edge`, `web/server.go` lleva `//go:build server`. | `web/client.go` → `web/browser.go`. La carpeta `edge/` desaparece de todos los proyectos: su `main.go` pasa a `web/edge.go`. |
+| D2 | **El código de aplicación deja de usar `wasm`/`!wasm`.** | Todo `//go:build wasm`/`!wasm` en apps y en los archivos de módulos que usan las apps se reemplaza por etiquetas de destino (D4–D7). |
+| D3 | **Cambio sin retrocompatibilidad**, en todo webtyp. | Sin período de convivencia: cada repo pasa al esquema nuevo en su plan, y las herramientas dejan de entender el viejo en el mismo cambio. |
+
+### Derivadas (2026-10-15)
+
+| # | Decisión | Por qué |
+|---|---|---|
+| D4 | **Cada compilación pasa exactamente una etiqueta de destino**: cliente → `-tags browser`; Worker (`goflare`) → `-tags edge`; servidor nativo → `-tags server`. `dev` se suma en desarrollo (`-tags server,dev`, `-tags browser,dev`), como hoy (`app/client_builder_init.go:33`). | Una herramienta, una etiqueta: no hay combinación que aprender. |
+| D5 | **El vocabulario completo** en código de aplicación: `browser`, `edge`, `server`, y `!browser` para la lógica de servidor que comparten el Worker y el servidor nativo. Un archivo sin etiqueta va a los tres. | `!browser` es la única negación: "todo lo que no es el navegador". |
+| D6 | **Módulos** (skill **app-modules**): `server.go` → `//go:build !browser`; `browser.go` → `//go:build browser`; `module.go` sin etiqueta. | Hoy `server.go` es `!wasm` y por eso no entra al Worker; con `!browser` entra al Worker y al servidor, y sale del navegador. |
+| D7 | **Archivos que lee `sitec` en tiempo de build** (`css.go`, `svg.go`, `html.go`, `js.go`, `favicon.go`): `//go:build server`. `sitec` compila con `-tags server`. | Hoy son `!wasm`; con `server` siguen fuera del navegador **y** fuera del Worker (con `!browser` entrarían al Worker y pesarían en su límite de 1 MB). |
+| D8 | **`gotest` corre una pasada por cada etiqueta de destino presente** en el módulo (más la de `dev`, que ya existe en `devflow` v0.4.132), cada una en la plataforma que decida P5. | Los archivos `browser` dejan de compilar en `go test` simple; sin esto, los tests de vista (`tests/<m>_view_test.go`) dejarían de correr. |
+| D9 | **La declaración de despliegue sigue en `config/deploy.go` con `//go:build deploy`** (D34 de DEPLOY_WIZARD sin cambios). | Ya cumple D1: el nombre del archivo es su etiqueta, y ningún binario lo compila. |
+| D10 | **`layoutscan` (`webtyp/router`) verifica**: cada `main` de `web/` lleva la etiqueta de su nombre; no queda `//go:build wasm`/`!wasm` en código de aplicación; no existe `edge/`. | El compilador no puede ver estas reglas; el chequeo estático sí. |
+
+**Límite conocido:** el editor (`gopls`) analiza una sola combinación de etiquetas a la vez.
+`webtyp/app` ya escribe la configuración del IDE (`app/client_vscode_config.go`): fijará
+`-tags server` como vista por defecto; los archivos `browser`/`edge` se verifican con `gotest` y
+`go vet` por destino (D8). Es el mismo costo que hoy tiene cualquier archivo `wasm` en el editor.
+
+
+### Cerradas al consolidar (2026-10-15)
+
+| # | Decisión | Consecuencia |
+|---|---|---|
+| D11 (cierra P1) | **Un solo `web/server.go`; "desarrollo" es un modo (`-tags server,dev`), no un destino.** En un proyecto cloud (existe `web/edge.go`) el despliegue es el Worker y `web/server.go` solo sirve para probar en local, componiendo los mismos módulos. | Sin `web/dev.go` ni `web/local.go`. |
+| D12 (cierra P2) | **Una sola carpeta de salida: `web/`**, igual en desarrollo y en despliegue; **no existe `.build/`** en ningún proyecto. Lo que se sirve va a `web/public/`. Los binarios quedan junto a su `main`: `web/server` (ya es así) y `web/edge.js` + `web/edge.wasm`. | Implicación: el Worker **no** va a `web/public/`, porque todo lo de `public` se sirve a cualquiera y expondría el código del servidor. `goflare` cambia `OutputDir` por defecto de `.build/` a `web/`; desaparecen `.build/` y `/edge.wasm` de la raíz (misitio los tiene en `.gitignore`). `.gitignore` de cada app: `/web/public/`, `/web/server`, `/web/edge.*`. |
+| D13 (cierra P3) | **Sin adaptadores locales nuevos**: los contratos de almacenamiento ya existen; el desorden venía de `config/` mezclando código de servidor y navegador, y D1–D7 lo resuelven. | Se elimina el paquete `cloudflare/local` del alcance. `web/server.go` de un proyecto cloud compone con los adaptadores que ya existen. |
+| D14 (cierra P4) | **Todo webtyp migra, librerías incluidas: no queda `wasm`/`!wasm` en ningún archivo.** Cada etiqueta se reemplaza por el **destino donde ese archivo realmente corre**: solo navegador → `browser` (p. ej. `dom`, `keyring/browser`); solo Worker → `edge` (`cloudflare/edge/edge.go`, `cloudflare/d1/adapter.go`); navegador y Worker → `browser \|\| edge` (`env/env_wasm.go`, `fetch/client_wasm.go`: llaman `syscall/js` en los dos); solo nativo → `server` (`env/env_native.go`, `fetch/client_stdlib.go`); servidor nativo y Worker → `!browser`. | El reemplazo literal (`wasm`→`browser`, `!wasm`→`!browser`) rompe el Worker: `cloudflare/edge/edge.go` saldría del build `edge` y `env/env_native.go` (usa `os`) entraría. Hoy hay 197 archivos `!wasm` y 100 `wasm` en `webtyp/`: cada plan de librería clasifica los suyos con esta tabla. |
 
 ---
 
-## Diagnóstico — lo que no estábamos viendo
+## Por qué romper todo webtyp (justificación)
 
-1. **`//go:build !wasm` significa "servidor" solo por casualidad.** En un proyecto nativo el
-   servidor es el único binario no-wasm, y la skill **app-modules** se apoya en eso
-   (`server.go` → `!wasm`). En un proyecto cloud el Worker **también** es wasm: la etiqueta deja
-   de separar y todo cae en el mismo saco.
-2. **En Go la frontera que siempre funciona es el paquete**: un paquete que nadie importa no se
-   compila. Medido en misitio: importar `config` (con la composición adentro) cuesta 549.952 B gzip
-   en el navegador; importar un paquete hoja (`api`) cuesta 118.032 B. TinyGo no descarta lo que
-   una importación arrastra (inicialización y variables de paquete), aunque no se use.
-3. **El ecosistema ya tiene la forma correcta**, pero solo para módulos reutilizables: la skill
-   **app-modules** pide `<m>` (dominio, servidor) y `<m>/ui` (vista, navegador). Los módulos
-   locales de cada app usan otra forma (archivos `server.go`/`browser.go` con etiquetas). Dos
-   formas para lo mismo.
-4. **Lo único que cambia entre producción y local son los adaptadores** (D1 o SQLite, R2 o un
-   directorio, bindings o `.env`). El resto debería ser literalmente el mismo código.
+1. **La causa raíz es de nombres, no de un proyecto.** `wasm`/`!wasm` describe la **plataforma**
+   y se usó como si describiera el **destino**. Coincide en proyectos nativos y falla en cuanto
+   aparecen dos destinos wasm (navegador + Worker). misitio no está "mal hecho": siguió la regla y
+   la regla no alcanzaba.
+2. **El nombre del archivo ya es la convención de Go para el destino**: `env_js.go`,
+   `file_windows.go`, `foo_wasm.go` se compilan solo para su `GOOS`/`GOARCH` sin escribir nada más.
+   D1 extiende esa idea a los destinos de webtyp. Precedentes fuera de Go: Remix y React Router
+   (`.server.ts`/`.client.ts`), React Server Components (`.server.js`/`.client.js`), Flutter
+   (carpetas por plataforma).
+3. **Sin retrocompatibilidad** porque convivir dos esquemas es tener dos formas de decir lo mismo
+   (balance de **api-design**: nunca positivo), y el ecosistema no tiene usuarios externos que se
+   rompan: el costo de renombrar solo crece.
+4. **Balance de complejidad:**
+   ```
+   Conceptos a aprender         +3 (browser, edge, server)  −3 (wasm/!wasm como destino, api/, routes/)
+   Carpetas raíz por proyecto   −1 (edge/)
+   Formas de separar destinos   −1 (etiqueta de plataforma + paquetes parche → solo etiqueta de destino)
+   ```
+
+---
 
 ## Preguntas abiertas
 
 Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
 
-### P1 — ¿Cómo se separa navegador de servidor sin etiquetas?
+### P5 — ¿Dónde corren los tests de lo que va al navegador y al Worker?
 
-- **A) (recomendada) Frontera por paquete, igual que los módulos reutilizables.**
+Hoy `browser.go` de un módulo no lleva etiqueta para que su test de vista corra en Go nativo
+(skill **app-modules**), y los archivos que llaman `syscall/js` quedan fuera de los tests nativos
+porque `wasm` es la arquitectura. Con D1/D14 un archivo `browser` o `edge` que importa
+`syscall/js` **no compila en nativo** (`syscall/js` solo existe en `js/wasm`), así que
+`go test -tags browser` nativo falla. D8 ("una pasada por etiqueta") necesita decir en qué
+plataforma corre cada pasada.
 
-  ```text
-  config/                 compartido, SIN etiquetas: nombre, rutas (paths), IDs, DTOs de cable,
-                          política, lista de módulos, tema. No importa nada del repo.
-  modules/<m>/            mitad servidor del módulo: handlers, operaciones, modelos.
-  modules/<m>/ui/         mitad navegador: Browser(...), ID, Label, css.go/svg.go.
-  modules/server.go       registro del servidor: Register(r router.Router, b Bindings)
-                          — la tabla de rutas con su acceso, una sola vez.
-  web/client.go           main del navegador: compone con config + modules/*/ui.
-  web/server.go           main local: adaptadores locales + modules.Register.
-  edge/main.go            main del Worker: D1/R2 + modules.Register.
-  ```
-
-  Regla única, para módulos locales y reutilizables: **el navegador importa solo `config` y paquetes
-  `ui`**. Se verifica con un test (`go list -deps ./web/` no contiene `webtyp.com/orm` ni ningún
-  `modules/<m>` sin `/ui`) y con `router/layoutscan`.
-  Por qué: cero conceptos nuevos (es la forma que ya tienen los módulos reutilizables), el
-  compilador hace cumplir la frontera, y `config/` vuelve a ser lo que dice su nombre.
-  Precedentes: Next.js separa con `server-only`/`client-only` y directorios; Remix/React Router
-  con `.server`/`.client`; Rails con `app/` vs `app/javascript`; Go, por paquete.
-  Balance: conceptos −1 (la tabla de etiquetas de **app-modules**), −2 (`api/`, `routes/`);
-  formas de hacer un módulo −1 (local y reutilizable igual).
-- B) Mantener las etiquetas actuales y aceptar que en proyectos cloud `config/` mezcle. Es el
-  estado actual que se quiere dejar.
-- C) Etiqueta `edge` en el Worker. Rechazada por D1.
-
-### P2 — ¿Cómo se prueba en local lo que corre en la nube?
-
-- **A) (recomendada) Mismo código, adaptadores locales con el mismo contrato.** Un paquete nuevo
-  `webtyp.com/cloudflare/local` da los bindings de Cloudflare en local: D1 sobre un archivo
-  SQLite (`.build/local.db`; D1 **es** SQLite, mismo dialecto), R2 sobre un directorio
-  (`.build/r2/`), variables desde `.env` y el keyring. `web/server.go` de un proyecto cloud =
-  `local` + `modules.Register` + `httpd`; `edge/main.go` = `d1`/`r2` + `modules.Register` +
-  `edge.Serve`. Lo único distinto entre los dos `main` son los adaptadores.
-  Precedentes: Miniflare/`wrangler dev` (D1 local sobre SQLite, R2 sobre disco), los emuladores de
-  Firebase, LocalStack; principio X de 12-factor (paridad desarrollo/producción) y IV (servicios
-  de respaldo como recursos intercambiables).
-  Hoy misitio usa `mem` en local (`misitio/web/server.go:24`), un almacenamiento distinto del de
-  producción: los errores de SQL solo aparecen en la nube.
-- B) Ejecutar el Worker real en local (`workerd`, el runtime abierto de Cloudflare) y borrar
-  `web/server.go` en proyectos cloud. Paridad máxima, pero cada cambio exige recompilar con TinyGo
-  (~20 s, medido en `misitio/tests/edge_size_test.go`), depende de un binario externo y pierde el
-  depurador nativo. Puede sumarse después como "vista previa local" antes de desplegar.
-
-### P3 — ¿Dónde vive la declaración de despliegue sin etiqueta?
-
-Hoy (D34 de DEPLOY_WIZARD) es `config/deploy.go` con `//go:build deploy`, justamente para que
-`goflare` no entre a ningún binario. Con D1 y D2 no puede quedar en `config/`.
-
-- **A) (recomendada)** **`config/deploy/deploy.go`**, un subpaquete que **nadie importa**: no entra
-  a ningún binario, `go vet ./...` lo compila (errores de tipo al momento), y `deploy.Scan` lo lee
-  por AST. Mismo patrón que `config/layouts/` (subpaquete permitido por **project-layout**).
-  Requiere cambiar `deploy.DefaultFile` y quitar `ErrMissingBuildTag` en el plan de `deploy`, que
-  está corriendo: se le manda el cambio por `codejob reply` al cerrar esta pregunta.
-- B) Dejar `//go:build deploy`. Es una etiqueta más, contra D1.
-
-### P4 — ¿Aplica a todos los proyectos o solo a los cloud?
-
-- **A) (recomendada)** **A todos.** Un solo layout que un junior (o un agente) aprende una vez. En
-  un proyecto nativo `web/server.go` usa adaptadores nativos (`sqlite`, `postgres`) y no hay
-  `edge/main.go`; el resto es igual. El generador de `web/server.go` (skill **app-server-main**)
-  pasa a llamar `modules.Register(r, b)` con los adaptadores que corresponden: locales de Cloudflare
-  si existe `edge/main.go`, nativos si no.
-- B) Solo a proyectos cloud. Dos layouts para aprender y dos generadores.
+- **A) (recomendada)** **Cada destino se prueba en su plataforma**: `server` en nativo; `browser`
+  con `GOOS=js GOARCH=wasm` en navegador headless (`webtyp/wasmbrowsertest`, que el ecosistema
+  ya tiene y `gotest` ya sabe invocar para wasm); `edge` compila y pasa `vet` con
+  `GOOS=js GOARCH=wasm -tags edge` (más el test de tamaño con TinyGo que ya existe). Es la prueba
+  honesta: el binario real de esos destinos es wasm. Contra: los tests de vista dejan de ser
+  "stdlib rápidos" y piden Chrome headless (ya requerido por los tests wasm actuales).
+- B) Mantener los tests de vista en nativo: los archivos `browser` de las apps no pueden importar
+  `syscall/js` (solo librerías), y las librerías `browser` traen un doble nativo para tests.
+  Duplica código en cada librería de navegador.
 
 ---
 
-## Librerías y repos afectados (se detalla al cerrar las preguntas)
+## Repos afectados (los planes se escriben al cerrar P5)
 
-| Repo | Cambio con las recomendaciones |
-|---|---|
-| devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**: el nuevo layout; se borra la tabla de etiquetas `server.go`/`browser.go` |
-| `webtyp/cloudflare` | paquete `local` (D1 sobre SQLite, R2 sobre disco, variables) — P2 |
-| `webtyp/server` | generador de `web/server.go`: `modules.Register(r, b)` con adaptadores según el tipo de proyecto — P4 |
-| `webtyp/router` | `layoutscan`: verifica la regla de P1 |
-| `webtyp/deploy` | `DefaultFile = "config/deploy/deploy.go"`, sin `ErrMissingBuildTag` — P3 |
-| `webtyp/app` | lo que lea `config/routes.go` o los registros de módulos |
-| `veltylabs/misitio` | re-layout completo (M1–M8 de DEPLOY_WIZARD P27); primer caso |
-| `veltylabs/iam`, `veltylabs/mjosefa-cms` | migración al layout, en una segunda fase |
+| Repo | Cambio | Tipo |
+|---|---|---|
+| devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**, **wasm**, bloque base de **agents-md**: vocabulario D4–D7 y D14, `web/{browser,edge,server}.go`, salida única en `web/` (D12) | primero (lo leen los agentes de todos los planes) |
+| `webtyp/devflow` | `gotest`: una pasada por etiqueta de destino, cada una en su plataforma (D8, P5); plantillas de `gonew` | **gate** |
+| `webtyp/router` | `layoutscan` (D10) | **gate** |
+| `webtyp/app` | cliente `-tags browser`, servidor `-tags server`; `web/browser.go`; configuración del IDE | tras gates |
+| `webtyp/server` | generador de `web/server.go` con `//go:build server` | tras gates |
+| `webtyp/goflare` | compila `./web` con `-tags edge` (deja de leer `edge/`); `OutputDir` por defecto `web/` (D12) | tras gates; se fusiona con su plan pendiente (D41 de DEPLOY_WIZARD) |
+| `webtyp/sitec` | compila productores con `-tags server` (D7) | tras gates |
+| **todas las librerías de `webtyp/` y `veltylabs/`** con `wasm`/`!wasm` (297 archivos en `webtyp/`) | etiquetas según la tabla de D14; `css.go`/`svg.go` → `server` | tras gates, en paralelo, un plan por repo |
+| `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go`, `client.go` → `browser.go`, etiquetas, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) |
