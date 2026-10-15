@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D43 cerradas; sin preguntas abiertas (el layout de misitio sigue en CLOUD_PARITY_LAYOUT). `wizard`, `deploy`, `env` running; los demás planes publicados sin despachar, esperando sus prerequisitos.
+> **Status:** IN PROGRESS · 2026-10-15 · D1–D43 cerradas; sin preguntas abiertas (el layout de misitio sigue en BUILD_DESTINATIONS). `deploy` publicado (v0.2.110); `wizard`, `env` running; `goflare` y `github` listos para despachar; los demás esperan sus prerequisitos.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -77,7 +77,7 @@ no la bloquea: §9 puede salir antes con su paso documentado y este wizard lo re
 | D41 (cierra P20) | Orden: `wizard` ‖ `deploy` ‖ `env` → `goflare` ‖ `github` ‖ `keyring` → `iam` (justo tras `goflare`) → `app` → `misitio`. | Tabla de librerías. |
 | D42 (cierra P26) | **Variables de runtime no secretas** se declaran en `deploy.Plan.Vars []deploy.Var{Key, Value}` con su valor literal de producción. `goflare` las pasa en el `Job` (input `vars`) y las envía como bindings `plain_text` en **cada** deploy, así un `PUT` de script nunca las borra. En desarrollo siguen en `.env`. | misitio declara `IAM_BASE_URL`, `MISITIO_BASE_URL`; iam declara `GOOGLE_REDIRECT_URL`, `IAM_PANEL_ORIGIN`. |
 
-| D43 (cierra P27) | **Rechazada la etiqueta `edge`**: no se agregan etiquetas de build. El problema de fondo (en un proyecto cloud el Worker y el navegador son wasm, y `config/` mezcla servidor y navegador) pasa a [CLOUD_PARITY_LAYOUT_MASTER_PLAN.md](CLOUD_PARITY_LAYOUT_MASTER_PLAN.md). Su P3 puede mover la declaración de `config/deploy.go` (con `//go:build deploy`, D34) a `config/deploy/deploy.go` sin etiqueta. | Si P3 de esa ola cierra en A: `codejob reply` al agente de `deploy` (o plan siguiente si ya cerró) y se corrigen `config/deploy.go` en la etapa 11 de `iam/docs/PLAN.md` y en `misitio/docs/PLAN_DEPLOY_WIZARD.md`. |
+| D43 (cierra P27) | **Rechazada la etiqueta `edge` como parche**; el usuario decidió el cambio de fondo en [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md): el destino es el nombre del archivo y su etiqueta (`web/browser.go` → `browser`, `web/edge.go` → `edge`, `web/server.go` → `server`), sin `wasm`/`!wasm` en código de aplicación. Su D9 confirma D34 (`config/deploy.go` con `//go:build deploy`). | Los planes de esta ola que crean o editan `edge/main.go`, `web/client.go` o etiquetas `wasm` (`app`, `goflare`, misitio, iam) se ajustan cuando esa ola cierre sus preguntas: sus repos tendrán un plan pendiente donde fusionarlo (skill **agents-workflow**). |
 
 ### Diseño derivado al revisar el código (2026-10-15)
 
@@ -97,7 +97,7 @@ Salió de leer el código al escribir los planes. Si alguno no te convence, dilo
 
 ## Preguntas abiertas
 
-Ninguna en esta ola. El layout de misitio se decide en [CLOUD_PARITY_LAYOUT_MASTER_PLAN.md](CLOUD_PARITY_LAYOUT_MASTER_PLAN.md).
+Ninguna en esta ola. El layout de misitio se decide en [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md).
 
 ## Agregados enviados a agentes en ejecución (textual)
 
@@ -108,11 +108,13 @@ Regla (skill **master-plan**): todo lo que se le pide a un agente después de de
 2. `webtyp/deploy`, misma sesión, 2026-10-15 (D42):
    > Second addition (decision P26 of the master plan), same plan: (1) plan.go: add to Plan the field 'Vars []Var' and the type 'type Var struct { Key, Value string }' with doc comment: non-secret runtime variables, value written in config/deploy.go, delivered by the Target as plain-text bindings on every deploy. (2) Scan: Vars is a composite literal of Var elements whose Key and Value are string literals (same rules as other string fields). (3) validate: each Var has non-empty Key and Value; a Var Key must not repeat and must not equal any Secret Key -> new errors ErrIncompleteVar, ErrDuplicateVar ('<KEY> declared twice, as a Var or Secret'). (4) README example: add Vars: []deploy.Var{{Key: "IAM_BASE_URL", Value: "https://iam.velty.cl"}}. Tests: S1 includes Vars; V-tests for both new errors. Nothing else changes (Deployment does not deliver Vars: the Target puts them in its Job).
 
-Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén implementados.
+Revisado en el PR #7 (2026-10-15): ambos implementados. La revisión corrigió localmente (commit `0ba9fb6`): `Scan` guardaba `""` ante variables o llamadas en vez de `ErrOnlyLiterals` con `archivo:línea`; el build tag se buscaba en cualquier comentario y no en la primera línea; `Source`/`To` aceptaban cualquier paquete; la construcción de `Missing` estaba triplicada (`Check`, `LocalMissing`, `Rotate`). Se agregó `ErrUnknownImport` (selector que no nombra un import del archivo). `Check` lista los `ToLocal` al final, por construirlos con `LocalMissing`.
+
+**Consecuencia para `app`:** desde `deploy` v0.2.110, `app` no compila (`deploy.Daemon`, `deploy.NewDaemon`, `deploy.DaemonConfig` en `handler.go:60`, `section-deploy.go:20,39`); su plan ya los elimina, y `gopush` no actualiza `deploy` en `app` hasta entonces.
 
 ## Plan siguiente de misitio
 
-Espera [CLOUD_PARITY_LAYOUT_MASTER_PLAN.md](CLOUD_PARITY_LAYOUT_MASTER_PLAN.md). Fallas medidas
+Espera [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md). Fallas medidas
 (2026-10-15), que ese plan debe resolver:
 
 **Qué falla en misitio** (medido contra las skills **project-layout**, **app-modules**,
@@ -222,9 +224,9 @@ usuario de primera clase por MCP (D21).
 | Repo | Cambio | Tipo | Plan |
 |---|---|---|---|
 | `webtyp/wizard` | `StepSource` tipado; `Step.NextFn` (pasos en tiempo de ejecución); `LabelText lang.Text`; `Dictionary()` | **gate** de `app` | [wizard/docs/PLAN.md](https://github.com/webtyp/wizard/blob/main/docs/PLAN.md) · **running** (18053327749468295567) |
-| `webtyp/deploy` | solo contratos + `Scan` + `Deployment` (D34–D36); borra todo lo demás (D3, D14, D16); `Dictionary()` | **gate** de goflare, github, app | [deploy/docs/PLAN.md](https://github.com/webtyp/deploy/blob/main/docs/PLAN.md) · **running** (7552631315228362006) |
-| `webtyp/goflare` | `deploy.Target` `goflare.Worker`: token de arranque (D27, D30, D40), token por proyecto, D1/R2 por nombre (D18, D38), secretos del Worker (D9), `Job` para CI (D37); `Dictionary()` | paralelo, tras `deploy` | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) · escrito, espera tag de `deploy` |
-| `webtyp/github` | `deploy.CI` `github.Actions`: diagnóstico de `gh`, workflow generado, secretos de Actions, `Release` + estado del run (D19, D39); `Dictionary()` | paralelo, tras `deploy` | [github/docs/PLAN.md](https://github.com/webtyp/github/blob/main/docs/PLAN.md) · escrito, espera tag de `deploy` |
+| `webtyp/deploy` | solo contratos + `Scan` + `Deployment` (D34–D36); borra todo lo demás (D3, D14, D16); `Dictionary()` | **gate** de goflare, github, app | PR [#7](https://github.com/webtyp/deploy/pull/7) · **publicado v0.2.110** (2026-10-15) |
+| `webtyp/goflare` | `deploy.Target` `goflare.Worker`: token de arranque (D27, D30, D40), token por proyecto, D1/R2 por nombre (D18, D38), secretos del Worker (D9), `Job` para CI (D37); `Dictionary()` | paralelo, tras `deploy` | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) · escrito, listo para despachar (`deploy` v0.2.110) |
+| `webtyp/github` | `deploy.CI` `github.Actions`: diagnóstico de `gh`, workflow generado, secretos de Actions, `Release` + estado del run (D19, D39); `Dictionary()` | paralelo, tras `deploy` | [github/docs/PLAN.md](https://github.com/webtyp/github/blob/main/docs/PLAN.md) · escrito, listo para despachar (`deploy` v0.2.110) |
 | `webtyp/env` | entorno → `.env` → keyring del proyecto (D15); deja de usar `keyring.Scheme` | paralelo | [env/docs/PLAN.md](https://github.com/webtyp/env/blob/main/docs/PLAN.md) · **running** (7810215043722152745) |
 | `webtyp/keyring` | borra `Scheme`/`IsReference` | tras publicar `env` | [keyring/docs/PLAN.md](https://github.com/webtyp/keyring/blob/main/docs/PLAN.md) · escrito |
 | `webtyp/app` | pestaña DEPLOY (D17), MCP `deploy_*` (D21, D23, D26), SECRETS desde la declaración, diccionarios (D22), compilación del Worker con `goflare` directo | tras todos los anteriores | [app/docs/PLAN.md](https://github.com/webtyp/app/blob/main/docs/PLAN.md) · escrito, espera todos los anteriores |
