@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D43 cerradas; sin preguntas abiertas (el layout de misitio sigue en BUILD_DESTINATIONS). `deploy` publicado (v0.2.110); `wizard`, `env` running; `goflare` y `github` listos para despachar; los demás esperan sus prerequisitos.
+> **Status:** IN PROGRESS · 2026-10-15 · D1–D43 cerradas; sin preguntas abiertas (el layout de misitio sigue en BUILD_DESTINATIONS). `deploy` (v0.2.110) y `wizard` (v0.0.30) publicados; `env` running; `goflare` y `github` listos para despachar; los demás esperan sus prerequisitos.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -111,6 +111,8 @@ Regla (skill **master-plan**): todo lo que se le pide a un agente después de de
 Revisado en el PR #7 (2026-10-15): ambos implementados. La revisión corrigió localmente (commit `0ba9fb6`): `Scan` guardaba `""` ante variables o llamadas en vez de `ErrOnlyLiterals` con `archivo:línea`; el build tag se buscaba en cualquier comentario y no en la primera línea; `Source`/`To` aceptaban cualquier paquete; la construcción de `Missing` estaba triplicada (`Check`, `LocalMissing`, `Rotate`). Se agregó `ErrUnknownImport` (selector que no nombra un import del archivo). `Check` lista los `ToLocal` al final, por construirlos con `LocalMissing`.
 
 **Consecuencia para `app`:** desde `deploy` v0.2.110, `app` no compila (`deploy.Daemon`, `deploy.NewDaemon`, `deploy.DaemonConfig` en `handler.go:60`, `section-deploy.go:20,39`); su plan ya los elimina, y `gopush` no actualiza `deploy` en `app` hasta entonces.
+
+**Revisión de `wizard` (PR #2, 2026-10-15):** implementado según el plan; la revisión solo corrigió `go.mod` (`webtyp.com/lang` marcado `// indirect` siendo directo). El plan afirmaba que `devflow.CodeJob` no necesitaba cambios, pero su `LabelText` concatena un enlace en tiempo de ejecución (`devflow/codejob.go:387`) y dejó de compilar contra `lang.Text`: corregido en `devflow` con `lang.Text(...)` explícito. `app` queda roto donde el plan ya lo anunciaba (`app/section-secrets.go:27`, `LabelText: key`); lo resuelve el plan de `app`.
 
 ## Plan siguiente de misitio
 
@@ -223,7 +225,7 @@ usuario de primera clase por MCP (D21).
 
 | Repo | Cambio | Tipo | Plan |
 |---|---|---|---|
-| `webtyp/wizard` | `StepSource` tipado; `Step.NextFn` (pasos en tiempo de ejecución); `LabelText lang.Text`; `Dictionary()` | **gate** de `app` | [wizard/docs/PLAN.md](https://github.com/webtyp/wizard/blob/main/docs/PLAN.md) · **running** (18053327749468295567) |
+| `webtyp/wizard` | `StepSource` tipado; `Step.NextFn` (pasos en tiempo de ejecución); `LabelText lang.Text`; `Dictionary()` | **gate** de `app` | PR [#2](https://github.com/webtyp/wizard/pull/2) · **publicado v0.0.30** (2026-10-15) |
 | `webtyp/deploy` | solo contratos + `Scan` + `Deployment` (D34–D36); borra todo lo demás (D3, D14, D16); `Dictionary()` | **gate** de goflare, github, app | PR [#7](https://github.com/webtyp/deploy/pull/7) · **publicado v0.2.110** (2026-10-15) |
 | `webtyp/goflare` | `deploy.Target` `goflare.Worker`: token de arranque (D27, D30, D40), token por proyecto, D1/R2 por nombre (D18, D38), secretos del Worker (D9), `Job` para CI (D37); `Dictionary()` | paralelo, tras `deploy` | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) · escrito, listo para despachar (`deploy` v0.2.110) |
 | `webtyp/github` | `deploy.CI` `github.Actions`: diagnóstico de `gh`, workflow generado, secretos de Actions, `Release` + estado del run (D19, D39); `Dictionary()` | paralelo, tras `deploy` | [github/docs/PLAN.md](https://github.com/webtyp/github/blob/main/docs/PLAN.md) · escrito, listo para despachar (`deploy` v0.2.110) |
