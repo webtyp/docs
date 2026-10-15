@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D42 cerradas; P27 abierta (misitio: hoja compartida). `wizard`, `deploy`, `env` running; los demás planes publicados sin despachar, esperando sus prerequisitos.
+> **Status:** IN PROGRESS · 2026-10-15 · D1–D42 cerradas; P27 abierta (proyectos edge: etiqueta `edge`). `wizard`, `deploy`, `env` running; los demás planes publicados sin despachar, esperando sus prerequisitos.
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -97,28 +97,44 @@ Salió de leer el código al escribir los planes. Si alguno no te convence, dilo
 
 Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
 
-### P27 — misitio: ¿quién es la hoja que comparten el navegador y el Worker?
+### P27 — Proyectos edge: ¿cómo queda el código del servidor fuera de `client.wasm`? (reescrita 2026-10-15)
 
-Al fusionar los planes pendientes de misitio (ver «Plan siguiente de misitio») aparece un choque.
-`misitio/docs/PLAN_ARQUITECTURA_MODULOS.md` etapa 1.1 **mueve `api/` adentro de `config/`** y la
-1.5 pone en `config/` la composición completa (`App` con `orm`, `iamclient.Consumer`,
-`sitemanager`, `sitecontent`). Pero `web/client.go` y los módulos del panel importan `config/`, y
-eso es exactamente lo que en v0.0.7 dejó `client.wasm` en **682 KB gzip contra un presupuesto de
-512 KB** (`misitio/tests/client_size_test.go`). Medido el 2026-10-15: importar solo `config`
-→ 549.952 B gzip; importar solo `api` → 118.032 B. TinyGo no descarta los paquetes que una
-importación arrastra aunque no se usen.
+**Qué falla en misitio** (medido contra las skills **project-layout**, **app-modules**,
+**app-rest-edge**):
 
-- **A) (recomendada)** **`api/` sigue siendo la hoja compartida** (rutas, IDs, DTOs, reglas de
-  imagen; lo que hoy es) y **`config/` es la composición del servidor** (`App`, política, login
-  SSR). El navegador importa `api/` y `modules/panel/`, nunca `config/`. Se reescriben en el plan
-  fusionado las etapas 1.1 (no se absorbe `api/`; se borran los alias `config/api.go`) y la regla
-  de 1.6 ("`config/` no importa este repo" pasa a "`api/` no importa este repo; `config/` solo
-  importa `api/`"), y se agrega un test: `GOOS=js GOARCH=wasm go list -deps ./web/` no contiene
-  `webtyp.com/orm` ni `veltylabs/iam`.
-- B) `config/` es la hoja compartida (como dice el plan) y la composición sale a un paquete nuevo
-  (`app/`). Contradice la skill **project-layout** (`config/` es la única raíz de composición).
-- C) Seguir el plan tal cual y subir el presupuesto del cliente a ~700 KB. Paga en cada carga del
-  panel lo que A evita gratis.
+| # | Falla | Dónde |
+|---|---|---|
+| M1 | `config/` importa paquetes del propio repo (`api`, `routes`, `authctx`, `config/panel`): la invariante 2 lo prohíbe | `config/api.go`, `app.go`, `assets.go`, `config.go`, `iamauth.go`, `policy.go`, `svg.go` |
+| M2 | Existen `api/` y `routes/`, patrones que webtyp ya eliminó: las rutas van en `config/routes.go` (`Register`) y los handlers en `modules/<m>/server.go` | `api/`, `routes/` |
+| M3 | `config/panel/` es un subpaquete de UI; el único subpaquete permitido es `config/layouts/` | `config/panel/{admin,constants,modules,preview}.go` |
+| M4 | `modules/` no sigue el par tipado: `admin`, `app`, `images`, `support` son archivos wasm sueltos, sin `server.go`/`browser.go`/`module.go`, sin `modules/server.go`/`modules/browser.go` | `modules/*` |
+| M5 | Duplicados del cliente de iam | `config/iamauth.go`, `config/authzcache.go`, `authctx/` (§9 de seguridad los borra) |
+| M6 | La composición del servidor está en archivos **sin build tag** porque el Worker también es wasm, así que entra a `client.wasm` | `config/app.go`, `backend.go`, `store.go` |
+| M7 | `sitecontent.New` sin `Members`: las operaciones de `site_content` deniegan | `config/store.go` |
+| M8 | `config/favicon.go` generado sin su dependencia | etapa 8 del plan de `app` |
+
+M1–M4 y M6 tienen la misma raíz: en un proyecto **edge**, el Worker y el navegador son **los dos
+`GOARCH=wasm`**, así que la etiqueta `!wasm` de **app-modules** (`server.go` → `//go:build !wasm`)
+no separa nada. Sin otra frontera, el código se amontonó en `config/` o en `api/`. Hoy `goflare`
+compila el Worker **sin tags** y el cliente se compila con `-tags dev`
+(`app/client_builder_init.go:33`). Medido: importar `config` cuesta 549.952 B gzip en el cliente
+contra 118.032 B importando solo `api` (TinyGo no descarta lo que una importación arrastra).
+
+- **A) (recomendada)** **Etiqueta de build `edge` para el Worker.** `goflare` compila `edge.wasm`
+  con `-tags edge` (en desarrollo y en CI). En un proyecto edge, el código solo de servidor lleva
+  `//go:build !wasm || edge` y el solo de navegador `//go:build wasm && !edge`. Con eso misitio
+  sigue el layout canónico **sin excepciones**: `config/` un solo paquete (`server.go`,
+  `routes.go`, `client.go`), `modules/<m>/{server,browser,module}.go`, sin `api/` ni `routes/`.
+  Precedentes: las condiciones de exportación de los bundlers (`"worker"`, `"browser"`) con que
+  Vercel Edge y Cloudflare separan código de servidor y de cliente, los paquetes `server-only` /
+  `client-only` de Next.js; en Go, la etiqueta es la herramienta equivalente. Cambia: `goflare`
+  (pasar `-tags edge`; etapa nueva de su plan, no despachado), skills **app-modules**,
+  **app-rest-edge**, **project-layout** (tabla de etiquetas para proyectos edge), y misitio se
+  reescribe con un plan nuevo (abajo).
+- B) Sin etiqueta: el navegador nunca importa `config/` y lo compartido vive en una hoja aparte.
+  Es el `api/` que webtyp eliminó, y contradice **project-layout** (`web/client.go` →
+  `config.BuildClient`).
+- C) Subir el presupuesto del cliente a ~700 KB. Cada carga del panel paga el código del servidor.
 
 ## Agregados enviados a agentes en ejecución (textual)
 
@@ -131,22 +147,19 @@ Regla (skill **master-plan**): todo lo que se le pide a un agente después de de
 
 Al revisar el PR de `deploy` (skill **plan-review**), verificar que ambos estén implementados.
 
-## Plan siguiente de misitio (fusión, instrucciones exactas)
+## Plan siguiente de misitio (instrucciones exactas)
 
-`misitio/docs/PLAN.md` es `cmd/migrate` (running). Al cerrarse, **todo** lo pendiente de misitio se
-fusiona en un solo `docs/PLAN.md` (skill **agents-workflow** → «A repo that already has a plan»):
+`misitio/docs/PLAN.md` es `cmd/migrate` (running). Al cerrar P27 se escribe **un** plan nuevo,
+`docs/PLAN_NEXT.md` (se renombra a `PLAN.md` cuando cierre `cmd/migrate`), que contiene:
 
-| Orden | Origen | Qué entra | Inconsistencia que se corrige al fusionar |
-|---|---|---|---|
-| 1 | `docs/PLAN_ARQUITECTURA_MODULOS.md` | etapas 1–7 | 1.1 y 1.6 según P27; 1.2, 1.3 y la parte de `Consumer` de 1.5 se escriben **una sola vez** junto con §9 (fila 3); `sitecontent.Deps{Members: sm}` ya existe (`site_content@v0.2.21/module.go:50`) — hoy `config/store.go` no lo pasa y las operaciones de `site_content` deniegan con `Members` nil |
-| 2 | `docs/PLAN_RUTAS_PARAMETRIZADAS.md` | todo | su tabla de rutas reemplaza la etapa 4 de la fila 1 en vez de editarla dos veces |
-| 3 | `SECURITY_BY_DEFAULT_MASTER_PLAN.md` §9 | etapas 1–3 | requiere el tag de iam con `private_key_jwt`; si no está publicado al fusionar, esta fila queda fuera y se vuelve a fusionar cuando lo esté |
-| 4 | `docs/PLAN_DEPLOY_WIZARD.md` | etapas 1–3 | requiere tags de `deploy`, `goflare`, `github`; `config/deploy.go` declara `IAM_CLIENT_PRIVATE_KEY` en vez de `IAM_CLIENT_SECRET` si la fila 3 entró |
-| — | `PLAN_STAGE_5/6/7`, `PLAN_INFRA_BLOQUEADA.md` | no entran | bloqueados por infraestructura; la etapa 7 parte B (cortar el dominio de Pages al Worker) sigue siendo manual |
+| Orden | Qué | Origen |
+|---|---|---|
+| 1 | Re-layout canónico: M1–M4, M6, M7 según la respuesta de P27 (con A: `config/{config,server,routes,client,css,favicon}.go`, `modules/<m>/{server,browser,module}.go` + registros, borrar `api/`, `routes/`, `config/panel/`) | nuevo; reemplaza `docs/PLAN_ARQUITECTURA_MODULOS.md` (usa nombres que **app-modules** prohíbe: `backend.go`, `view.go`, `handler.go`) y `docs/PLAN_RUTAS_PARAMETRIZADAS.md` (edita `routes/`, que desaparece): **ambos se borran** al escribir el plan nuevo, recuperando de ellos solo los problemas medidos que sigan vigentes |
+| 2 | Cliente de iam con `private_key_jwt` (M5) | `SECURITY_BY_DEFAULT_MASTER_PLAN.md` §9, si iam ya publicó; si no, queda fuera y se fusiona después |
+| 3 | `config/deploy.go` | `docs/PLAN_DEPLOY_WIZARD.md` (se borra al fusionar); `IAM_CLIENT_PRIVATE_KEY` en vez de `IAM_CLIENT_SECRET` si entró la fila 2 |
+| — | `PLAN_STAGE_5/6/7`, `PLAN_INFRA_BLOQUEADA.md` | no entran: bloqueados por infraestructura |
 
-Los archivos de las filas 1, 2 y 4 se borran al quedar fusionados. Escribir la fusión cuando P27
-esté cerrada (no depende de que `cmd/migrate` cierre: puede quedar escrita como
-`docs/PLAN_NEXT.md` y renombrarse a `PLAN.md` al cerrar).
+Mientras tanto, misitio no compila en local por M8: se repara solo cuando `app` publique su etapa 8.
 
 ## Tareas que no son planes de código (instrucciones exactas)
 
