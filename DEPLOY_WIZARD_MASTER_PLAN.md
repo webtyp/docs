@@ -31,7 +31,7 @@ no la bloquea: §9 puede salir antes con su paso documentado y este wizard lo re
 
 | # | Decisión | Consecuencia |
 |---|---|---|
-| D1 | **Los secretos viven solo en `webtyp/keyring`** y se ingresan una vez en el wizard de `webtyp/app`. Nunca en `.env`, repo, plan, shell ni chat. | Skill **secrets** (devskills v0.0.14). Se borra todo doc que diga `gh secret set X` o "pon X en `.env`". |
+| D1 | **Un secreto vive en dos lugares y en ningún otro**: en producción, en el almacén del **destino** (secretos de GitHub Actions o del Worker); en la máquina del desarrollador, en **`webtyp/keyring`**, que es la fuente desde la que el wizard alimenta los destinos. Nunca en `.env`, repo, plan, shell ni chat. Los destinos son de solo escritura: si el keyring no lo tiene, el wizard lo vuelve a crear (mintea o genera y reemplaza) o lo pide; nunca lo trae de la nube. Flujo: [diagrams/DEPLOY_SECRETS_FLOW.md](diagrams/DEPLOY_SECRETS_FLOW.md). | Skill **secrets** (devskills v0.0.14). Se borra todo doc que diga `gh secret set X` o "pon X en `.env`". |
 | D2 | **`webtyp/app` es el orquestador**: no sabe *cómo* se despliega nada; recibe inyectadas las formas de desplegar y las configura. | `app` es la raíz de composición: único que importa `goflare` y `github`. |
 | D3 | **`webtyp/deploy` no depende de ninguna forma de desplegar.** Solo define el contrato. | Se borran de `deploy`: `providers/cloudflare/`, `pusher_cloudflare.go`, el registro global `RegisterPusher`/`init()` (`pusher.go:21-27`), las claves `CF_*` y `goflare/<proyecto>` de `store.go`, el mapeo heredado `"cloudflare"→"cloudflarePages"` (`wizard.go:48`). `deploy/go.mod` deja de requerir `goflare`. |
 | D4 | **Cada proyecto declara cómo se despliega y qué necesita.** | Formato: D7. |
