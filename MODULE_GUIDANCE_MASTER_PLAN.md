@@ -1,13 +1,11 @@
 # Ayuda integrada en los módulos, avisos por módulo y rediseño de `alert_manager` — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · P1–P14 aceptadas; **esperan P15 y P16** (quién lleva la cuenta de avisos y dónde se muestran al entrar); `alert_manager` local, sin publicar
+> **Status:** IN PROGRESS · 2026-10-20 · P1–P16 aceptadas (todas); H1/H2/H4 listas para despachar, H7 hecha; H3/H5/H6/H8 esperan sus gates; `alert_manager` local, sin publicar
 
 Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se explica solo y guía paso a paso; nadie debe tener que explicarlo.
 
 ## Preguntas abiertas
 
-**P15 — Quién lleva la cuenta de avisos de cada módulo.** Pediste que cada módulo pueda poner avisos y muestre una burbuja con la cantidad. La burbuja ya existe en el shell (capacidad `Badged`, `layout/platformd/capabilities.go:10`, dibujada en `platformd.go:811`); falta quién la alimente. A) **`alert_manager` guarda todos los avisos** con su módulo de origen y su estado «visto» por persona; cada módulo solo llama a `notify.Raise`, y la aplicación conecta a cada entrada del menú la cuenta de lo **no visto por esa persona** en ese módulo; B) cada módulo guarda y cuenta sus propios avisos. **Recomiendo A**: un solo lugar para «visto», para el aviso manual y para el historial de envíos; con B cada módulo repite tablas y lógica (prohibido: la misma lógica en dos repos). Respuesta:
-
-**P16 — Dónde se ve, al entrar al módulo, qué produjo los avisos.** A) el shell dibuja una **franja de avisos** arriba del contenido de cualquier módulo con avisos no vistos («3 avisos: Stock bajo de Paracetamol · …»), cada uno con «Ver» (lleva al registro de origen) y «Marcar visto»; B) cada módulo los dibuja a su manera. **Recomiendo A**: es igual en todos los módulos y no exige código en cada uno. Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -30,23 +28,25 @@ Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se expl
 | D15 | **`alert_manager` es una sola entrada en el menú, sin submódulos**: su vista es la Bandeja; la configuración (medios, qué se avisa, quién recibe) se abre desde un botón dentro del módulo, como pasos de un acordeón (`components/stepaccordion`), solo para quien tiene el permiso | H6 |
 | D16 | Cada aviso tiene estado **por destinatario**: enviado → **visto** (al abrirlo); quien lo creó ve ✓ / ✓✓ como en WhatsApp | H4, H6 |
 | D17 | Rediseño de nombres: Bandeja, Medios de envío, Qué se avisa, Quién recibe (por área), Historial de envíos; `lang.json` completo; demo con avisos de al menos dos módulos, uno resuelto y un envío fallido | H6 |
+| D18 (cierra P15) | **`alert_manager` guarda todos los avisos** con su módulo de origen y estado «visto» por persona; cada módulo solo llama `notify.Raise`; la aplicación conecta a cada entrada del menú la cuenta de lo no visto por esa persona en ese módulo | H4, H6 |
+| D19 (cierra P16) | El **shell** (`platformd`) dibuja una franja de avisos arriba del contenido de cualquier módulo con avisos no vistos, cada uno con «Ver» y «Marcar visto» | H2 |
 
 ## Fases
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | lista para plan |
-| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (P16) | espera P16 |
-| H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | tras H1 |
-| H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | espera P15 |
-| H5 | `veltylabs/email` | declarar sus datos (remitente, secreto) | tras H4 |
-| H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | tras H2–H4 |
-| H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | lista |
-| H8 | `pharmacy_manager`, `supply_manager` | declarar y publicar sus avisos; descripción del módulo | tras H4 |
+| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **despachada** |
+| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (D19) | **despachada** |
+| H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | espera cierre de H1 |
+| H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | **despachada** |
+| H5 | `veltylabs/email` | declarar sus datos (remitente, secreto) | espera cierre de H4 |
+| H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
+| H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
+| H8 | `pharmacy_manager`, `supply_manager` | declarar y publicar sus avisos; descripción del módulo | espera cierre de H4 |
 
 ## Bloqueos
 
-Ninguno: faltan P15 y P16.
+Ninguno.
 
 ## Relación con otras olas
 
