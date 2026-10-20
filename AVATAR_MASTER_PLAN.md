@@ -1,6 +1,6 @@
 # Avatar vectorial modular (`webtyp/avatar`) — master plan
 
-> **Status:** COMPLETED · 2026-10-19 · Todas las librerías implementadas, verificadas y cerradas con codejob / gopush.
+> **Status:** IN PROGRESS · 2026-10-20 · Reabierto: el motor en vivo (v0.1.0) funciona pero mezcla actividad/emoción en un solo `State`, el parpadeo/habla no son fluidos, y falta cableado para acompañar la integración con `webtyp/agent`. Esperando respuestas P5–P9.
 
 **Disparador:** el prototipo del avatar de Cote en `veltylabs/mjosefa-cote/docs/avatar/preview.html` demostró que el flujo de dibujo ideal es mantener un único archivo SVG puro editable en Inkscape (`docs/avatar/img/cote-base-v1.2.svg`, dividido en capas anatómicas `#torso`, `#head`, `#hair`, `#brows`, `#eyes`, `#nose`, `#mouth`, `#poses`, `#extras`), pero mantener la lógica de estados, secuencias de habla, parpadeo y bostezo aleatorio en CSS/JS suelto (~600 líneas en `preview.html` con 25 `@keyframes` y timers manuales) es frágil y no tipado.
 
