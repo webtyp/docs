@@ -1,6 +1,6 @@
 # Security by default — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · every framework piece shipped (including auth v0.0.75); iam running (session 12558430203965191498). misitio: migration shipped (v0.0.7), `cmd/migrate` running (D6), security plan (§9) waits for iam.
+> **Status:** IN PROGRESS · 2026-10-20 · every framework piece shipped; `iam` closed v0.0.28; misitio: D1 schema sync closed (v0.0.10); **§9 despachada** (`docs/PLAN.md`, Jules, sesión 4525363837779143163) — ya no espera nada.
 
 Trigger: the API explorer in `veltylabs/iam` reports 22 of 25 routes as
 `public`. The framework's own rule (skill **api-design**, `webtyp/router`
@@ -246,7 +246,7 @@ self-contained `docs/PLAN.md` in that repo, ready for `codejob dispatch`.
 | `webtyp/auth` | PLAN ✅ v0.0.75 | DEV_AUTOLOGIN opt-in (`dev` tag); session policy (idle, absolute, domain, `__Host-`, assurance, revocation); `Identity`; step-up strategy; `auth/passkey`; `auth/clientassertion`; delete `session/jwt` | PR [#7](https://github.com/webtyp/auth/pull/7) |
 | `webtyp/goflare` | PLAN ✅ v0.5.39 (+ v0.5.40: deps and routes file = routescan.DefaultFile) | `RATE_LIMIT_PER_10S` (default 100) → zone `http_ratelimit` rule per deploy; fail the deploy if the token lacks permission | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) |
 | `veltylabs/iam` | PLAN · **running** (session 12558430203965191498) | Back inside the framework: `RunServer` with `Authorize`; `.Requires` everywhere; `iam_admin`/`iam_client` roles; opaque sessions; admin step-up cookie; passkey panel UI; `private_key_jwt`; token exchange; protected `/_routes`; audit of machine mutations; public inventory test; e2e matrix | [iam/docs/PLAN.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN.md) |
-| `veltylabs/misitio` | PLAN · migration ✅ v0.0.7 (PR #8); `cmd/migrate` (D6) **running** (session 14819822264169824065); security plan waits for iam's tag | `IAM_CLIENT_PRIVATE_KEY`; one `Consumer` (delete local `IAMAuthn`/`AuthzCache`/`authctx`); public inventory test | §9 below (copied to `misitio/docs/PLAN.md` at dispatch) |
+| `veltylabs/misitio` | migration ✅ v0.0.7; D6 ✅ v0.0.10; §9 `[Claude · 2026-10-20 16:10]` **despachada** (sesión 4525363837779143163) | `IAM_CLIENT_PRIVATE_KEY`; one `Consumer` (delete local `IAMAuthn`/`AuthzCache`/`authctx`); public inventory test | §9 below (ya copiado a `misitio/docs/PLAN.md`) |
 
 Every plan carries: the repo's `AGENTS.md` constraints inline (TinyGo/WASM:
 no maps, `webtyp/fmt`, tests in `tests/`, no API exported for tests); a
@@ -301,15 +301,12 @@ Against the local dev server **and** a staging Worker:
 
 ---
 
-## 9. misitio — iam consumer (spec for `misitio/docs/PLAN.md`)
+## 9. misitio — iam consumer (spec for `misitio/docs/PLAN.md`) — DESPACHADA 2026-10-20
 
-Dispatch when `veltylabs/iam` publishes the tag that removes `client_secret`.
-**Merge rule (2026-10-15):** this section is not dispatched alone. It is merged with misitio's other
-pending plans into one `docs/PLAN.md`, per `DEPLOY_WIZARD_MASTER_PLAN.md` → «Plan siguiente de misitio».
-At dispatch, copy this section into `misitio/docs/PLAN.md` with the
-frontmatter `PLAN: "feat(security)!: consume iam through one Consumer with private_key_jwt; delete the local duplicates of it"`,
-`EXECUTOR: jules`, `REVIEWER: none`, and the header "Read AGENTS.md at the
-repo root before any change."
+`iam` publicó v0.0.28 (quita `client_secret`); D6 (sync de esquema D1) ya cerró v0.0.10 por su cuenta. Sin
+más dependientes, se copió este texto a `misitio/docs/PLAN.md` y se despachó (sesión 4525363837779143163) —
+resuelve de paso el bloqueo que TIME_UNITS tenía en `config/authzcache.go` (ese archivo lo borra esta
+misma migración).
 
 ### Decisions
 

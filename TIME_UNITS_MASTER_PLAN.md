@@ -1,5 +1,5 @@
 # Unidades de tiempo explícitas — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · ola 2a y 2b cerradas; `appointment_booking` en curso (Jules); `misitio` bloqueada por otra ola de `iam`
+> **Status:** IN PROGRESS · 2026-10-20 · ola 2a y 2b cerradas; `appointment_booking`/`clinical_encounter` en curso (Antigravity); `misitio` desbloqueada (espera cierre de SECURITY_BY_DEFAULT §9)
 
 Por qué y cómo: `webtyp/time/docs/ARCHITECTURE.md` (los dos tipos y por qué `time` importa `calendar`).
 
@@ -33,7 +33,11 @@ Ninguna.
 
 ## Bloqueos
 
-- `misitio`: su campo `config/authzcache.go` necesita `webtyp.com/time` v0.6.2, que solo trae `github.com/veltylabs/iam` v0.0.28, pero entre v0.0.23 y v0.0.28 `iam` reescribió su API de cliente por otra ola ajena (passkeys, RFC 7523: `client.FetchAuthzToken` desapareció, `ClientSecret` ya no existe). `misitio/routes/admin.go` no compila contra la nueva API. No se improvisa esa adaptación aquí: queda pendiente de que esa ola de `iam` tenga su propio plan hacia `misitio`, o de que el usuario decida. `misitio` quedó revertido, sin cambios.
+Ninguno. `misitio` ya no se arregla aquí: `config/authzcache.go` (y sus dos duplicados,
+`config/iamauth.go` y `authctx/`) los borra por completo el plan §9 de `SECURITY_BY_DEFAULT_MASTER_PLAN.md`
+(despachado 2026-10-20, sesión 4525363837779143163) — un parche de tipo en un archivo que va a desaparecer
+era trabajo perdido. `misitio` entra a la fase 2e de esta ola cuando ese plan cierre, sin campo que tipar en
+ese archivo.
 
 ## Relación con otras olas
 
