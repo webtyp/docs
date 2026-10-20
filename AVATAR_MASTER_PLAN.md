@@ -87,6 +87,62 @@ En `veltylabs/mjosefa-cote/docs/PLAN.md` (`lines 1-60`) hay un plan **no despach
 - **A) (recomendada)** Mover o referenciar `cote-base-v1.2.svg` desde `svg.go` (`//go:build !wasm`, `func IconSvg() *sprite.Sprite`) en el paquete raíz `cote`, exponer `cote.NewAvatar() *avatar.Avatar`, actualizar `web/client.go` con la vista completa de prueba del avatar (selector de los 9 estados, locución `Speak`/`Stop` y toggles de capas `#hair`/`#head`/`#torso`/`#poses`/`#extras`), eliminar `docs/avatar/preview.html` cuando `web/client.go` esté funcionando, y fusionar estas etapas en `veltylabs/mjosefa-cote/docs/PLAN.md` (regla **agents-workflow** → «A repo that already has a plan — merge, never queue»).
 - B) Ejecutar el cambio de `mjosefa-cote` localmente con `LAST_PLAN_EXECUTED.md` una vez publicados `webtyp/svg`, `webtyp/widget` y `webtyp/avatar`, dejando `docs/PLAN.md` reservado para cuando salga `agenteval v0.3.0`.
 
+### P5 — ¿Separamos actividad, emoción y micro-movimiento en canales independientes?
+
+Hoy `avatar.State` es un enum único y mutuamente excluyente (`Normal, Greeting, Speak, Think, Listen, Fatigue, Sad, Astonishment, Anger`, ver D5/P3 arriba) que mezcla **actividad** (qué está haciendo: hablar, pensar, escuchar) con **emoción** (cómo se siente: triste, enojado, asombrado). Por eso hoy no se puede "hablar enojado" ni "caminar triste": serían dos estados a la vez en un enum que solo admite uno.
+
+- **A) (recomendada)** Partir `avatar.State` en dos ejes independientes — `avatar.Activity` (`Idle, Greeting, Speak, Think, Listen, Fatigue`, controla boca/manos/postura) y `avatar.Emotion` (`Neutral, Sad, Astonished, Angry, Happy`, controla cejas/forma de ojos) — más un tercer canal **autónomo** que nunca se apaga (parpadeo, respiración) en su propia goroutine, sin que `Speak`/`Fatigue` lo pausen. `av.SetEmotion(Sad); av.Speak("...")` se combinan al renderizar: la boca sigue el visema de `Speak`, las cejas siguen `Sad`. Prior art: Unity Mecanim separa *Animation Layers* con *Avatar Mask* (una capa mueve solo la cara, otra el cuerpo) y ARKit separa visemas (boca) de blendshapes de emoción (cejas/ojos) por este mismo motivo.
+  - *A favor:* resuelve el caso exacto que describís; escala al cuerpo futuro sin reabrir el diseño del estado.
+  - *En contra:* reabre la API pública ya cerrada en `webtyp/avatar` v0.1.0 (rompe `SetState`); exige migrar `mjosefa-cote/web/client.go`.
+- B) Mantener un enum único y agregar combinaciones (`SpeakSad`, `SpeakAngry`, ...).
+  - *En contra:* explosión combinatoria (6 actividades × 5 emociones = 30 estados) para resolver lo que dos campos resuelven con 11.
+
+**Respuesta:**
+
+### P6 — ¿El nombre `webtyp/avatar` separa "crear personaje" de "animarlo en vivo"?
+
+Dentro del mismo paquete hoy conviven `avatar.NewCatalog`/`cat.WithHair(...)` (armar un personaje nuevo — lo que decís que **ya funciona bien**) y `avatar.New(cat)`/`SetState`/`Speak` (animarlo — lo que decís que **es difícil**). El nombre genérico "avatar" no deja ver esa frontera a primera lectura.
+
+- **A) (recomendada)** No partir el repo todavía: nombrar los dos conceptos con archivos claros dentro de `webtyp/avatar` — `catalog.go` (armado: slots, capas, accesorios) y `engine.go` (motor en vivo: estado, secuencias) — y documentar en el `README.md` "cómo armar un personaje" separado de "cómo animarlo". El Gate 4 de **api-design** ya resolvió que ambos viven en el mismo paquete; el problema reportado es de nombres/documentación, no de límite de paquete.
+  - *En contra:* si el motor de animación crece mucho (blend trees, cuerpo con huesos), puede necesitar partirse de verdad — se decide cuando aparezca esa necesidad.
+- B) Partir ahora en dos repos (`webtyp/avatar` solo catálogo + `webtyp/avatarfx` motor).
+  - *En contra:* con un solo consumidor (`mjosefa-cote`) y sin cuerpo todavía, es partir antes de conocer el límite real.
+
+**Respuesta:**
+
+### P7 — ¿Cómo tipamos ropa/aros/lentes ahora, aunque el contenido llegue después?
+
+Hoy la única diferenciación entre avatar masculino y femenino es el pelo y las pestañas en `eyes-*` (D2 arriba); no hay slot para remera, aros o lentes, y D2 deja `Extra1..3` genéricos.
+
+- **A) (recomendada)** Agregar slots con nombre ya en `Catalog` (`WithShirt`, `WithEarrings`, `WithGlasses`), aceptando `svg.Icon` opcional (`nil` = invisible, sin romper avatares existentes) en vez de seguir numerando `Extra1..3`. Agregar un slot nombrado hoy cuesta una línea; renombrar `Extra1`→`Glasses` después de que un segundo consumidor ya lo referencie es un cambio de ruptura en N repos.
+  - *En contra:* 3-4 campos más en `Catalog` sin contenido real todavía (quedan `nil` hasta tener el SVG).
+- B) Dejar `Extra1..3` genéricos y mapear ropa ahí cuando llegue el momento.
+  - *En contra:* un consumidor no sabe por el nombre si `Extra2` es "aros" o "mochila"; viola el *novice-name test* de **api-design**.
+
+**Respuesta:**
+
+### P8 — ¿Qué causa los movimientos bruscos y el parpadeo poco natural al hablar?
+
+Pregunta de diagnóstico, no de diseño: hay que inspeccionar el `webtyp/avatar` v0.1.0 ya corriendo en `mjosefa-cote` antes de decidir el arreglo. Dos hipótesis, no excluyentes: (1) el timer de parpadeo compite o se pausa con la goroutine de `Speak` — si se aprueba P5, un canal autónomo que nunca se detiene lo resuelve de raíz; (2) el cambio de `<symbol>` (`href`) es un corte duro sin transición, mientras Live2D/Rive interpolan entre formas vecinas en 80-150ms.
+
+- **A) (recomendada)** Antes de tocar diseño, inspeccionar con el MCP de webtyp (`browser_get_console`, `browser_evaluate_js`) el avatar corriendo hoy para confirmar cuál hipótesis aplica, y recién ahí decidir entre "parpadeo en canal propio" (P5) o una receta de transición en `widget/style` (ya hay una entrada pendiente de `Blink/Wave/Pulse` en el plan de `widget`).
+- B) Asumir la causa (timer compartido) y aplicar P5 sin medir.
+  - *En contra:* si la causa real es el corte duro de CSS, P5 no lo arregla y el síntoma queda.
+
+**Respuesta:**
+
+### P9 — ¿Cómo se conecta el avatar con las decisiones del agente (animación en vivo dirigida por IA)?
+
+`webtyp/agent` es estrictamente un orquestador sin backends concretos (su `AGENTS.md`): declara *ports*, nunca importa una implementación (igual que hace con `MemoryStore`).
+
+- **A) (recomendada)** `agent.Config` declara un *port* opcional `avatar.Controller` (interfaz chica: `SetEmotion`, `SetActivity`) — mismo patrón que `MemoryStore` — y la aplicación (Cote) decide qué emoción corresponde, no `agent` (evita que el orquestador importe `webtyp/avatar`, y mantiene D23 de ese plan: "la seguridad es código, no prompt" — tampoco el LLM decide el estado del avatar sin pasar por código tipado).
+  - *Pendiente de tu decisión real:* ¿la emoción la infiere el **decider** con una pregunta cerrada más (ej. "¿el tono de esta respuesta es neutral/triste/molesto/sorprendido?", nuevo `DecidePrompt` en `qwen`) o la infiere **código** por reglas de dominio (ej. "si la herramienta devolvió error → `Sad`")? Esto decide si hay que tocar `qwen`/`agenteval` o alcanza con Cote.
+- B) Cote conecta el avatar directo en `web/client.go` sin pasar por `agent`, con una heurística simple sobre el texto de la respuesta.
+  - *A favor:* cero cambios en `webtyp/agent`; se prueba ya en el laboratorio de `agenteval`.
+  - *En contra:* si `mjosefa-cms` después quiere lo mismo, duplica la heurística en cada app en vez de vivir una vez en `agent`.
+
+**Respuesta:**
+
 ---
 
 ## Evidencia en el código actual
