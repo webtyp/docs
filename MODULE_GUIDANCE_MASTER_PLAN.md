@@ -35,8 +35,8 @@ Ninguna.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | en curso (redespachada tras un commit vacío del primer intento, sesión 15203441228956046925) |
-| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (D19) | en curso (redespachada tras una sesión fallida sin PR — el plan asumía render condicional; el chasis usa señales (`*SignalBool` + `BindStateFunc`), nunca montaje condicional; sesión 13939708736157451254) |
+| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | `[Claude · 2026-10-20 15:14]` en curso (redespachada tras un commit vacío del primer intento, sesión 15203441228956046925) |
+| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (D19) | `[Claude · 2026-10-20 15:14]` en curso (redespachada tras una sesión fallida sin PR — el plan asumía render condicional; el chasis usa señales (`*SignalBool` + `BindStateFunc`), nunca montaje condicional; sesión 13939708736157451254) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | espera cierre de H1 |
 | H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | **cerrada** v0.2.2 |
 | H5 | `veltylabs/email` | declarar sus datos (remitente, secreto) | espera cierre de H4 |

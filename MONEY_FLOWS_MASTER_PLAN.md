@@ -26,9 +26,9 @@ Por qué y cómo (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md). F
 | M0 | `webtyp/notify`, `veltylabs/email`, `veltylabs/whatsapp` | puerto `Channel`, canales configurables en BD, secretos por nombre | cerrada (`notify` v0.2.1, `email` v0.1.1, `whatsapp` v0.0.2 solo con `PRICING.md`) |
 | M0b | `alert_manager` | quién recibe qué alerta, registro de envíos | **local, sin publicar, UX rechazada por el usuario** — redibujo espera MODULE_GUIDANCE P15/P16 (no es parte de esta ola) |
 | M1 | `webtyp/money` | `Money`, `Fact`, `Sink`, eventos (`Publish`/`Subscribe`, sin `Fanout`), idempotencia | cerrada v0.1.3 |
-| M2 | `payment_manager` | número de comprobante generado por el sistema, publicar hechos (`money.Publish`) | en curso (Jules, sesión 4223631125565401932) |
-| M3 | `veltylabs/cash_manager` (nuevo) | turnos por persona, apertura/cierre con arqueo, primer `Sink`, pantallas «Hoy»/«Cierre»/«Reposición»/«Caja 30 días», rol de contador solo lectura | en curso (repo creado con `gonew -owner veltylabs`, sesión 767920940306581773) |
-| M4 | `agreement_manager` | terceros, acuerdos (3 cláusulas), inclusiones con stock, excepciones de tarifa, devengo, «por pagar»/«por cobrar», estado de cuenta | en curso (sesión 11249834244515361457; preguntó por `.In()`/`.ReadAll()`/`CivilDate`, respondido) |
+| M2 | `payment_manager` | número de comprobante generado por el sistema, publicar hechos (`money.Publish`) | `[Claude · 2026-10-20 15:14]` en curso (Jules, sesión 4223631125565401932) |
+| M3 | `veltylabs/cash_manager` (nuevo) | turnos por persona, apertura/cierre con arqueo, primer `Sink`, pantallas «Hoy»/«Cierre»/«Reposición»/«Caja 30 días», rol de contador solo lectura | `[Claude · 2026-10-20 15:14]` en curso (repo creado con `gonew -owner veltylabs`, sesión 767920940306581773) |
+| M4 | `agreement_manager` | terceros, acuerdos (3 cláusulas), inclusiones con stock, excepciones de tarifa, devengo, «por pagar»/«por cobrar», estado de cuenta | `[Claude · 2026-10-20 15:14]` en curso (sesión 11249834244515361457; preguntó por `.In()`/`.ReadAll()`/`CivilDate`, respondido) |
 | M4b | puertos de **terminal de cobro** + **emisor de documento tributario** | contrato tipo `notify`, implementación TUU si aplica | espera K1 |
 | M5 | módulo de venta de farmacia | venta, cobro por el puerto de terminal, boleta automática, salida de stock | espera M4b, CATALOG_SPLIT (F) |
 | M6 | `purchase_manager` (nuevo) | compras con costo de lote | después de M3/M4 |

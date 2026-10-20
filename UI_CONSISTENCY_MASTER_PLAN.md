@@ -1,5 +1,5 @@
 # Consistencia visual entre módulos — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · ola 3 cerrada en casi todos los módulos (grupo, `Label`, `decktabs`→grupo); `business_calendar` con un plan despachado (reloj 24h en el editor de horario); `item_catalog`/`service_catalog` sigue con `replace` locales
+> **Status:** IN PROGRESS · 2026-10-20 · ola 3 cerrada en casi todos los módulos (grupo, `Label`, `decktabs`→grupo, reloj 24h en `business_calendar`); `item_catalog`/`service_catalog` sigue con `replace` locales
 
 Índice de olas: [MASTER_PLANS.md](MASTER_PLANS.md). Forma de trabajo: skill **master-plan** (este documento es el estado; el chat no resume).
 
