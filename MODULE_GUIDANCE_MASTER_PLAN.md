@@ -36,7 +36,7 @@ Ninguna.
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **cerrada** v0.6.40 |
-| H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | `[Claude · 2026-10-20 15:30]` en curso (sesión 17491794384523155737; falló 2 veces como feature completa — dividida en piezas chicas por indicación del usuario) |
+| H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | **cerrada** v0.3.57 |
 | H2b | `webtyp/layout` (`platformd.go`) | botón «?» (señal + `BindStateFunc`, igual que `menuOpen`) | tras cierre de H2a |
 | H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | tras cierre de H2b |
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | tras cierre de H2a (independiente de H2b/H2c) |
