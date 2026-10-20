@@ -40,7 +40,7 @@ Ninguna.
 | H2b | `webtyp/layout` (`platformd.go`) | botón «?» (señal + `BindStateFunc`, igual que `menuOpen`) | tras cierre de H2a |
 | H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | tras cierre de H2b |
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | tras cierre de H2a (independiente de H2b/H2c) |
-| H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | escrita, estacionada en `docs/PLAN_CRUDVIEW_DESCRIPTION.md` (el slot de `docs/PLAN.md` lo ocupa H2a); se despacha al cerrar H2a |
+| H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | `[Antigravity · 2026-10-20 15:52]` despachada |
 | H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | **cerrada** v0.2.2 |
 | H5 | `veltylabs/email` | declarar sus datos (remitente, secreto) | espera cierre de H4 |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
