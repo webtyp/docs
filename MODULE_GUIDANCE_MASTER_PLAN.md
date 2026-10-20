@@ -1,5 +1,5 @@
 # Ayuda integrada en los módulos, avisos por módulo y rediseño de `alert_manager` — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · P1–P16 aceptadas (todas); H1/H2/H4 listas para despachar, H7 hecha; H3/H5/H6/H8 esperan sus gates; `alert_manager` local, sin publicar
+> **Status:** IN PROGRESS · 2026-10-20 · P1–P16 aceptadas (todas); H1 y H4 cerradas, H7 hecha; H2 dividida en H2a–d (H2a en curso); H3/H5/H6/H8 esperan sus gates; `alert_manager` local, sin publicar
 
 Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se explica solo y guía paso a paso; nadie debe tener que explicarlo.
 
@@ -35,9 +35,12 @@ Ninguna.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | `[Claude · 2026-10-20 15:14]` en curso (redespachada tras un commit vacío del primer intento, sesión 15203441228956046925) |
-| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (D19) | `[Claude · 2026-10-20 15:14]` en curso (redespachada tras una sesión fallida sin PR — el plan asumía render condicional; el chasis usa señales (`*SignalBool` + `BindStateFunc`), nunca montaje condicional; sesión 13939708736157451254) |
-| H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | espera cierre de H1 |
+| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **cerrada** v0.6.40 |
+| H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | `[Claude · 2026-10-20 15:30]` en curso (sesión 17491794384523155737; falló 2 veces como feature completa — dividida en piezas chicas por indicación del usuario) |
+| H2b | `webtyp/layout` (`platformd.go`) | botón «?» (señal + `BindStateFunc`, igual que `menuOpen`) | tras cierre de H2a |
+| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | tras cierre de H2b |
+| H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | tras cierre de H2a (independiente de H2b/H2c) |
+| H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | escrita, estacionada en `docs/PLAN_CRUDVIEW_DESCRIPTION.md` (el slot de `docs/PLAN.md` lo ocupa H2a); se despacha al cerrar H2a |
 | H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | **cerrada** v0.2.2 |
 | H5 | `veltylabs/email` | declarar sus datos (remitente, secreto) | espera cierre de H4 |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
