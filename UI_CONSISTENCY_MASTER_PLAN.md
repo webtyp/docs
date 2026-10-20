@@ -39,7 +39,7 @@ _(ninguna)_
 | 3 | `veltylabs/modules/appointment_booking` | Personal → grupo; reserva con `form.New`; registro en línea; `Scope` en Horario/Servicios; sobrecupo en `CalendarConfig` | **cerrada** (landed junto con su migración de TIME_UNITS) |
 | 3 | `staff_manager`, `patient_directory`, `business_calendar`, `device_manager`, `editorial`, `service_catalog` | `Label` en todo campo con widget | **cerrada**: `staff_manager` v0.1.120, `patient_directory` v0.1.33, `business_calendar` v0.4.87, `device_manager` v0.2.55, `editorial` v0.0.25, `service_catalog` v0.5.4; de paso, `editorial.slug` y `service_catalog.Specialty.slug` tenían `Label: "Slug"` (jerga, no explica nada): ahora `Label`+`Help` describen qué hace el campo |
 | 3 | `chat_room`, `business_calendar`, `payment_manager` | `decktabs` → grupo; inputs a mano → `form` | **cerrada** |
-| 3 | `business_calendar` | editor de horario mostraba minutos-desde-medianoche para escribir («480» en vez de «08:00»): se cambia a reloj 24h (`input.Hour()`) | **despachada** (`docs/PLAN.md`, Jules, sesión 15090588848331827000) |
+| 3 | `business_calendar` | editor de horario mostraba minutos-desde-medianoche para escribir («480» en vez de «08:00»): se cambia a reloj 24h (`input.Hour()`) | **cerrada** v0.4.88 |
 
 Los planes de módulos (ola 3) se escriben cuando estén publicados los tags de su base, para fijar versiones exactas.
 

@@ -35,10 +35,10 @@ Ninguna.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **despachada** |
-| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (D19) | **despachada** |
+| H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | en curso (redespachada tras un commit vacío del primer intento, sesión 15203441228956046925) |
+| H2 | `webtyp/layout` (`platformd`) | `Described`, bienvenida, botón «?», pasos; franja de avisos (D19) | en curso (redespachada tras una sesión fallida sin PR — el plan asumía render condicional; el chasis usa señales (`*SignalBool` + `BindStateFunc`), nunca montaje condicional; sesión 13939708736157451254) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | espera cierre de H1 |
-| H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | **despachada** |
+| H4 | `webtyp/notify` | catálogo de tipos, origen del aviso, datos de cada controlador, estado visto | **cerrada** v0.2.2 |
 | H5 | `veltylabs/email` | declarar sus datos (remitente, secreto) | espera cierre de H4 |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
