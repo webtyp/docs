@@ -142,7 +142,7 @@ Pregunta de diagnóstico, no de diseño: hay que inspeccionar el `webtyp/avatar`
 - B) Asumir la causa (timer compartido) y aplicar P5 sin medir.
   - *En contra:* si la causa real es el corte duro de CSS, P5 no lo arregla y el síntoma queda.
 
-**Respuesta:**
+**Respuesta:** acteulmente cambie el modo de compilacion a tinygo (S) el parpadeo anda bien.pero si quiero cambiar de estado semantico la tranciicon no es automatica se pega, es como que hay un cuelgue, no es en teimpo real, eomo la vesion de javascript..esto es un problema que se debe soluconar de raiz ene l framework webtyp..no podemos congelar la ui nunca y con este simple objeto lo estamos haciendo..faltan logs para detectar el problema
 
 ### P9 — ¿Cómo se conecta el avatar con las decisiones del agente (animación en vivo dirigida por IA)?
 
@@ -154,7 +154,7 @@ Pregunta de diagnóstico, no de diseño: hay que inspeccionar el `webtyp/avatar`
   - *A favor:* cero cambios en `webtyp/agent`; se prueba ya en el laboratorio de `agenteval`.
   - *En contra:* si `mjosefa-cms` después quiere lo mismo, duplica la heurística en cada app en vez de vivir una vez en `agent`.
 
-**Respuesta:**
+**Respuesta:** la emocion y comportamiento debe darla el decider, pero no se el orden de dependeicna para una buena arquietectura..necesito que acteulces los diagramas para verlos, y tambien saber si en la industria ya existe un producto similar para ver como separar las piezas correctemente
 
 ---
 
@@ -170,6 +170,8 @@ Pregunta de diagnóstico, no de diseño: hay que inspeccionar el `webtyp/avatar`
    - `style.Sheet` estiliza partes `.name__part` (`Part`, `When`, `WhenWithin`); no tiene recetas de micro-animación continua para partes de un avatar (`Blink`, `Wave`, `Pulse`, `Float`) ni pivote de transformación (`transform-box: fill-box; transform-origin: ...`).
 4. **Reactividad de atributos en `webtyp/dom` (`element.go:301, 361`, `dom_frontend.go:737-751`)**:
    - `el.BindAttr("href", sigString)` actualiza en vivo el atributo `href` de un `<use>` en el DOM cuando `sigString.Set("#cote-mouth-talk-o")` cambia desde una goroutine en WASM, sin re-serializar el árbol del componente.
+
+EL CODIGO DEEB SER LO MAS EFICIENTE PSOIBLE,CON EL MENOR USAO DE MEMORIA, EVITAR LAS ALOCACIONES,YA QUE CADA MALA DECICION SUMA  EN MALA EXPERIENCIA PARA EL USUARIO FINAL
 
 ---
 
