@@ -1,5 +1,5 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · D1, P2–P11, P6/P9/P10 (con cambios), P8 (rename) y H1–H3/K2–K4 cerradas; **M0–M4 despachadas o cerradas**; **K1 (TUU) sigue abierta** y bloquea M4b/M5
+> **Status:** IN PROGRESS · 2026-10-20 · D1, P2–P11, P6/P9/P10 (con cambios), P8 (rename) y H1–H3/K2–K4 cerradas; **M0–M4 cerradas (M3 cash_manager v0.1.0, M4 agreement_manager v0.1.13, M2 payment_manager v0.1.21)**; **K1 (TUU) sigue abierta** y bloquea M4b/M5
 
 Por qué y cómo (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md). Forma de trabajo: skill **master-plan**.
 
@@ -27,7 +27,7 @@ Por qué y cómo (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md). F
 | M0b | `alert_manager` | quién recibe qué alerta, registro de envíos | **local, sin publicar, UX rechazada por el usuario** — redibujo espera MODULE_GUIDANCE P15/P16 (no es parte de esta ola) |
 | M1 | `webtyp/money` | `Money`, `Fact`, `Sink`, eventos (`Publish`/`Subscribe`, sin `Fanout`), idempotencia | cerrada v0.1.3 |
 | M2 | `payment_manager` | número de comprobante generado por el sistema, publicar hechos (`money.Publish`) | **cerrada** v0.1.21 |
-| M3 | `veltylabs/cash_manager` (nuevo) | turnos por persona, apertura/cierre con arqueo, primer `Sink`, pantallas «Hoy»/«Cierre»/«Reposición»/«Caja 30 días», rol de contador solo lectura | `[Antigravity · 2026-10-20 19:45]` en curso (sesión 767920940306581773, implementando etapas 4-6) |
+| M3 | `veltylabs/cash_manager` (nuevo) | turnos por persona, apertura/cierre con arqueo, primer `Sink`, pantallas «Hoy»/«Cierre»/«Reposición»/«Caja 30 días», rol de contador solo lectura | **cerrada** v0.1.0 |
 | M4 | `agreement_manager` | terceros, acuerdos (3 cláusulas), inclusiones con stock, excepciones de tarifa, devengo, «por pagar»/«por cobrar», estado de cuenta | **cerrada** v0.1.13 |
 | M4b | puertos de **terminal de cobro** + **emisor de documento tributario** | contrato tipo `notify`, implementación TUU si aplica | espera K1 |
 | M5 | módulo de venta de farmacia | venta, cobro por el puerto de terminal, boleta automática, salida de stock | espera M4b, CATALOG_SPLIT (F) |
