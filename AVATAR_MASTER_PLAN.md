@@ -40,6 +40,10 @@ En `webtyp/svg/sprite/file.go:12-23`, `(*Sprite).AddFile(id, svgFile)` hoy mete 
   - *A favor:* un repo menos que despachar.
   - *En contra:* duplica el parseo de `viewBox` y XML que ya vive en `webtyp/svg/sprite/file.go:26-66` y `webtyp/svg/sanitize/sanitize.go:114-168`.
 
+  RESPUESTA:
+  ESTO YA SE EJECUTO CON LA OPCION A
+  VERIFICALO
+
 ### P2 — ¿Cómo se reparten las animaciones entre Go (`webtyp/avatar` con señales `dom` + goroutines) y CSS (`webtyp/widget/style`)?
 
 En `preview.html:95-228` hicieron falta 25 `@keyframes` con `steps(1, end)` (`speak-mouth-a`, `speak-mouth-o`, `speak-mouth-n`, `yawn-mouth-rest`, `yawn-mouth-mid`, `yawn-mouth-wide`, etc.) para conmutar la visibilidad de cada boca/mano/ojo por porcentajes. En `webtyp`, `webtyp/css` mantiene `keyframes(...)` y `rule(...)` privados al paquete (`webtyp/css/dsl.go:86,270`) y `webtyp/widget/style` solo expone recetas semánticas (`emit_flowdecls.go:97-216`).
@@ -55,6 +59,9 @@ En `preview.html:95-228` hicieron falta 25 `@keyframes` con `steps(1, end)` (`sp
 - B) **Todo en `@keyframes` de CSS**, exportando un constructor general de keyframes en `webtyp/css` y `webtyp/widget/style` y usando Go únicamente para el timer aleatorio de 10–30s del bostezo.
   - *A favor:* las secuencias de `speak` corren sin ticks de Go.
   - *En contra:* traslada a Go las mismas 25 tablas de porcentajes CSS difíciles de mantener que motivaron este cambio, y obliga a abrir la superficie de `webtyp/css` y `webtyp/widget/style` con constructores de keyframes arbitrarios.
+
+  RESPUESTA:
+  CREO QUE AQUI ESTE LE CUELLO DE BOTELLA ACTEUL Y EL POR QUE SE COMPORTA TAN MAL AL INTERACTUAR CON LO BOTONES DE ANIMACIONES Y COLGANDOCE..EN WEBASEMBLY ENE L NAVEGADOR LAS GORUTIRNAS NO ANDAN BIEN, NENOS SI PARA DISTRIBUCION SE COMPILARA CON TINYGO POR DEFECTO..HAY QUE HACER USO DE CSS, SW Y CALBACK SEGUN MI OPINION,,INVENSTIGA Y CORREIGEME SI ME EQUIVOCO
 
 ### P3 — ¿Cómo arma el consumidor su avatar y qué superficie pública expone `webtyp/avatar`?
 
@@ -80,12 +87,18 @@ El archivo `cote-base-v1.2.svg` ya sigue una convención fija de IDs por capa (`
   - *A favor:* no exige nombres fijos dentro del SVG.
   - *En contra:* 40 líneas de boilerplate por cada avatar nuevo.
 
+RESPEUSTA:
+ES LO QUE ESTAMO DISCUTEINDO YA SE IMPLEMENTO PERO EL NOMBRE S GENERICO COMO CONTRATO HACE FALTA UN PAQUETE DE CERACION O CLI PARA EL SVG .Y RENOMBRAR avatar conviando con otra palabra
+
 ### P4 — ¿Cómo organizamos la integración en `veltylabs/mjosefa-cote` respecto a su `docs/PLAN.md` actual?
 
 En `veltylabs/mjosefa-cote/docs/PLAN.md` (`lines 1-60`) hay un plan **no despachado** (sin `STATUS`, bloqueado esperando `webtyp.com/agenteval v0.3.0`) para actualizar `evals/`. Por otro lado, `cote-base-v1.2.svg` está hoy en `docs/avatar/img/cote-base-v1.2.svg`.
 
 - **A) (recomendada)** Mover o referenciar `cote-base-v1.2.svg` desde `svg.go` (`//go:build !wasm`, `func IconSvg() *sprite.Sprite`) en el paquete raíz `cote`, exponer `cote.NewAvatar() *avatar.Avatar`, actualizar `web/client.go` con la vista completa de prueba del avatar (selector de los 9 estados, locución `Speak`/`Stop` y toggles de capas `#hair`/`#head`/`#torso`/`#poses`/`#extras`), eliminar `docs/avatar/preview.html` cuando `web/client.go` esté funcionando, y fusionar estas etapas en `veltylabs/mjosefa-cote/docs/PLAN.md` (regla **agents-workflow** → «A repo that already has a plan — merge, never queue»).
 - B) Ejecutar el cambio de `mjosefa-cote` localmente con `LAST_PLAN_EXECUTED.md` una vez publicados `webtyp/svg`, `webtyp/widget` y `webtyp/avatar`, dejando `docs/PLAN.md` reservado para cuando salga `agenteval v0.3.0`.
+
+RESPUESTA:
+NO HE REVISADO A FONDO COMO ESTA IMPLEMENTADO HOY.. SOLO SE QUE "webtyp dev" lo levante en
 
 ### P5 — ¿Separamos actividad, emoción y micro-movimiento en canales independientes?
 
@@ -97,7 +110,7 @@ Hoy `avatar.State` es un enum único y mutuamente excluyente (`Normal, Greeting,
 - B) Mantener un enum único y agregar combinaciones (`SpeakSad`, `SpeakAngry`, ...).
   - *En contra:* explosión combinatoria (6 actividades × 5 emociones = 30 estados) para resolver lo que dos campos resuelven con 11.
 
-**Respuesta:**
+**Respuesta:** A 
 
 ### P6 — ¿El nombre `webtyp/avatar` separa "crear personaje" de "animarlo en vivo"?
 
@@ -108,7 +121,7 @@ Dentro del mismo paquete hoy conviven `avatar.NewCatalog`/`cat.WithHair(...)` (a
 - B) Partir ahora en dos repos (`webtyp/avatar` solo catálogo + `webtyp/avatarfx` motor).
   - *En contra:* con un solo consumidor (`mjosefa-cote`) y sin cuerpo todavía, es partir antes de conocer el límite real.
 
-**Respuesta:**
+**Respuesta:** A
 
 ### P7 — ¿Cómo tipamos ropa/aros/lentes ahora, aunque el contenido llegue después?
 
@@ -119,7 +132,7 @@ Hoy la única diferenciación entre avatar masculino y femenino es el pelo y las
 - B) Dejar `Extra1..3` genéricos y mapear ropa ahí cuando llegue el momento.
   - *En contra:* un consumidor no sabe por el nombre si `Extra2` es "aros" o "mochila"; viola el *novice-name test* de **api-design**.
 
-**Respuesta:**
+**Respuesta:** A
 
 ### P8 — ¿Qué causa los movimientos bruscos y el parpadeo poco natural al hablar?
 
