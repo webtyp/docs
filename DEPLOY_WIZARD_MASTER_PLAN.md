@@ -1,6 +1,6 @@
 # Despliegue guiado — master plan
 
-> **Status:** IN PROGRESS · 2026-10-15 · D1–D43 cerradas; sin preguntas abiertas (el layout de misitio sigue en BUILD_DESTINATIONS). `deploy` (v0.2.110) y `wizard` (v0.0.30) publicados; `env` running; `goflare` y `github` listos para despachar; los demás esperan sus prerequisitos.
+> **Status:** CLOSED · 2026-10-20 · todas las librerías de la ola publicadas (`deploy` v0.2.111, `wizard` v0.0.31, `goflare` v0.5.42, `github` v0.0.3, `env` v0.1.1, `keyring` v0.2.9) y `app` **v0.7.0** (pestaña DEPLOY, herramientas MCP `deploy_*`, SECRETS desde la declaración, dependencias de archivos generados); comprobado con una ejecución real de `deployment()` sobre un proyecto de prueba. Lo que queda no es de esta ola: la **aceptación con cuenta real de Cloudflare** (§Aceptación, la hace el usuario) y el re-layout y la declaración de `misitio`, que pasan a [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md).
 
 **Disparador:** desplegar `veltylabs/misitio` exige hoy pasos manuales repartidos en tres documentos
 (`misitio/docs/DEPLOY.md`, `CI_TOKEN.md`, `PLAN_INFRA_BLOQUEADA.md`): crear D1 y R2 a mano, crear un
@@ -77,7 +77,7 @@ no la bloquea: §9 puede salir antes con su paso documentado y este wizard lo re
 | D41 (cierra P20) | Orden: `wizard` ‖ `deploy` ‖ `env` → `goflare` ‖ `github` ‖ `keyring` → `iam` (justo tras `goflare`) → `app` → `misitio`. | Tabla de librerías. |
 | D42 (cierra P26) | **Variables de runtime no secretas** se declaran en `deploy.Plan.Vars []deploy.Var{Key, Value}` con su valor literal de producción. `goflare` las pasa en el `Job` (input `vars`) y las envía como bindings `plain_text` en **cada** deploy, así un `PUT` de script nunca las borra. En desarrollo siguen en `.env`. | misitio declara `IAM_BASE_URL`, `MISITIO_BASE_URL`; iam declara `GOOGLE_REDIRECT_URL`, `IAM_PANEL_ORIGIN`. |
 
-| D43 (cierra P27) | **Rechazada la etiqueta `edge` como parche**; el usuario decidió el cambio de fondo en [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md): el destino es el nombre del archivo y su etiqueta (`web/browser.go` → `browser`, `web/edge.go` → `edge`, `web/server.go` → `server`), sin `wasm`/`!wasm` en código de aplicación. Su D9 confirma D34 (`config/deploy.go` con `//go:build deploy`). | Los planes de esta ola que crean o editan `edge/main.go`, `web/client.go` o etiquetas `wasm` (`app`, `goflare`, misitio, iam) se ajustan cuando esa ola cierre sus preguntas: sus repos tendrán un plan pendiente donde fusionarlo (skill **agents-workflow**). |
+| D43 (cierra P27) | **Rechazada la etiqueta `edge` como parche**; el usuario decidió el cambio de fondo en [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md) (D1, D15): dos ejes con **una sola etiqueta nueva, `browser`** (`browser`/`!browser` de destino + `wasm`/`!wasm` de plataforma: `web/browser.go` → `//go:build browser` → `browser.wasm`, `web/edge.go` → `//go:build wasm && !browser` → `edge.wasm`, `web/server.go` → `//go:build !wasm` → `server`; en módulos `browser.go` → `browser` y `server.go` → `!browser`, sin etiquetas `edge` ni `server`). Su D9 confirma D34 (`config/deploy.go` con `//go:build deploy`). | Los planes de esta ola que crean o editan `edge/main.go`, `web/client.go` (→ `web/browser.go`) o etiquetas `wasm` (`app`, `goflare`, misitio, iam) se ajustan cuando esa ola cierre sus preguntas: sus repos tendrán un plan pendiente donde fusionarlo (skill **agents-workflow**). |
 
 ### Diseño derivado al revisar el código (2026-10-15)
 
@@ -114,6 +114,27 @@ Revisado en el PR #7 (2026-10-15): ambos implementados. La revisión corrigió l
 
 **Revisión de `wizard` (PR #2, 2026-10-15):** implementado según el plan; la revisión solo corrigió `go.mod` (`webtyp.com/lang` marcado `// indirect` siendo directo). El plan afirmaba que `devflow.CodeJob` no necesitaba cambios, pero su `LabelText` concatena un enlace en tiempo de ejecución (`devflow/codejob.go:387`) y dejó de compilar contra `lang.Text`: corregido en `devflow` con `lang.Text(...)` explícito. `app` queda roto donde el plan ya lo anunciaba (`app/section-secrets.go:27`, `LabelText: key`); lo resuelve el plan de `app`.
 
+**Revisión de `github` (PR #1, 2026-10-15):** implementado; la revisión corrigió localmente antes de cerrar (v0.0.3): borrado `release_test_export.go` (exportaba `SetClockForTest`/`ResetClockForTest`/`SetTimeoutForTest` bajo `!production`, violando la regla de no exportar símbolos solo para tests) y reemplazado por `release_internal_test.go` justificado en la raíz sobre las costuras no exportadas `timeNow`/`timeSleep`; completadas las 14 traducciones obligatorias `es` en `lang.json` (estaban vacías) y el test `TestLang` (L1, dejado como stub); cubiertas las filas G3–G5 de `Check` y todos los estados de `Status`; movido `Provision` a `workflow.go`; `go mod tidy` eliminó 25 dependencias indirectas sin uso.
+
+**Revisión de `keyring` (PR #2, 2026-10-15):** implementado (`reference.go` y `reference_test.go` borrados); la revisión agregó la línea sobre `config/deploy.go` y `auto.OpenForModule` en `README.md` y limpió bloques vacíos que el agente dejó en `docs/LAST_PLAN_EXECUTED.md` antes de cerrar (v0.2.9).
+
+3. `webtyp/goflare`, sesión 4620029912345869226, 2026-10-15:
+   > Proceed through all remaining stages (Stage 1 step 5 through Stage 9) and open the PR without stopping between stages. Make sure: (1) lang.json has the Spanish ('es') column populated for every key (no empty strings in column 0) and langc sync is run; (2) no symbols are exported only for tests (tests in tests/ must use package goflare_test and the exported API); (3) go mod tidy and gotest ./... pass before opening the PR.
+4. `webtyp/goflare`, misma sesión, 2026-10-15:
+   > 1. Yes: add unexported 'func (c *CfClient) delete(path string) ([]byte, error) { return c.do(http.MethodDelete, path, nil) }' to CfClient in cloudflare.go (or call c.do(http.MethodDelete, path, nil) directly since target_provision.go and target_check.go are in package goflare). 2. Add the delete helper first, then fix tests/target_check_test.go (including the K8 permission_groups/tokens mocks and K9 ci.Has mocks) and complete all remaining Stage 8 tests and Stage 9 docs. Ensure lang.json has Spanish ('es') translations populated, run langc sync, go mod tidy, and gotest ./..., and open the PR without stopping again.
+5. `veltylabs/iam`, sesión 12558430203965191498, 2026-10-15:
+   > Never mock library types locally. webtyp.com/auth v0.0.75 is now published with SessionPolicy, Principal, cookie.Options, passkey, and clientassertion. Run: GOPROXY=https://proxy.golang.org,direct go get webtyp.com/auth@v0.0.75 webtyp.com/router@v0.4.3 webtyp.com/server@v0.2.86 webtyp.com/cloudflare@v0.0.39 webtyp.com/jwt@v0.1.24 webtyp.com/webauthn@v0.1.6 webtyp.com/crypto@v0.0.28 webtyp.com/model@v0.2.3 webtyp.com/deploy@v0.2.110 webtyp.com/github@v0.0.3. Note for Stage 5: to check HasPasskey in AdminMeResponse, check what webtyp.com/auth@v0.0.75/passkey exposes (e.g. passkey.Module.CountByUser or ListByUser or ReadAllPasskeyCredential). Proceed through Stages 4–10 now; when you reach Stage 11 (config/deploy.go), run go get webtyp.com/goflare@latest for goflare.Worker (and if goflare's new tag is not live yet at that moment, pause at Stage 11 and ask).
+6. `webtyp/goflare`, misma sesión, 2026-10-16:
+   > Yes, that aligns completely. Run gotest ./..., finish implementing tests/target_provision_test.go and tests/target_misc_test.go (Stage 8) and the documentation updates (Stage 9), verify lang.json has column 0 ('es') populated for every key and run langc sync, run go mod tidy and gotest ./..., and open the PR immediately without pausing again.
+7. `webtyp/goflare`, misma sesión, 2026-10-16:
+   > Everything looks good. Finish updating docs/D1.md and docs/QUICK_REFERENCE.md (and any remaining docs so the grep checks in the plan return empty), ensure lang.json has column 0 ('es') populated for every key, run langc sync, go mod tidy, and gotest ./..., and open the PR immediately.
+8. `veltylabs/iam`, misma sesión, 2026-10-16:
+   > 1. Yes: delete VerifyProjectSecret, GenerateClientSecret, hashProjectSecret, projectSecretKey, projectSecretKeyLabel, clientSecretBytes, clientSecretPrefix, RegenerateProjectSecret, and the pepper env constant from config/projects.go, as specified in Stage 6 step 2. Machine authentication is handled by clientassertion.New(db, ProjectKeys{DB: db}, b.Origin, authMod.Notify) registered via authMod.Enable(ca). 2. asym.VerifyCompact is in package webtyp.com/crypto/asym (and base64url decoding is in webtyp.com/crypto/encoding.DecodeBase64URL), both in webtyp.com/crypto@v0.0.28 which has no extra dependencies. Proceed through Stages 6–12 and open the PR without pausing again.
+9. `webtyp/goflare`, sesión 4620029912345869226, 2026-10-16:
+   > Yes, proceed with all three fixes immediately: (1) use t.TempDir() / t.Chdir(t.TempDir()) in TestConfig_C1_C2_V1_V2 (and delete any stray edge/ directory in the repo working tree) and set t.Setenv("CLOUDFLARE_API_TOKEN", "test-token") where Deploy is called; (2) in TestProvision_P3, Provision creates resources (D1, R2, custom domain, rate limit, runtime secrets) before minting the project token, so the mock for P3 must allow the resource endpoints (or test P3 with a plan that has no databases/buckets/domain) and return permission_groups missing one of the required group names when minting the token; (3) in K1, Accept validates the bootstrap token via /user/tokens/verify and /accounts before storing it in personal keyring, so a token for which /user/tokens/verify returns 401/inactive must return an error and not call personal.Put. Make gotest ./... 100% green and open the PR immediately without stopping again.
+10. `webtyp/goflare`, misma sesión, 2026-10-16:
+   > Yes! Two critical reminders for that fix: (1) parseCFResponse already extracts and returns payload.Result, so in target_provision.go and target_check.go unmarshal the bytes returned by client.get/post/put/delete directly into the inner struct/slice (e.g. struct{ ID string; Value string } for token creation), never into a wrapper struct{ Result ... }; (2) verify that project token endpoints in target_check.go, target_provision.go, and fakeCFForProvision use the account-scoped paths (/accounts/{a}/tokens, /accounts/{a}/tokens/permission_groups, DELETE /accounts/{a}/tokens/{id}) per Stage 3 K8 and Stage 4 (only bootstrap token verification uses /user/tokens/verify). Fix that now, run gotest ./... to confirm 0 failures, and open the PR immediately.
+
 ## Plan siguiente de misitio
 
 Espera [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md). Fallas medidas
@@ -129,7 +150,7 @@ Espera [BUILD_DESTINATIONS_MASTER_PLAN.md](BUILD_DESTINATIONS_MASTER_PLAN.md). F
 | M3 | `config/panel/` es un subpaquete de UI; el único subpaquete permitido es `config/layouts/` | `config/panel/{admin,constants,modules,preview}.go` |
 | M4 | `modules/` no sigue el par tipado: `admin`, `app`, `images`, `support` son archivos wasm sueltos, sin `server.go`/`browser.go`/`module.go`, sin `modules/server.go`/`modules/browser.go` | `modules/*` |
 | M5 | Duplicados del cliente de iam | `config/iamauth.go`, `config/authzcache.go`, `authctx/` (§9 de seguridad los borra) |
-| M6 | La composición del servidor está en archivos **sin build tag** porque el Worker también es wasm, así que entra a `client.wasm` | `config/app.go`, `backend.go`, `store.go` |
+| M6 | La composición del servidor está en archivos **sin build tag** porque el Worker también es wasm, así que entra a `browser.wasm` (hoy `client.wasm`) | `config/app.go`, `backend.go`, `store.go` |
 | M7 | `sitecontent.New` sin `Members`: las operaciones de `site_content` deniegan | `config/store.go` |
 | M8 | `config/favicon.go` generado sin su dependencia | etapa 8 del plan de `app` |
 
@@ -143,13 +164,9 @@ que desaparece), recuperando solo los problemas medidos que sigan vigentes. `PLA
 
 ## Tareas que no son planes de código (instrucciones exactas)
 
-- **Skill `dev-autologin`** (`webtyp/devskills/skills/dev-autologin/SKILL.md`), **después** de que
-  `env` publique su plan de esta ola: reemplazar la sección "Configuration via `.env`" (líneas
-  24-41 hoy) por "Configuration": declarar `DEV_AUTOLOGIN` en `config/deploy.go` como
-  `deploy.Secret{Key: "DEV_AUTOLOGIN", What: "Credentials replayed to open a dev session automatically", Source: deploy.Typed, Guide: []lang.Text{"Type the JSON payload of your authenticator, e.g. {\"code\":\"12345678-5\"}"}, To: []deploy.Place{deploy.ToLocal}}`;
-  la persona lo escribe en la pestaña SECRETS de webtyp; `env` lo lee del keyring del proyecto.
-  Conservar los dos ejemplos de JSON como ejemplos de **valor**, sin `.env`. Sincronizar con
-  `devskills -f` y publicar devskills.
+- **Skill `dev-autologin`** (`webtyp/devskills/skills/dev-autologin/SKILL.md`): **publicado**
+  (`devskills` v0.0.21, 2026-10-15) con `DEV_AUTOLOGIN` declarado en `config/deploy.go` (`ToLocal`)
+  y leído del keyring del proyecto por `webtyp/env`.
 - **iam:** fusionado en su `docs/PLAN.md` (etapas 10–12) y publicado (iam v0.0.24); planes
   obsoletos `PLAN_SECURITY_HARDENING.md`, `PLAN_STAGE_1..6` borrados.
 - **Planes obsoletos borrados el 2026-10-15:** `goflare/docs/PLAN_STAGE_1..7` (size gate,
@@ -227,12 +244,12 @@ usuario de primera clase por MCP (D21).
 |---|---|---|---|
 | `webtyp/wizard` | `StepSource` tipado; `Step.NextFn` (pasos en tiempo de ejecución); `LabelText lang.Text`; `Dictionary()` | **gate** de `app` | PR [#2](https://github.com/webtyp/wizard/pull/2) · **publicado v0.0.30** (2026-10-15) |
 | `webtyp/deploy` | solo contratos + `Scan` + `Deployment` (D34–D36); borra todo lo demás (D3, D14, D16); `Dictionary()` | **gate** de goflare, github, app | PR [#7](https://github.com/webtyp/deploy/pull/7) · **publicado v0.2.110** (2026-10-15) |
-| `webtyp/goflare` | `deploy.Target` `goflare.Worker`: token de arranque (D27, D30, D40), token por proyecto, D1/R2 por nombre (D18, D38), secretos del Worker (D9), `Job` para CI (D37); `Dictionary()` | paralelo, tras `deploy` | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) · escrito, listo para despachar (`deploy` v0.2.110) |
-| `webtyp/github` | `deploy.CI` `github.Actions`: diagnóstico de `gh`, workflow generado, secretos de Actions, `Release` + estado del run (D19, D39); `Dictionary()` | paralelo, tras `deploy` | [github/docs/PLAN.md](https://github.com/webtyp/github/blob/main/docs/PLAN.md) · escrito, listo para despachar (`deploy` v0.2.110) |
-| `webtyp/env` | entorno → `.env` → keyring del proyecto (D15); deja de usar `keyring.Scheme` | paralelo | [env/docs/PLAN.md](https://github.com/webtyp/env/blob/main/docs/PLAN.md) · **running** (7810215043722152745) |
-| `webtyp/keyring` | borra `Scheme`/`IsReference` | tras publicar `env` | [keyring/docs/PLAN.md](https://github.com/webtyp/keyring/blob/main/docs/PLAN.md) · escrito |
-| `webtyp/app` | pestaña DEPLOY (D17), MCP `deploy_*` (D21, D23, D26), SECRETS desde la declaración, diccionarios (D22), compilación del Worker con `goflare` directo | tras todos los anteriores | [app/docs/PLAN.md](https://github.com/webtyp/app/blob/main/docs/PLAN.md) · escrito, espera todos los anteriores |
-| `veltylabs/iam` | workflow con `d1-name` (D38) y `config/deploy.go` con `Vars` (D42) | **inmediatamente** tras publicar `goflare` (sin él, iam despliega sin D1) | etapas 10–12 de [iam/docs/PLAN.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN.md) (fusionadas con el plan de seguridad, que se despacha cuando `auth` publique; `d1-name` ya agregado al workflow, así que no hay ventana rota) · escrito |
+| `webtyp/goflare` | `deploy.Target` `goflare.Worker`: token de arranque (D27, D30, D40), token por proyecto, D1/R2 por nombre (D18, D38), secretos del Worker (D9), `Job` para CI (D37); `Dictionary()` | paralelo, tras `deploy` | **publicado v0.5.42** (`NewTarget`, `Worker`, `Dictionary`) |
+| `webtyp/github` | `deploy.CI` `github.Actions`: diagnóstico de `gh`, workflow generado, secretos de Actions, `Release` + estado del run (D19, D39); `Dictionary()` | paralelo, tras `deploy` | PR [#1](https://github.com/webtyp/github/pull/1) · **publicado v0.0.3** (2026-10-15) |
+| `webtyp/env` | entorno → `.env` → keyring del proyecto (D15); deja de usar `keyring.Scheme` | paralelo | publicado: ✅ Tag: v0.1.0 |
+| `webtyp/keyring` | borra `Scheme`/`IsReference` | tras publicar `env` | PR [#2](https://github.com/webtyp/keyring/pull/2) · **publicado v0.2.9** (2026-10-15) |
+| `webtyp/app` | pestaña DEPLOY (D17), MCP `deploy_*` (D21, D23, D26), SECRETS desde la declaración, diccionarios (D22), compilación del Worker con `goflare` directo | tras todos los anteriores | **publicado v0.7.0** (2026-10-20): el segundo intento de Jules no compilaba y se reescribió localmente contra las APIs reales (ver «Revisión del PR de `app`») |
+| `veltylabs/iam` | workflow con `d1-name` (D38) y `config/deploy.go` con `Vars` (D42) | **inmediatamente** tras publicar `goflare` (sin él, iam despliega sin D1) | publicado como v0.5.42 |
 | `veltylabs/misitio` | `config/deploy.go` con `Vars` (D42); borra pasos manuales de sus docs; rota secretos (D25) | último, aceptación | [misitio/docs/PLAN_DEPLOY_WIZARD.md](https://github.com/veltylabs/misitio/blob/main/docs/PLAN_DEPLOY_WIZARD.md) · escrito, espera `app` |
 
 ## Aceptación de la ola
@@ -248,3 +265,29 @@ arranque de Cloudflare en su keyring:
    después sin errores.
 5. Ningún secreto en `.env`, en el repo, en el keyring de nadie (salvo tokens de arranque y
    secretos de desarrollo) ni en el chat.
+
+## Adición enviada a un agente en ejecución (`codejob reply`, 2026-10-19, `app`, sesión 17048424785949401293)
+
+Jules avisó que las etapas 1–6 estaban hechas pero que no podía ejecutar las pruebas por un error del «private proxy». Respuesta textual: «Good progress; continue with Stage 7, Stage 8 and Stage 9 exactly as the plan says. One thing must change: do not deliver code you could not run. The private-proxy error is an environment setting, not a code problem. In every shell that runs go, set 'export GOPRIVATE=webtyp.com/*,github.com/veltylabs/*' and 'export GOFLAGS=-mod=mod', then run 'go mod tidy' and 'gotest' (install it with 'go install webtyp.com/devflow/cmd/gotest@latest' under the same variables). The Delivery check of the plan (gotest green, the greps, git diff --stat main) must pass before you open the PR, and the PR must contain the files of every stage: the previous attempt of this plan ended with an empty PR. If a module still cannot be fetched after this, stop and name the exact module and error in the PR instead of guessing types. Commit after each stage.»
+
+Segunda adición (2026-10-19, `app`, misma sesión): Jules perdió su trabajo con un `git reset --hard` en su sandbox y pidió confirmar si rehacía las etapas 1–9. Respuesta textual: «Yes: re-apply Stage 1 through Stage 9 now, using the solutions you already have in context, with GOPRIVATE and GOFLAGS set as indicated. To avoid losing work again: never run 'git reset --hard', 'git checkout -- .' or 'git clean' on this repository; commit after each stage ('git add -A && git commit') so every stage survives; run gotest after Stage 4, Stage 7 and Stage 8. Open the pull request when the last stage is done, with the Delivery check of the plan passing. A session that ends without a pull request is a failed delivery.»
+
+## Revisión del PR de `app` (2026-10-19, `webtyp/core` PR #30)
+
+El PR de Jules (segundo intento) **no compilaba**: escribió contra firmas inventadas de `deploy`, `goflare`, `github`, `keyring/auto` y `mcp`, sin `go.mod` actualizado, sin tests (los quitó), sin documentación y con un archivo suelto (`PR_DESCRIPTION.md`). Se corrigió **localmente en la rama del PR** (commit `aba1a60`) contra las APIs reales; `gotest` (vet, race, tests) en verde. Desviaciones del plan, juzgadas por mérito:
+
+- **`deploy_guide` sin argumento `item`**: devuelve los pasos de **todos** los ítems con la numeración de `deploy_status`. Un argumento exigía un modelo generado con `ormc` y la herramienta instalada no lo generaba para `client_models.go`; el agente ve todos los pasos y elige.
+- **Rotar**: en vez de un botón, un asistente que pide escribir `ROTATE` (reemplaza secretos de producción) y luego pide el valor nuevo de cada secreto tipeado. Se hizo así porque **no se puede registrar un manejador después de iniciar la TUI** (`UpdateAction` lo documenta: la lista de manejadores no tiene candado) y `Rotate()` devuelve ítems que hay que preguntar.
+- **Tests**: un archivo de raíz (`deploy_flow_test.go`, con su justificación) en vez de cuatro en `tests/`, porque ejercitan costuras no exportadas (el constructor de `Deployment`, los pasos del asistente, `ensureImports` con un ejecutor inyectado).
+- **`Handler.EdgeWorker`** (el `goflare` del Worker) reemplaza a `DeployManager`: el test de archivos no observados sigue necesitando acceso.
+- El criterio de aceptación `grep NewDaemon` coincide con `NewDaemonToolProvider` (anterior y ajeno); el plan debió acotarlo a `deploy.NewDaemon`.
+
+## Cierre de la ola (2026-10-20)
+
+**Comprobación real, no solo pruebas:** sobre un proyecto de prueba con `config/deploy.go` (`goflare.Worker`, `github.Actions`), `app` construyó el `Deployment` de verdad (`go vet -tags deploy`, `deploy.Scan`, llavero, `goflare.NewTarget`, `github.New`) y `Check()` devolvió la lista correcta: repositorio de GitHub (manual), workflow de despliegue (automático), workflow desactualizado (manual) y token de arranque de Cloudflare (se escribe en el asistente, con tres pasos). Sin fallas.
+
+**No verificado, y por qué:** la TUI real (los botones y asistentes se registran antes de iniciarla, y las pruebas usan una TUI simulada) y los pasos 1–5 de «Aceptación», que necesitan una cuenta de Cloudflare, `gh auth login` y dos personas.
+
+**Si la aceptación falla en la máquina del usuario:** anotar el paso y el mensaje exacto aquí y abrir un plan nuevo en `app` con la **firma exacta** de cada API que toque (regla agregada a la skill **plan-authoring** tras esta ola: el agente inventó firmas cuando el plan solo las nombraba).
+
+**Lo que sigue en otras olas:** `misitio` (re-layout M1–M8 y declaración de despliegue `misitio/docs/PLAN_DEPLOY_WIZARD.md`) depende de BUILD_DESTINATIONS, no de esta ola; M8 (favicon sin dependencia) quedó resuelto en `app` v0.7.0.

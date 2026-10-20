@@ -1,158 +1,63 @@
 # Consistencia visual entre módulos — master plan
-> **Status:** IN PROGRESS · 2026-10-14 · D1–D17 cerradas; widget, components, form e item_catalog publicados; layout retenido
+> **Status:** IN PROGRESS · 2026-10-20 · ola 3 cerrada en casi todos los módulos (grupo, `Label`, `decktabs`→grupo); `business_calendar` con un plan despachado (reloj 24h en el editor de horario); `item_catalog`/`service_catalog` sigue con `replace` locales
 
 Índice de olas: [MASTER_PLANS.md](MASTER_PLANS.md). Forma de trabajo: skill **master-plan** (este documento es el estado; el chat no resume).
 
-## 1. Objetivo
+## 1. Qué quedó fuera de este documento
 
-**`platformd` es el responsable de cómo se ve la app; un módulo solo declara *qué* contenido tiene.**
-El alcance es la consistencia **mínima** que el usuario percibe al cambiar de pantalla: **los
-formularios** (cada módulo es prácticamente un formulario) y **el encabezado del módulo**, que sube al
-header de la app. Las piezas visuales propias de un módulo, que nadie más reutiliza, siguen viviendo y
-estilizándose dentro del módulo (D7).
+Lo ya decidido y verificado pasó a **documentación y skills**; aquí solo vive lo que falta:
 
-Módulo de referencia: **`veltylabs/modules/item_catalog`** — el más simple; ya agrupa sus pantallas con
-`platformd.NewGroupUIModule`. Todo cambio de esta ola se prueba primero ahí.
+- **Reglas** (formulario, título único, roles de color, foco y selección ámbar, datos neutros): skill **ui-consistency** (`devskills/skills/ui-consistency`).
+- **Razones, prior art, alternativas descartadas y el experimento del anillo en degradado:** [UI_CONSISTENCY_DESIGN.md](UI_CONSISTENCY_DESIGN.md).
+- **Publicado antes:** `widget` v0.6.41 (`style.Heading()`), `form` v0.4.41 (etiqueta arriba, validar al salir, `Label` obligatorio, `Radio` en chips), `components` v0.8.31 (títulos con `Heading()`, `decktabs` borrado), `item_catalog` v0.3.76 (referencia: select de especialidad en el formulario, `Label` en todo campo).
 
-Fuera de alcance: rail y drawer de `platformd`, tema de color, iconografía, piezas visuales internas de un módulo.
+**Objetivo que sigue en pie:** `platformd` es responsable de cómo se ve la app; un módulo solo declara *qué* contenido tiene. Módulo de referencia: `veltylabs/modules/item_catalog` (todo cambio se prueba primero ahí). Fuera de alcance: rail y drawer de `platformd`, la *elección* del tema de color, iconografía y piezas internas de un módulo.
 
-## 2. Decisiones
+## 2. Decisiones cerradas por implementar
 
-- **D1** (cierra P11 original) — Este master plan va en el idioma del usuario; los `docs/PLAN.md` que se despachan con `codejob` van en inglés. Regla en **dev-protocols** y **master-plan**.
-- **D2** (cierra P1) — **Un solo formato de campo: etiqueta arriba del control**, igual en móvil y escritorio:
+**Formulario y color — hechos en local, sin publicar** (D3, D20, D21, D22, D23 y la accesibilidad de campos): el detalle de cada regla vive en la skill **ui-consistency** y en [UI_CONSISTENCY_DESIGN.md](UI_CONSISTENCY_DESIGN.md); lo que cambió en cada árbol está en §4.
 
-  ```
-   Nombre completo *              ← <label> texto, traducido, sin truncar
-  ┌──────────────────────────────┐
-  │ Dra. Ana Rojas               │ ← control a ancho completo, alto táctil ≥ 44px
-  └──────────────────────────────┘
-   Formato: 12.345.678-9           ← ayuda (solo si el modelo trae Help)
-   ⚠ RUT inválido                  ← error; reemplaza a la ayuda mientras exista
-  ```
+**Estructura en los módulos (esperan el tag de `layout`):** «Personal» (Datos y dispositivos / Horario / Servicios) pasa a ser un grupo con `platformd.NewGroupUIModule`, como `item_catalog` ([browser.go](../../veltylabs/modules/item_catalog/ui/browser.go)).
 
-  Se elimina el chip sobre el borde ([form/css.go](../form/css.go) `PartLabel` `OnEdge`) y el truncado
-  a 14 bytes ([form/render_input.go:19](../form/render_input.go#L19), `labelChars`). El markup de `form` ya
-  es `label → help → control → error` ([render_input.go:128-200](../form/render_input.go#L128-L200)): el
-  cambio es de hoja de estilos; todo módulo con `crudview` lo hereda sin tocar código. Respaldo: Baymard,
-  NN/g, GOV.UK Design System, Polaris, Material 3 (etiqueta arriba = más rápido de llenar, sin ambigüedad).
-- **D3** (cierra P2) — **Una sola columna** siempre, ancho máximo legible (~40rem). Se elimina `PartForm` `Grid(2, …)`.
-- **D4** (cierra P3) — **Ayuda y error debajo del control**; el error reemplaza a la ayuda; se valida **al
-  salir del campo y al enviar**, no en cada tecla.
-- **D5** (cierra P4) — **Todo formulario es `form.New` sobre un modelo existente.** Reserva paso 4: buscar
-  = `FindPatientByRutArgs` (`SubmitLabel("Search")`); registro = `Patient` con `ShowField(rut, name, phone,
-  email)`; online = `LinkPatientArgs`. Se borran `textField` y los `PartFlow*` de campo
-  ([booking_flow.go:370-374](../../veltylabs/modules/appointment_booking/ui/booking_flow.go#L370-L374)).
-- **D6** (cierra P5) — **El título del módulo sube al header de la app.**
-  - Móvil: **sin cambios** ([img/app-mod-header-mobile.png](img/app-mod-header-mobile.png)) — se ve bien y ocupa poco.
-  - Escritorio: desaparece la banda de título dentro del contenido (`rp__header`, ver
-    [img/app-mod-header-desktop-remove.png](img/app-mod-header-desktop-remove.png)); la esquina superior
-    izquierda del header muestra `[icono-app] [nombre-app] / [nombre-módulo]` (dinámico), fondo color
-    primario, texto e icono blancos. Hoy ([img/app-mod-header-desktop.png](img/app-mod-header-desktop.png))
-    el nombre del módulo solo aparece en móvil ([platformd/css.go:62-71](../layout/platformd/css.go#L62-L71)).
-  - El formulario empieza más arriba.
-  - **Los controles que hoy van junto al título van dentro del formulario**, no en el header
-    (`rightpanel.HeadControls`, `crudview.Config.Context`).
-  - **`decktabs` sale de las pantallas de módulo**: ocupa demasiado espacio; agrupar pantallas es
-    `platformd.NewGroupUIModule`, como ya hace `item_catalog`
-    ([item_catalog/ui/browser.go:96-104](../../veltylabs/modules/item_catalog/ui/browser.go#L96-L104)).
-    "Personal" (Datos y dispositivos / Horario / Servicios) pasa a ser un grupo.
-- **D7** (cierra P7) — **No se impide que un módulo estilice sus propias piezas** (mapa de planta,
-  editor de horario, etc.): hay piezas que no se reutilizan y mueren en su módulo. **No hay bloqueo en el
-  build** (`sitec` sale de la ola). La frontera de consistencia es: **campos → `form`**, **encabezado del
-  módulo → `platformd`**.
-- **D8** (cierra P8) — **Registro de paciente revelado en línea**: si el RUT no existe, el formulario de
-  registro aparece en el mismo paso con el RUT ya cargado; se elimina el `modaldialog` del paso 4.
-- **D9** (cierra P9; **reemplazada por D17**) — ~~`chipgrid` implementa `form.Renderer`~~: obligaba a los modelos de dominio a importar UI.
-- **D10** (cierra P10) — **Todo campo con widget declara `Label`** (inglés, se traduce) y `form` emite un
-  **diagnóstico ruidoso en desarrollo** si falta, en vez de mostrar el nombre del campo (hoy se ve "Name"
-  en `#personal`; `model.Field.Label` existe en [model/field.go:83-92](../model/field.go#L83-L92)).
+- **D5** — todo formulario es `form.New` sobre un modelo existente. Reserva paso 4: buscar = `FindPatientByRutArgs` (`SubmitLabel("Search")`); registro = `Patient` con `ShowField(rut, name, phone, email)`; online = `LinkPatientArgs`. Se borran `textField` y los `PartFlow*` de campo ([booking_flow.go:370-374](../../veltylabs/modules/appointment_booking/ui/booking_flow.go#L370-L374)).
+- **D8** — registro de paciente **en línea**: si el RUT no existe, el formulario de registro aparece en el mismo paso con el RUT cargado; se elimina el `modaldialog` del paso 4.
+- **D15 (resto)** — en `appointment_booking`: el selector de profesional de Horario y Servicios pasa a `crudview.Config.Scope` (ya existe en `layout`, local); «Máx. sobrecupo/día» → formulario de `CalendarConfig`. (El select de especialidad en `item_catalog` ya está publicado.)
+- **D16 (resto)** — Personal, `chat_room` y `business_calendar` pasan a `NewGroupUIModule`; entran los inputs a mano de `payment_manager` y `chat_room`; `room_layout` queda fuera (edición sobre lienzo). Se tomó por aceptada; corrígelo aquí si no.
 
-- **D11** (cierra P11) — **Foco con color primario**: el campo que se edita pinta su etiqueta (y el marco, con el tratamiento de foco de `Field`) en primario; el resto neutro. Es el único rasgo de marca del campo.
-- **D12** (cierra P12) — **Un solo nivel de título dentro del contenido**: `<h1>` = nombre del módulo en el header (`platformd`); dentro del contenido solo `<h2>` de sección con la receta `style.Heading()` (`widget/style`). Ningún componente ni módulo fija tamaño/peso de un título.
-- **D13** (cierra P13) — **Toda la barra del header en color primario** en escritorio, igual que en móvil; usuario y estado en blanco.
-- **D14** (cierra P14) — Hijo de un grupo: se muestra **`[app] / <pantalla activa>`** (lo que `activeLabel()` ya devuelve).
-- **D15** (cierra P15) — Valor del registro → campo del formulario (`item_catalog.specialty_id` como `input.Select()`, se borran `requireSpecialty` y `specialtyPicker`). **Filtro de alcance** → cabecera de la lista sobre el buscador: `crudview.Config.Context` pasa a `Config.Scope`. "Máx. sobrecupo/día" → formulario de `CalendarConfig`.
-- **D17** (cierra P17) — **El `Radio` de `form` se dibuja como chips** (misma apariencia que `chipgrid`: cajas táctiles en fila que se envuelven, la elegida en primario); `chipgrid` queda como selector fuera de formularios. Sin API nueva. Agregado al plan de `form` después del despacho y enviado a Jules con `codejob reply`.
-- **D16** (cierra P16) — `decktabs` se borra; Personal, `chat_room` y `business_calendar` pasan a `NewGroupUIModule`. Entran a la ola los inputs a mano de `payment_manager` y `chat_room`; `room_layout` queda fuera (edición sobre lienzo, D7).
-
-## 3. Evidencia
-
-| # | Pantalla | Qué se ve | De dónde sale |
-|---|---|---|---|
-| E1 | `#personal` → Datos y dispositivos | Chip de color sobre el borde, dos columnas, error en la esquina, H1 "Funcionarios" | [form/css.go](../form/css.go), [form/render_input.go:162-169](../form/render_input.go#L162-L169), [layout/rightpanel/rightpanel.go:110-112](../layout/rightpanel/rightpanel.go#L110-L112) |
-| E2 | `#appointment_booking` | Acordeón sin título de pantalla; campos a mano con etiqueta arriba y otra hoja de estilos; registro en un modal con un tercer estilo | [booking_flow.go:370-374](../../veltylabs/modules/appointment_booking/ui/booking_flow.go#L370-L374), [step_patient.go:37-46](../../veltylabs/modules/appointment_booking/ui/step_patient.go#L37-L46), [ui/css.go:39-55](../../veltylabs/modules/appointment_booking/ui/css.go#L39-L55) |
-| E3 | idem | Los campos a mano duplican modelos que ya declaran sus widgets | [patient_directory/model.go:16-40](../../veltylabs/modules/patient_directory/model.go#L16-L40) |
-| E4 | `#personal` | Etiqueta "Name" en inglés: el modelo no trae `Label` | [model/field.go:83-92](../model/field.go#L83-L92) |
-| E5 | todos | 4 jerarquías de título: H1 degradado (`rightpanel`), H3 (`stepaccordion`), H3 sueltos (`payment_manager/ui/browser.go:150`), H1 sueltos (`room_layout/ui/stage*.go`) | — |
-| E7 | 4 módulos | `<input>` a mano: appointment_booking, payment_manager, chat_room, room_layout | `grep -rn 'Input("' veltylabs/modules/*/ui` |
-| E8 | components | `actionbutton.ActionButton.Variant` es `string`; `widget/style` no tiene receta de título | [components/actionbutton](../components/actionbutton/README.md) |
-
-**Causa raíz**: `UIModule.View()` devuelve un `dom.Component` libre y el título vive *dentro* del
-contenido (`rightpanel.Title`), así que cada módulo decide si lo tiene y cómo; y `form` no es el único
-camino para un campo porque nada en el contrato lo hace más fácil que escribir `Input(...)`.
-
-## 4. Compuerta api-design
-
-1. **Prior art.** Flutter `Scaffold` / Android `TopAppBar` (el título de pantalla es del armazón, la
-   pantalla solo aporta `body`); Shopify Polaris `Page` + `FormLayout` (el producto compone, no estiliza
-   campos); Django admin / Rails scaffold (el formulario se genera del modelo). Aquí `form.New(model)` y
-   `UIModule.Label()` ya existen: falta que sean el **único** camino para campo y título.
-2. **Novice-name.** Sin nombres nuevos en `form` ni en `platformd` (el título sale de `Label()`). Nuevo:
-   `style.Heading()` (D12); `crudview.Config.Scope` reemplaza a `Context` (D15); `actionbutton.Variant` tipado. Se borran nombres, no se agregan.
-3. **Ledger.**
-   ```
-   Conceptos que aprender          −3  (Context, HeadControls, decktabs para agrupar)
-   Archivos para un form nuevo     −1  (css.go del módulo para sus campos)
-   Líneas en el módulo de reserva  −~120 (textField, modal, PartFlow*, css de campos)
-   Formas de hacer lo mismo        campo 3→1 · título 4→1 · agrupar pantallas 2→1
-   ```
-4. **Dónde vive.** Forma del campo: `form`. Título de módulo: `platformd`. Receta de título de sección:
-   `widget/style`. Agrupar pantallas: `platformd.NewGroupUIModule`. Piezas propias: el módulo (D7).
-5. **Qué borra.** `rightpanel.Title` y su fila de cabecera; `rightpanel.HeadControls`;
-   `crudview.Config.Context` (pasa a `Scope`); `components/decktabs`; `form` `labelChars` + truncado, chip
-   `OnEdge`, `Grid(2, …)`; en módulos: `textField`, `PartFlowField/Input/Check`, `requireSpecialty`,
-   `specialtyPicker`, el `modaldialog` del paso 4, `personal.go` con `decktabs`.
-
-## 5. Librerías comprometidas y orden
-
-Ola 1 no depende de nada; cada ola siguiente espera el tag publicado de la anterior.
-
-| Ola | Librería | Cambio | Decisiones | PLAN.md |
-|---|---|---|---|---|
-| 1 | `webtyp/widget` | `style.Heading()` | D12 | **publicado v0.6.41** (PR #8) |
-| 1 | `webtyp/form` | etiqueta arriba, una columna, ayuda/error abajo, validar al salir, foco primario, aviso sin `Label` | D2–D4, D10, D11, D17 | **publicado v0.4.41** (PR #26) |
-| 1 | `webtyp/layout` | título del módulo en el header (barra primaria, `<h1>`), `rightpanel` sin banda de título, `crudview` `Context` → `Scope` en la cabecera de la lista | D6, D12–D15 | escrito, **retenido** (ver Pendientes) |
-| 2 | `webtyp/components` | títulos con `Heading()`, `actionbutton.Variant` tipado, borrar `decktabs` | D12, D16 | **publicado v0.8.31** (PR #33) |
-| 3 | `veltylabs/modules/item_catalog` (referencia) | `specialty_id` como select en el form; borrar `requireSpecialty`/`specialtyPicker`; `Label` en todos los campos con widget | D5, D10, D15 | **publicado v0.3.76** (PR #11) |
-| 3 | `veltylabs/modules/appointment_booking` | Personal → grupo; reserva con `form.New`; registro en línea; `Scope` en Horario/Servicios; sobrecupo en form de `CalendarConfig` | D5, D6, D8, D15, D16 | pendiente: tags de form, layout, components |
-| 3 | `staff_manager`, `patient_directory` y demás con `crudview` | `Label` en todo campo con widget | D10 | pendiente: tag de form |
-| 3 | `chat_room`, `business_calendar`, `payment_manager` | `decktabs` → grupo; inputs a mano → `form` | D5, D16 | pendiente: tags de form y components |
-
-## 6. Relación con otras olas
-
-- **Independiente** de SECURITY_BY_DEFAULT y API_SURFACE.
-- **Comparte `form`/`dom`** con NO_REFLECTION_MASTER_PLAN (su ola 1 tocó `form`; hoy `form/docs/` no
-  tiene PLAN.md en cola): antes de escribir el PLAN.md de `form` se verifica que esa ola esté publicada.
-- **Extiende SOURCE_SELECTION** (D10: claves en inglés, `Label`/`Help` en los modelos).
-- **Cambia API publicada** de `layout` (`rightpanel.Title`, `HeadControls`, `crudview.Config.Context`) y
-  `components` (`decktabs`): sin consumidores externos fuera de `veltylabs`, se renombra/borra en esta ola (api-design gate 2).
-
-## 7. Preguntas abiertas
+## 3. Preguntas abiertas
 
 _(ninguna)_
 
-## 8. Pendientes
+## 4. Librerías y orden
 
-- **Seguimiento cada 15 min: detenido el 2026-10-14 a pedido del usuario.** Lo que sigue en vuelo se revisa a mano. Intentos de feedback por fallo, máximo 2: widget cerrado sin fallos · form cerrado (1 intento usado; en la revisión quité 7 archivos sueltos del agente y resolví un conflicto con `main` en `docs/PLAN.md`) · components cerrado sin fallos · item_catalog cerrado (1 intento usado; en la revisión agregué el log de error al cargar especialidades) (los `codejob reply` enviados fueron cambios de alcance, no fallos). Fuera de la ola: `webtyp/devflow` (arreglo de `codejob close`) **publicado v0.4.138** (PR #48; agregué en la revisión la aserción de que no vuelve a mergear).
+| Ola | Librería | Cambio | Estado |
+|---|---|---|---|
+| 1b | `webtyp/form` | **arreglo de «tenant_id required»:** el formulario conserva al guardar los campos del registro cargado que no muestra (sin widget); rejilla de 2 columnas, selección y check en ámbar, check de fila completa, radio con nombre accesible, select con guía y con `Picker()` (`PartSelect`), sin tooltip técnico | **publicado** `form` v0.4.43 |
+| 1b | `webtyp/widget` | superficie `Inverse`, `DockedClear(space)`, superficie `AccentOutline` (anillo inset de acento que no repinta) y receta `Picker()` + `PartSelect` (popup del select con `base-select`, bajo `@supports`); tests de comportamiento | **publicado** `widget` v0.6.43 (`AccentOutline`, `Inverse`, `DockedClear`, `Picker()` documentados en `docs/SPECS.md`) |
+| 1b | `webtyp/components` | `targetlist`: badge neutro sobre el borde inferior derecho (fuera del flujo, posición fija), hover/foco con `AccentOutline`; `chipgrid`, `cellgrid` y el día de `scheduleeditor` elegidos en ámbar; `usermenu`: el trigger lee sobre el header primario (`Button(Primary)`); se borra el test del badge sobre el borde | **publicado** `components` v0.8.34 |
+| 2 | `webtyp/layout` | título en el header (`<h1>` único y grande junto a la marca; nombre y versión de la app en el panel que abre la marca, `Platform.AppVersion`; barra primaria), `rightpanel` sin banda de título, `crudview` `Context` → `Scope` en la cabecera de la lista; mensaje en superficie `Inverse` bajo el header en móvil, `Auto()` ≥ 4 s, errores persistentes y sin apilar, «Could not save: …»; detalle a ancho completo en móvil | **publicado** `layout` v0.3.51 (etapas 1–5 de su plan, guardado como `docs/LAST_PLAN_EXECUTED.md`); `chatview` ya no usa `decktabs` (borrado de `components` en v0.8.31): lleva su propio selector de dos pestañas |
+| 3 | `veltylabs/modules/appointment_booking` | Personal → grupo; reserva con `form.New`; registro en línea; `Scope` en Horario/Servicios; sobrecupo en `CalendarConfig` | **cerrada** (landed junto con su migración de TIME_UNITS) |
+| 3 | `staff_manager`, `patient_directory`, `business_calendar`, `device_manager`, `editorial`, `service_catalog` | `Label` en todo campo con widget | **cerrada**: `staff_manager` v0.1.120, `patient_directory` v0.1.33, `business_calendar` v0.4.87, `device_manager` v0.2.55, `editorial` v0.0.25, `service_catalog` v0.5.4; de paso, `editorial.slug` y `service_catalog.Specialty.slug` tenían `Label: "Slug"` (jerga, no explica nada): ahora `Label`+`Help` describen qué hace el campo |
+| 3 | `chat_room`, `business_calendar`, `payment_manager` | `decktabs` → grupo; inputs a mano → `form` | **cerrada** |
+| 3 | `business_calendar` | editor de horario mostraba minutos-desde-medianoche para escribir («480» en vez de «08:00»): se cambia a reloj 24h (`input.Hour()`) | **despachada** (`docs/PLAN.md`, Jules, sesión 15090588848331827000) |
 
-- **`webtyp/layout` tiene cambios sin commit que no son de esta ola** (`platformd.go`, `README.md`,
-  `go.mod`: el selector de tema pasa al menú de usuario, siguiendo el PR #32 de components).
-  `codejob dispatch` publica todo el árbol de trabajo, así que **no despaché layout**. Confirmar si esos
-  cambios se publican (o se descartan) y luego `codejob dispatch` en `webtyp/layout`.
-- **components PR #32 cerrado a mano**: estaba mergeado pero sin publicar y `codejob close` falló porque la rama del PR ya no existía (defecto de `devflow`: `Close` revisa los commits del PR antes de detectar que ya está mergeado). Borré su `docs/PLAN.md` y publiqué con `gopush` (v0.8.30). El arreglo de `devflow` está publicado (v0.4.138).
-- **`webtyp/widget/docs/PLAN.md` era un plan ya ejecutado** (receta `AppBar`, commit `9207a13`): lo pasé a
-  `docs/LAST_PLAN_EXECUTED.md` para liberar `PLAN.md`.
-- **D16, segunda parte, se tomó por aceptada** (dejaste la pregunta sin responder): `payment_manager` y
-  `chat_room` entran; `room_layout` queda fuera. Corrígelo aquí si no es así.
-- Los planes de módulos (ola 3) se escriben cuando estén publicados los tags de su base, para fijar versiones exactas.
+Los planes de módulos (ola 3) se escriben cuando estén publicados los tags de su base, para fijar versiones exactas.
 
+## 5. Pendientes
+
+- **`item_catalog` conserva `replace` locales** a `form`, `components`, `widget` y `layout` (decisión del usuario: faltan detalles de UI). `gopush` los quita de los dependientes con commit de `go.mod` ('deps only'): tras cada `gopush` de esas librerías hay que volver a ponerlos (sin commit). Se quitan al cerrar `item_catalog`.
+- Fallos de la cascada **ajenos a esta ola** (mocks que no implementan `router.Route.RequiresMFA` / `router.Context.Assurance`): `patient_directory`, `room_layout`, `dbsync`, `pwa`; son de SECURITY_BY_DEFAULT.
+- Revisar `stepindicator`: su paso actual va en primario y el seleccionado en `AccentInverse`; D20 dice que «actual» es ámbar, pero la semántica de progreso es distinta y no se tocó.
+- **Módulos despachados (2026-10-19, `codejob`, Jules):** `business_calendar`, `chat_room` y `appointment_booking` (su `docs/PLAN.md`: `decktabs` → grupo, API nueva de `layout`, replaces locales fuera). Revisión cada 15 min con `codejob` + `codejob pull`. **Estacionado:** `appointment_booking/docs/PLAN_BOOKING_FORMS.md` (D5, D8 y sobrecupo en formulario) espera un release de `patient_directory` con `Label` en sus campos con widget (su plan está por escribir; su `gotest` hoy falla por mocks de `RequiresMFA`/`Assurance`, de SECURITY_BY_DEFAULT).
+- **Seguimiento de `mjosefa-cms`:** al publicarse `chat_room`, quitar `chatroomui.WithoutGroups()` de `modules/browser.go:69` (la opción se borra); su `go mod tidy` falla mientras los módulos con `decktabs` no se republiquen.
+- Escribir los planes de los demás módulos (ola 3) cuando estén los tags; migrar `appointment_booking` (hoy no compila: `decktabs` borrado, `RightPanel.Title/HeadControls` y `Config.Context` quitados de `layout`).
+- Borrar `widget.PartRadioChecked` / `PartRadioUnchecked` de `widget/field.go` (sin uso desde que el `Radio` es chips).
+- **Traducciones** («field Name is required», «Select an option», «Could not save/update/delete», etiquetas; 21+ claves en `item_catalog/lang.json`): `langc sync` y traducir.
+- Celdas huérfanas en la rejilla de 2 columnas: depende del orden de los campos del modelo; si molesta, el modelo declara `SpanFull`.
+- En móvil el botón flotante ↺ solapa ~14 px el borde derecho del último campo al final del scroll: margen en `crudview` (va en el plan de `layout`).
+- Icono de revelar contraseña activo (ámbar sobre fondo claro, ~1,7:1): vigilar el contraste.
+- Método: la demo regenera `style.css` solo ante un cambio de **contenido** (de `go.mod` o de un archivo del módulo con `replace`); el MCP del navegador no envía teclas, ni hover, ni cambia de tema: para eso se usa un Chromium aparte con `--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4` contra `https://localhost:8080`.
+
+## 6. Relación con otras olas
+
+Independiente de SECURITY_BY_DEFAULT y API_SURFACE. Comparte `form`/`dom` con NO_REFLECTION_MASTER_PLAN (su ola 1 ya está publicada). Extiende SOURCE_SELECTION (`Label`/`Help` en los modelos). Cambia API publicada de `layout` (`rightpanel.Title`, `HeadControls`, `crudview.Config.Context` → `Scope`) sin consumidores fuera de `veltylabs`.
