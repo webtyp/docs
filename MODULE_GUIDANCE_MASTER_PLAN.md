@@ -46,7 +46,7 @@ Ninguna.
 | H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | **despachada** (sesión 16563578987340549225) |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
-| H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | **despachadas** (sesiones 1520402411300222046 y 2078816032640775252) |
+| H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | [Antigravity · 2026-10-21 16:32] `pharmacy_manager` en revisión (PR #2); `supply_manager` en curso |
 | H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | tras cerrar H2b |
 
 ## Bloqueos
