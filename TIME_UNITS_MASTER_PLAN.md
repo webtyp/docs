@@ -1,5 +1,5 @@
 # Unidades de tiempo explícitas — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · olas 2a, 2b y 2c cerradas (`appointment_booking` v0.3.11); SECURITY_BY_DEFAULT cerrada 100% (misitio v0.0.11); `clinical_encounter` (2d) despachada a Jules (Antigravity); `misitio` y dependientes listas para 2e.
+> **Status:** IN PROGRESS · 2026-10-21 · olas 2a, 2b, 2c (`appointment_booking` v0.3.11) y 2d (`clinical_encounter` v0.2.17) **cerradas**; SECURITY_BY_DEFAULT cerrada 100% (misitio v0.0.11); `misitio` y dependientes listas para 2e tras BUILD_DESTINATIONS.
 
 Por qué y cómo: `webtyp/time/docs/ARCHITECTURE.md` (los dos tipos y por qué `time` importa `calendar`).
 
@@ -27,7 +27,7 @@ Ninguna.
 | T4c | `webtyp/dbsync` | quitar las conversiones `int64(...)` hacia `outbox` e `idempotency` | cerrada (`dbsync` v0.3.6) |
 | 2b | `staff_manager` | ídem | cerrada v0.1.119 |
 | 2c | `appointment_booking` | ídem (dos relojes duplicados, 15 campos de fecha, constantes `OnlineHoldSeconds`/`PaymentWindowSeconds` tipadas sin renombrar) | **cerrada** v0.3.11 (ejecutada en local tras límite de 3h; suite race/tests/wasm 100% limpia) |
-| 2d | `clinical_encounter` | ídem | `[Antigravity · 2026-10-21 08:35]` despachada a Jules |
+| 2d | `clinical_encounter` | ídem | **cerrada** v0.2.17 |
 | 2e | `mjosefa-cms`, `misitio`, `mjosefa-cote`, `alert_manager` (local) | ídem o en local si son 2 archivos o menos | tras todo lo anterior |
 | T5 | `devskills` | regla en **module-layout** | cerrada |
 
