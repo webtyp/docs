@@ -1,5 +1,6 @@
 # Avatar en vivo (`webtyp/avatar`) — master plan
 > **Status:** IN PROGRESS · 2026-10-20 · Despachados `widget` (fase 4) y `agentworker` (fase 6a). Esperando sus PR; `avatar` y `agenteval` tienen su plan escrito y se despachan al publicarse esos tags.
+> **A partir de ahora, Antigravity hace la revisión (`codejob pull` + **plan-review**) y el despacho de las fases 5, 5b, 6b en adelante; no hay temporizador de Claude corriendo.** Las marcas `[Claude · 2026-10-20 21:40/21:45]` de las fases 4 y 6a ya pasaron los 90 min: están libres, cualquier agente puede seguirlas sin pisarse.
 
 Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
 [`avatar/docs/ARCHITECTURE.md`](../avatar/docs/ARCHITECTURE.md).
