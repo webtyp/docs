@@ -119,7 +119,7 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `veltylabs/modules/patient_directory` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.41 |
 | `veltylabs/modules/staff_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.129 |
 | `veltylabs/modules/business_calendar` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.4.95 |
-| `veltylabs/modules/payment_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:34] revisando PR #4 |
+| `veltylabs/modules/payment_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.26 |
 | `veltylabs/modules/cash_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.2 |
 | `veltylabs/modules/room_layout` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:04] despachado (sesión 378554101422698965) |
 | `veltylabs/modules/chat_room` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.84 |
