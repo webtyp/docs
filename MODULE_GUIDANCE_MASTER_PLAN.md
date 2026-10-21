@@ -38,7 +38,7 @@ Ninguna.
 | H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **cerrada** v0.6.40 |
 | H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | **cerrada** v0.3.57 |
 | H2b | `webtyp/layout` (`platformd.go`) | botón «?» con panel de descripción + `platformd.Describe(m, text, steps...)` (conserva `UseNotifier`, `Badged`, grupo) | **cerrada** v0.3.63 |
-| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | [Antigravity · 2026-10-21 18:26] despachando |
+| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | [Antigravity · 2026-10-21 18:26] despachado (sesión 14992285505495030673) |
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **cerrada** v0.3.63 (junto con H2b) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
@@ -47,7 +47,7 @@ Ninguna.
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
 | H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | **cerradas** (`pharmacy_manager` v0.1.11, `supply_manager` v0.2.11) |
-| H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | [Antigravity · 2026-10-21 18:26] despachando |
+| H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | [Antigravity · 2026-10-21 18:27] despachado (`pharmacy` sesión 10868670966356070953, `supply` sesión 11417708814429379795) |
 
 ## Bloqueos
 
