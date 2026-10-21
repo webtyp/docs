@@ -1,5 +1,5 @@
 # Avatar en vivo (`webtyp/avatar`) — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · `agentworker` (fase 6a) cerrada v0.1.23; `widget` (fase 4) cerrada v0.6.44; `avatar` (fase 5) cerrada v0.2.0; `agenteval` (fase 6b) despachada a Jules (sesión 1984959015553858212).
+> **Status:** IN PROGRESS · 2026-10-20 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.0) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b completadas. Próximas: 5b (`avatarc`) y 6c (medición de laboratorio).
 > **Antigravity coordina la revisión (`codejob pull` + **plan-review**) y el despacho de las fases siguientes.**
 
 Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
@@ -40,7 +40,7 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | 5 | `webtyp/avatar` | v0.2.0: D7–D10, D12, D13, D19; corrige los defectos 1–7; subpaquete `reference` con `cote.svg` (ya copiado) y test que cruza motor y dibujo (D20) (`docs/PLAN.md` escrito) | **cerrada** v0.2.0 |
 | 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href` | plan tras cerrar la 5 |
 | 6a | `webtyp/agentworker` | `EventReply.DecideMs`/`TurnMs` (D18) (`docs/PLAN.md`) | **cerrada** v0.1.23 |
-| 6b | `webtyp/agenteval` | panel: mensajes de ejemplo, línea de tiempos y el avatar de referencia junto al chat (piensa mientras espera, habla la respuesta) (`docs/PLAN.md` escrito) | `[Antigravity · 2026-10-20 23:56]` en curso (sesión 1984959015553858212, finalizando etapa 6 docs y PR) |
+| 6b | `webtyp/agenteval` | panel: mensajes de ejemplo, línea de tiempos y el avatar de referencia junto al chat (piensa mientras espera, habla la respuesta) (`docs/PLAN.md` escrito) | **cerrada** v0.4.33 |
 | 6c | — (local) | correr el laboratorio con los 4 ejemplos por tier (plano/SIMD) y anotar tiempos y fallas en `agenteval/docs/REAL_TESTS.md`; con esos números se reabre P12 | tras cerrar la 6b |
 | 6d | `mjosefa-cote` | solo escenarios `evals/`: revalidar su `docs/PLAN.md` (escrito para agenteval v0.3.0) contra v0.4.x. Sin página de laboratorio propia (D20) | plan tras la 6c |
 | 7 | `agent`, `agentworker` | `Reply.Tone` (D17) y eventos de fase hacia la página | espera 6c |
