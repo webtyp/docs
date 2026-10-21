@@ -120,5 +120,10 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `veltylabs/modules/staff_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:50] despachado (sesión 3830856205489761289) |
 | `veltylabs/modules/business_calendar` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:51] despachado (sesión 5202149115176402781) |
 | `veltylabs/modules/payment_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:51] despachado (sesión 9886713861479132384) |
+| `veltylabs/modules/cash_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:03] despachando |
+| `veltylabs/modules/room_layout` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:03] despachando |
+| `veltylabs/modules/chat_room` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:03] despachando |
+| `veltylabs/modules/device_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:03] despachando |
+| `veltylabs/modules/network_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:03] despachando |
 | demás módulos (`veltylabs/modules/*`) | D6 y D14/D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | tras gates, en paralelo, un plan por repo | por despachar |
 | `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | plan por escribir |
