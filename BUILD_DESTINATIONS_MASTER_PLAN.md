@@ -125,5 +125,6 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `veltylabs/modules/chat_room` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:04] despachado (sesión 4781977923503768344) |
 | `veltylabs/modules/device_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:04] despachado (sesión 6061249605030948184) |
 | `veltylabs/modules/network_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:05] despachado (sesión 17907113701879890727) |
+| `veltylabs/modules/clinical_encounter` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:09] despachando |
 | demás módulos (`veltylabs/modules/*`) | D6 y D14/D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | tras gates, en paralelo, un plan por repo | por despachar |
 | `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | plan por escribir |
