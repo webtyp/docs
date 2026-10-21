@@ -47,7 +47,7 @@ Ninguna.
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
 | H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | **cerradas** (`pharmacy_manager` v0.1.11, `supply_manager` v0.2.11) |
-| H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | [Antigravity · 2026-10-21 18:45] revisando PR #4 (`pharmacy_manager`); `supply_manager` en curso |
+| H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | `pharmacy_manager` **cerrada** v0.1.14; `supply_manager` en curso (sesión 11417708814429379795) |
 
 ## Bloqueos
 
