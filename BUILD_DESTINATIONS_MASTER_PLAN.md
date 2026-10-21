@@ -115,5 +115,10 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `veltylabs/modules/appointment_booking` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | despachado (sesión 3516746636369494847) |
 | `veltylabs/modules/pharmacy_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.12 |
 | `veltylabs/modules/supply_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.12 |
+| `veltylabs/modules/service_catalog` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:49] despachando |
+| `veltylabs/modules/patient_directory` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:49] despachando |
+| `veltylabs/modules/staff_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:49] despachando |
+| `veltylabs/modules/business_calendar` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:49] despachando |
+| `veltylabs/modules/payment_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:49] despachando |
 | demás módulos (`veltylabs/modules/*`) | D6 y D14/D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | tras gates, en paralelo, un plan por repo | por despachar |
 | `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | plan por escribir |
