@@ -42,7 +42,7 @@ Ninguna.
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **despachada** junto con H2b (mismo plan) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
-| H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | **despachada** (sesión 15697860841372215455) |
+| H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | [Antigravity · 2026-10-21 16:10] en revisión (PR #4, sesión 15697860841372215455) |
 | H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | plan escrito y estacionado: `email/docs/PLAN_DRIVER_FIELDS.md`; al cerrar H4b, poner el tag y renombrar a `PLAN.md` |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
