@@ -37,9 +37,9 @@ Ninguna.
 |---|---|---|---|
 | H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **cerrada** v0.6.40 |
 | H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | **cerrada** v0.3.57 |
-| H2b | `webtyp/layout` (`platformd.go`) | botón «?» con panel de descripción + `platformd.Describe(m, text, steps...)` (conserva `UseNotifier`, `Badged`, grupo) | [Antigravity · 2026-10-21 18:18] revisando PR #45 |
-| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | tras cierre de H2b |
-| H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **despachada** junto con H2b (mismo plan) |
+| H2b | `webtyp/layout` (`platformd.go`) | botón «?» con panel de descripción + `platformd.Describe(m, text, steps...)` (conserva `UseNotifier`, `Badged`, grupo) | **cerrada** v0.3.63 |
+| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | por despachar |
+| H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **cerrada** v0.3.63 (junto con H2b) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
 | H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | **cerrada** v0.2.3 |
