@@ -1,6 +1,6 @@
 # Destinos de compilación — master plan
 
-> **Status:** IN PROGRESS · 2026-10-21 · D1–D16 cerradas (dos ejes: `wasm` de plataforma + `browser` de destino; `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`); `js` (v0.1.3), `html` (v0.0.28), `sitec` (v0.2.66) **cerrados y publicados**; faltan los planes de `devskills`, `devflow` y `router` (gates, ya desbloqueados por D16). **Cambio sin retrocompatibilidad en todo webtyp.**
+> **Status:** IN PROGRESS · 2026-10-21 · D1–D16 cerradas (dos ejes: `wasm` de plataforma + `browser` de destino; `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`); `js` (v0.1.3), `html` (v0.0.28), `sitec` (v0.2.66) **cerrados y publicados**; `devskills` v0.0.23 publicado (skills con los dos ejes); `devflow` y `router` **despachados** (gates); `server` ya generaba `//go:build !wasm` (nada que hacer). **Cambio sin retrocompatibilidad en todo webtyp.**
 
 **Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker) que se prueba en local
 con `web/server.go`. `//go:build wasm`/`!wasm` no distingue el Worker del navegador (los dos son
@@ -103,14 +103,14 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 
 | Repo | Cambio | Tipo | Plan |
 |---|---|---|---|
-| devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**, **wasm**, bloque base de **agents-md**: dos ejes y tabla de D15, D6, `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`, salida única en `web/` (D12) | primero (lo leen los agentes de todos los planes) | **pendiente por escribir** — siguiente paso de esta ola |
+| devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**, **wasm**, bloque base de **agents-md**: dos ejes y tabla de D15, D6, `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`, salida única en `web/` (D12) | primero (lo leen los agentes de todos los planes) | **cerrado** v0.0.23 |
 | `webtyp/js` | `DefaultWasmURL = "/browser.wasm"` (D1); docs y tests (`browser.wasm` / `browser.<hash>.wasm`) | **gate** de `sitec` y `app` | **cerrado** v0.1.3 |
 | `webtyp/html` | `scaffold/client.go` → `scaffold/browser.go` con `//go:build browser` (`tests/scaffold_test.go` compila con `-tags browser` hacia `browser.wasm`, D1/D4) | **gate** de `app` | **cerrado** v0.0.28 |
 | `webtyp/sitec` | `WasmBuildOptions` por defecto `web/browser.go` → `browser.wasm` (`browser.<hash>.wasm` en release) pasando `-tags browser` cuando compila `browser.go` (D1, D4, D7); `build.go` detecta `web/browser.go`; `reach.go` pasa `-tags=browser` en el sondeo `js/wasm` | **gate** de `goflare` y `app` (tras `js`) | **cerrado** v0.2.66 |
-| `webtyp/devflow` | `gotest`: una pasada por destino, cada una en su plataforma (D8, D16); plantillas de `gonew` | **gate** | plan por escribir |
-| `webtyp/router` | `layoutscan` (D10) | **gate** | plan por escribir |
+| `webtyp/devflow` | `gotest`: una pasada por destino, cada una en su plataforma (D8, D16); `gonew` no tiene plantillas afectadas | **gate** | **despachado** (sesión 18240306663496279394) |
+| `webtyp/router` | `layoutscan` (D10) | **gate** | **despachado** (sesión 42405233861288978) |
 | `webtyp/app` | cliente `-tags browser` (`web/browser.go` → `web/public/browser.wasm`, `scaffold/browser.go`); servidor sin etiqueta de destino; configuración del IDE | tras gates (`js`, `html`, `sitec`, `devflow`, `router`) | se fusiona al cerrar el plan en ejecución |
-| `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | tras gates | plan por escribir |
+| `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | — | **cerrado**: `maingen.go` ya lo emite |
 | `webtyp/goflare` | compila `web/edge.go` sin etiqueta de destino (deja de leer `edge/`) y rechaza `-tags browser` (D10); `OutputDir` por defecto `web/` (D12) | tras gates (`sitec`); se fusiona al cerrar el plan en ejecución (D41 de DEPLOY_WIZARD) | espera cierre de `goflare` |
 | módulos (`veltylabs/modules` y los que siguen **app-modules**) y los pocos archivos de librería importados por navegador y Worker a la vez | D6 y D14: `server.go` `!wasm` → `!browser`, `browser.go` → `browser`, demo `web/client.go` → `web/browser.go` | tras gates, en paralelo, un plan por repo | plan por escribir |
 | `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | plan por escribir |

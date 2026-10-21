@@ -1,5 +1,5 @@
 # Catálogo: servicios, farmacia e insumos — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · A, B1, B2, C0, C1, C2 cerradas; D23 (P22) cerrada; **C3 por despachar**; E espera MODULE_GUIDANCE; F espera la caja de MONEY_FLOWS
+> **Status:** IN PROGRESS · 2026-10-21 · A, B1, B2, C0, C1, C2 cerradas; D23 (P22) cerrada; **C3a despachada** (`clinical_encounter`, sesión 1480903546617489967); C3b (pantallas) va con E; E espera MODULE_GUIDANCE; F espera la caja de MONEY_FLOWS
 
 Razonamiento de las decisiones ya implementadas: [CATALOG_DESIGN.md](CATALOG_DESIGN.md).
 
@@ -11,6 +11,7 @@ Ninguna.
 
 | # | Decisión | Dónde se implementa |
 |---|---|---|
+| D24 | La atención guarda `service_id` (lo trae la reserva desde la agenda); sin servicio no se carga receta, solo líneas a mano | C3a |
 | D23 (P22) | Si al marcar la atención como realizada la rebaja falla (sin turno en box, sin bodega, sin stock, lote vencido): la atención **se cierra igual**; cada línea que no se pudo rebajar queda «pendiente de rebaja» y genera un aviso al área Insumos, que la resuelve desde su pantalla | C3 |
 | D5 | El uso de insumos se registra en la atención, con instantánea, y se rebaja **una sola vez** | C |
 | D6 | Cada línea de uso tiene la bandera `billable`, por omisión no cobrable | C |
@@ -35,7 +36,8 @@ Ninguna.
 | C0 | `room_layout` | lector `RoomOfOccupant`: en qué box tiene turno un profesional en un instante | cerrada v0.3.37 |
 | C1 | `service_catalog` | receta de insumos (`service_supply`, lector `ServiceRecipe`); `mcp.go` separado en `module.go`, `errors.go`, `ops.go` | cerrada v0.5.0; **su pantalla** (elegir insumos) va con E |
 | C2 | `supply_manager` | `room_id` en la ubicación (una activa por box) y `UseInRoom` | cerrada v0.2.0; **elegir el box** en el formulario va con E |
-| C3 | `clinical_encounter` | `tenant_id`, líneas de uso desde la receta, ajuste, rebaja al realizar (D23) | plan por escribir y despachar |
+| C3a | `clinical_encounter` | `tenant_id`, `service_id`, líneas de uso desde la receta, ajuste, `CompleteVisit` con rebaja, pendientes + aviso (D23), reintento | **despachada** (sesión 1480903546617489967) |
+| C3b | `clinical_encounter` | pantallas: lista de insumos antes de cerrar (D21) y pendientes de Insumos; demo con `room_layout`/`supply_manager` | tras C3a, con E |
 | E | `pharmacy_manager`, `supply_manager`, `service_catalog` | pantallas de stock, entradas, salidas y próximos a vencer; elegir el box de una ubicación; armar la receta del servicio | espera MODULE_GUIDANCE |
 | F | módulo de venta (nuevo) | venta al público | después de la caja (MONEY_FLOWS M2–M4) y de K1 |
 | D | `mjosefa-cms` | grupos «Farmacia» e «Insumos» en el menú; permisos por módulo | pendiente, después de E |

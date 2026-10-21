@@ -1,5 +1,5 @@
 # Avatar en vivo (`webtyp/avatar`) — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.0) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b completadas. `mjosefa-cote` ya commiteó su integración (`600b900`): fase 9 queda libre para despachar. Próximas: 5b (`avatarc`), 6c (medición local) y 9.
+> **Status:** IN PROGRESS · 2026-10-21 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.0) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b completadas. 5b (`avatarc`, ids en una sola lista, hrefs precalculados) **despachada** (sesión 203486620831700554). Lo de agentes (6c en adelante y 9) queda para la etapa final; pruebas solo en `agenteval`, nunca en `mjosefa-cms` hasta decidir la arquitectura (dueño, 2026-10-21).
 > **Antigravity coordina la revisión (`codejob pull` + **plan-review**) y el despacho de las fases siguientes.**
 
 Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
@@ -38,14 +38,14 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | 3 | `webtyp/avatar` | motor v0.1.0 | cerrada v0.1.0; la reemplaza la 5 |
 | 4 | `webtyp/widget` | `Blink()`, `Breathe()`, `Frame(i, n, Cadence)` + movimiento reducido + validación "una animación por elemento" (`docs/PLAN.md`) | **cerrada** v0.6.44 |
 | 5 | `webtyp/avatar` | v0.2.0: D7–D10, D12, D13, D19; corrige los defectos 1–7; subpaquete `reference` con `cote.svg` (ya copiado) y test que cruza motor y dibujo (D20) (`docs/PLAN.md` escrito) | **cerrada** v0.2.0 |
-| 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href` | plan tras cerrar la 5 |
+| 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href`; `RequiredSymbols` y hrefs precalculados (D13) | **despachada** (sesión 203486620831700554) |
 | 6a | `webtyp/agentworker` | `EventReply.DecideMs`/`TurnMs` (D18) (`docs/PLAN.md`) | **cerrada** v0.1.23 |
 | 6b | `webtyp/agenteval` | panel: mensajes de ejemplo, línea de tiempos y el avatar de referencia junto al chat (piensa mientras espera, habla la respuesta) (`docs/PLAN.md` escrito) | **cerrada** v0.4.33 |
 | 6c | — (local) | correr el laboratorio con los 4 ejemplos por tier (plano/SIMD) y anotar tiempos y fallas en `agenteval/docs/REAL_TESTS.md`; con esos números se reabre P12 | tras cerrar la 6b |
 | 6d | `mjosefa-cote` | solo escenarios `evals/`: revalidar su `docs/PLAN.md` (escrito para agenteval v0.3.0) contra v0.4.x. Sin página de laboratorio propia (D20) | plan tras la 6c |
 | 7 | `agent`, `agentworker` | `Reply.Tone` (D17) y eventos de fase hacia la página | espera 6c |
 | 8 | `qwen`, `agenteval` | medir la pregunta de tono del decider (D16) | espera 6c |
-| 9 | `mjosefa-cote` | importar `avatar/reference` y borrar su copia (`svg.go`, `docs/avatar/img/cote-base-v1.2.svg`, `docs/avatar/preview.html`); su `web/client.go` de prueba se borra (el laboratorio lo reemplaza, D20) | lista para despachar (integración ya commiteada) |
+| 9 | `mjosefa-cote` | importar `avatar/reference` y borrar su copia (`svg.go`, `docs/avatar/img/cote-base-v1.2.svg`, `docs/avatar/preview.html`); su `web/client.go` de prueba se borra (el laboratorio lo reemplaza, D20) | **diferida** a la etapa final de agentes (dueño, 2026-10-21) |
 
 ### Dependencias (quién importa a quién)
 
