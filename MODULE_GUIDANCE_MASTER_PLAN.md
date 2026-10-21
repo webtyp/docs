@@ -1,5 +1,5 @@
 # Ayuda integrada en los módulos, avisos por módulo y rediseño de `alert_manager` — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · P1–P16 aceptadas (todas); H1, H2a, H2b, H2c (v0.3.64), H2d, H3, H4, H4b (v0.2.3), H5 (v0.1.3), H7, H8 (`supply_manager` v0.2.11, `pharmacy_manager` v0.1.11), H8b (`pharmacy_manager` v0.1.14) cerradas; **en vuelo**: `supply_manager` (H8b); H6 espera; `alert_manager` local, sin publicar
+> **Status:** IN PROGRESS · 2026-10-21 · P1–P16 aceptadas (todas); H1, H2a, H2b, H2c (v0.3.64), H2d, H3, H4, H4b (v0.2.3), H5 (v0.1.3), H7, H8 (`supply_manager` v0.2.11, `pharmacy_manager` v0.1.11), H8b (`pharmacy_manager` v0.1.14, `supply_manager` v0.2.14) cerradas; H6 espera; `alert_manager` local, sin publicar
 
 Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se explica solo y guía paso a paso; nadie debe tener que explicarlo.
 
@@ -47,7 +47,7 @@ Ninguna.
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
 | H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | **cerradas** (`pharmacy_manager` v0.1.11, `supply_manager` v0.2.11) |
-| H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | `pharmacy_manager` **cerrada** v0.1.14; `supply_manager` [Antigravity · 2026-10-21 19:30] revisando PR #5 |
+| H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | **cerradas** (`pharmacy_manager` v0.1.14, `supply_manager` v0.2.14) |
 
 ## Bloqueos
 
