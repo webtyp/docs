@@ -36,7 +36,7 @@ Ninguna.
 | C0 | `room_layout` | lector `RoomOfOccupant`: en qué box tiene turno un profesional en un instante | cerrada v0.3.37 |
 | C1 | `service_catalog` | receta de insumos (`service_supply`, lector `ServiceRecipe`); `mcp.go` separado en `module.go`, `errors.go`, `ops.go` | cerrada v0.5.0; **su pantalla** (elegir insumos) va con E |
 | C2 | `supply_manager` | `room_id` en la ubicación (una activa por box) y `UseInRoom` | cerrada v0.2.0; **elegir el box** en el formulario va con E |
-| C3a | `clinical_encounter` | `tenant_id`, `service_id`, líneas de uso desde la receta, ajuste, `CompleteVisit` con rebaja, pendientes + aviso (D23), reintento | [Antigravity · 2026-10-21 16:38] en curso (sesión 1480903546617489967) |
+| C3a | `clinical_encounter` | `tenant_id`, `service_id`, líneas de uso desde la receta, ajuste, `CompleteVisit` con rebaja, pendientes + aviso (D23), reintento | [Antigravity · 2026-10-21 18:01] revisando PR #9 |
 | C3b | `clinical_encounter` | pantallas: lista de insumos antes de cerrar (D21) y pendientes de Insumos; demo con `room_layout`/`supply_manager` | tras C3a, con E |
 | E | `pharmacy_manager`, `supply_manager`, `service_catalog` | pantallas de stock, entradas, salidas y próximos a vencer; elegir el box de una ubicación; armar la receta del servicio | espera MODULE_GUIDANCE |
 | F | módulo de venta (nuevo) | venta al público | después de la caja (MONEY_FLOWS M2–M4) y de K1 |

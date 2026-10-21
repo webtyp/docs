@@ -112,7 +112,7 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `webtyp/app` | cliente `-tags browser` (`web/browser.go` → `web/public/browser.wasm`, `scaffold/browser.go`); servidor sin etiqueta de destino; configuración del IDE | tras gates (`js`, `html`, `sitec`, `devflow`, `router`) | [Antigravity · 2026-10-21 17:19] despachado (sesión 13590018183934190997) |
 | `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | — | **cerrado**: `maingen.go` ya lo emite |
 | `webtyp/goflare` | compila `web/edge.go` sin etiqueta de destino (deja de leer `edge/`) y rechaza `-tags browser` (D10); `OutputDir` por defecto `web/` (D12) | tras gates (`sitec`) | [Antigravity · 2026-10-21 17:17] despachado (sesión 6212008180401272509) |
-| `veltylabs/modules/appointment_booking` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | despachado (sesión 3516746636369494847) |
+| `veltylabs/modules/appointment_booking` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:01] revisando PR #21 |
 | `veltylabs/modules/pharmacy_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.12 |
 | `veltylabs/modules/supply_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.12 |
 | `veltylabs/modules/service_catalog` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:50] despachado (sesión 11754236225602002332) |
