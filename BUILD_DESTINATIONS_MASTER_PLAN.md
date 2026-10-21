@@ -108,7 +108,7 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `webtyp/html` | `scaffold/client.go` → `scaffold/browser.go` con `//go:build browser` (`tests/scaffold_test.go` compila con `-tags browser` hacia `browser.wasm`, D1/D4) | **gate** de `app` | **cerrado** v0.0.28 |
 | `webtyp/sitec` | `WasmBuildOptions` por defecto `web/browser.go` → `browser.wasm` (`browser.<hash>.wasm` en release) pasando `-tags browser` cuando compila `browser.go` (D1, D4, D7); `build.go` detecta `web/browser.go`; `reach.go` pasa `-tags=browser` en el sondeo `js/wasm` | **gate** de `goflare` y `app` (tras `js`) | **cerrado** v0.2.66 |
 | `webtyp/devflow` | `gotest`: una pasada por destino, cada una en su plataforma (D8, D16); `gonew` no tiene plantillas afectadas | **gate** | **despachado** (sesión 18240306663496279394) |
-| `webtyp/router` | `layoutscan` (D10) | **gate** | **despachado** (sesión 42405233861288978) |
+| `webtyp/router` | `layoutscan` (D10) | **gate** | [Antigravity · 2026-10-21 16:24] en revisión (sesión 42405233861288978) |
 | `webtyp/app` | cliente `-tags browser` (`web/browser.go` → `web/public/browser.wasm`, `scaffold/browser.go`); servidor sin etiqueta de destino; configuración del IDE | tras gates (`js`, `html`, `sitec`, `devflow`, `router`) | se fusiona al cerrar el plan en ejecución |
 | `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | — | **cerrado**: `maingen.go` ya lo emite |
 | `webtyp/goflare` | compila `web/edge.go` sin etiqueta de destino (deja de leer `edge/`) y rechaza `-tags browser` (D10); `OutputDir` por defecto `web/` (D12) | tras gates (`sitec`); se fusiona al cerrar el plan en ejecución (D41 de DEPLOY_WIZARD) | espera cierre de `goflare` |
