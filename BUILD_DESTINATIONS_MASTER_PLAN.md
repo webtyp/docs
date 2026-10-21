@@ -1,6 +1,6 @@
 # Destinos de compilación — master plan
 
-> **Status:** IN PROGRESS · 2026-10-21 · D1–D16 cerradas (dos ejes: `wasm` de plataforma + `browser` de destino; `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`); `js`, `html`, `sitec` **despachados** (sesiones 1056176574103482956, 1466854644911309856, 11030676366596612176); faltan los planes de `devflow` y `router` (gates, ya desbloqueados por D16). **Cambio sin retrocompatibilidad en todo webtyp.**
+> **Status:** IN PROGRESS · 2026-10-21 · D1–D16 cerradas (dos ejes: `wasm` de plataforma + `browser` de destino; `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`); `js` (v0.1.3), `html` (v0.0.28), `sitec` (v0.2.66) **cerrados y publicados**; faltan los planes de `devskills`, `devflow` y `router` (gates, ya desbloqueados por D16). **Cambio sin retrocompatibilidad en todo webtyp.**
 
 **Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker) que se prueba en local
 con `web/server.go`. `//go:build wasm`/`!wasm` no distingue el Worker del navegador (los dos son
@@ -104,9 +104,9 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | Repo | Cambio | Tipo | Plan |
 |---|---|---|---|
 | devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**, **wasm**, bloque base de **agents-md**: dos ejes y tabla de D15, D6, `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`, salida única en `web/` (D12) | primero (lo leen los agentes de todos los planes) | **pendiente por escribir** — siguiente paso de esta ola |
-| `webtyp/js` | `DefaultWasmURL = "/browser.wasm"` (D1); docs y tests (`browser.wasm` / `browser.<hash>.wasm`) | **gate** de `sitec` y `app` | **despachado** (sesión 1056176574103482956) |
-| `webtyp/html` | `scaffold/client.go` → `scaffold/browser.go` con `//go:build browser` (`tests/scaffold_test.go` compila con `-tags browser` hacia `browser.wasm`, D1/D4) | **gate** de `app` | **despachado** (sesión 1466854644911309856) |
-| `webtyp/sitec` | `WasmBuildOptions` por defecto `web/browser.go` → `browser.wasm` (`browser.<hash>.wasm` en release) pasando `-tags browser` cuando compila `browser.go` (D1, D4, D7); `build.go` detecta `web/browser.go`; `reach.go` pasa `-tags=browser` en el sondeo `js/wasm` | **gate** de `goflare` y `app` (tras `js`) | **despachado** (sesión 11030676366596612176) |
+| `webtyp/js` | `DefaultWasmURL = "/browser.wasm"` (D1); docs y tests (`browser.wasm` / `browser.<hash>.wasm`) | **gate** de `sitec` y `app` | **cerrado** v0.1.3 |
+| `webtyp/html` | `scaffold/client.go` → `scaffold/browser.go` con `//go:build browser` (`tests/scaffold_test.go` compila con `-tags browser` hacia `browser.wasm`, D1/D4) | **gate** de `app` | **cerrado** v0.0.28 |
+| `webtyp/sitec` | `WasmBuildOptions` por defecto `web/browser.go` → `browser.wasm` (`browser.<hash>.wasm` en release) pasando `-tags browser` cuando compila `browser.go` (D1, D4, D7); `build.go` detecta `web/browser.go`; `reach.go` pasa `-tags=browser` en el sondeo `js/wasm` | **gate** de `goflare` y `app` (tras `js`) | **cerrado** v0.2.66 |
 | `webtyp/devflow` | `gotest`: una pasada por destino, cada una en su plataforma (D8, D16); plantillas de `gonew` | **gate** | plan por escribir |
 | `webtyp/router` | `layoutscan` (D10) | **gate** | plan por escribir |
 | `webtyp/app` | cliente `-tags browser` (`web/browser.go` → `web/public/browser.wasm`, `scaffold/browser.go`); servidor sin etiqueta de destino; configuración del IDE | tras gates (`js`, `html`, `sitec`, `devflow`, `router`) | se fusiona al cerrar el plan en ejecución |
