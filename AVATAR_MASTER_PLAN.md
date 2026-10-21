@@ -1,5 +1,5 @@
 # Avatar en vivo (`webtyp/avatar`) — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · Arreglo de `svg` listo en local (falta verificación visual: reiniciar el daemon webtyp). Siguiente: plan de `widget` (fase 4) y medir el decider en la demo de Cote (fase 6).
+> **Status:** IN PROGRESS · 2026-10-20 · Despachados `widget` (fase 4) y `agentworker` (fase 6a). Esperando sus PR; `avatar` y `agenteval` tienen su plan escrito y se despachan al publicarse esos tags.
 
 Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
 [`avatar/docs/ARCHITECTURE.md`](../avatar/docs/ARCHITECTURE.md).
@@ -13,7 +13,7 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | # | Decisión | Dónde se implementa |
 |---|---|---|
 | D7 (P5) | Tres canales independientes: `Activity` (Idle, Greeting, Listen, Think, Speak, Fatigue), `Emotion` (Neutral, Happy, Sad, Astonished, Angry) y uno autónomo (parpadeo, respiración) que nunca se pausa. Dueño por capa: boca = visema de `Speak` > actividad > emoción; cejas/ojos = emoción, el parpadeo los pisa 150 ms; manos/extras = actividad | `avatar` |
-| D8 (P2, corregida) | Go nunca corre un bucle: cada setter escribe 1–2 atributos `data-*` en el mismo llamado. Parpadeo, sílabas, puntos de pensar y respiración son animaciones CSS (receta *flipbook* de N cuadros en `widget/style`). Solo 2 timers Go, creados una vez y reutilizados: fin de locución (duración según el texto) y bostezo 10–30 s. Sin `go`, sin `js.FuncOf` por cuadro | `widget` + `avatar` |
+| D8 (P2, corregida) | Go nunca corre un bucle: cada setter cambia el `href`/`display` de cada capa en el mismo llamado (`widget.State` es un conjunto cerrado de 8 estados genéricos, así que el CSS no selecciona "triste" ni "hablando"). Parpadeo, respiración, sílabas, manos, puntos de pensar, zzz y ondas son CSS (`Blink`, `Breathe`, `Frame` en `widget/style`). Timers Go solo en eventos raros: fin de `Speak` y pasos del bostezo (`time` no tiene `Reset`). Sin `go`, nada por cuadro | `widget` + `avatar` |
 | D9 (P3, P6, P10) | El nombre queda `webtyp/avatar` (el usuario no quiere otro por ahora). Por eso no hay repo nuevo: los tipos de contrato (`Activity`, `Emotion`, `Viseme`) y la implementación SVG conviven en `avatar`, separados en `catalog.go` (armado) y `engine.go` (en vivo). Se parte en contrato + implementación solo cuando exista una segunda implementación | `avatar` |
 | D10 (P7) | Slots con nombre `Shirt`, `Earrings`, `Glasses` en el catálogo, opcionales (vacío = no se dibuja), con orden de capas fijo | `avatar` |
 | D11 (P9) | La emoción la da el decider; `agent` nunca importa el avatar: emite datos, `agentworker` los lleva a la página, la página anima | `agent`, `agentworker`, Cote |
@@ -23,18 +23,23 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | D15 (P12) | Antes de decidir quién da la actividad, medir el decider en la demo de Cote. Ojo: decider-0.8b pesa más que el writer (≈ 529 MB vs ≈ 230 MB en int4); es más barato solo porque responde una letra, pero leer el prompt (prefill) domina su tiempo | `mjosefa-cote` |
 | D16 (P13) | Las plantillas de Cote declaran su tono en código; el decider pregunta el tono solo en turnos del writer, con redacción medida antes en `agenteval` | Cote, `qwen`, `agenteval` |
 | D17 (P14) | El tono es `agent.Reply.Tone` (tipo de `agent`); la página de Cote lo traduce a `avatar.Emotion` (~6 líneas); `tts` v2 leerá el mismo `Tone` | `agent`, Cote |
+| D18 (D15) | `agentworker` construye el decider y la app no puede envolverlo: `agentworker` mide cada `Decide` y el turno, y `EventReply` lleva `DecideMs []int64` y `TurnMs` (como `timings` de llama.cpp). El panel del laboratorio muestra una línea por turno y ofrece mensajes de ejemplo | `agentworker`, `agenteval/ui` |
+| D19 | Sin estado `Happy` en el SVG: `Happy` usa las variantes `greeting`. `Viseme` no se agrega hasta que exista TTS (v2) | `avatar` |
 
 ## Fases
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | 1 | `webtyp/svg` | `AddLayers` | cerrada v0.3.28 |
-| 1b | `webtyp/svg` | `AddLayers` emitía **vacíos** los grupos de Inkscape (salto de línea tras `<g`) y dejaba ocultos sus hijos (`display:none`): por eso no se veían manos ni nube. Test ampliado en `sprite/layers_test.go`; verificado contra `cote-base-v1.2.svg` | [Claude · 2026-10-20 21:15] local + `replace` en Cote; falta verificación visual y `gopush` |
+| 1b | `webtyp/svg` | `AddLayers` vaciaba los grupos de Inkscape y dejaba ocultos sus hijos (por eso no se veían manos ni nube) | cerrada v0.3.30 (verificada en vivo) |
 | 2 | `webtyp/widget` | recetas `Wave`, `Pulse`, `Pivot` | cerrada v0.6.42 |
 | 3 | `webtyp/avatar` | motor v0.1.0 | cerrada v0.1.0; la reemplaza la 5 |
-| 4 | `webtyp/widget` | receta *flipbook* (N cuadros, período, `prefers-reduced-motion`) y parpadeo, solo CSS (D8) | lista para plan |
-| 5 | `webtyp/avatar` | v0.2: D7–D10, D12–D14; corrige los defectos de v0.1.0. Búsqueda en el ecosistema: reutiliza `svg/sprite`, `widget/style`, `dom`; `avatarc` sigue el patrón de `ormc`/`langc` | espera 4 |
-| 6 | `mjosefa-cote` | demo con Cote real en el Worker (`agentworker`) + `select` de mensajes de ejemplo para no escribir; registrar el tiempo de cada pregunta al decider (herramienta, tono) por tier. Es la fase 5 del master de agentes | lista para plan |
+| 4 | `webtyp/widget` | `Blink()`, `Breathe()`, `Frame(i, n, Cadence)` + movimiento reducido + validación "una animación por elemento" (`docs/PLAN.md`) | [Claude · 2026-10-20 21:40] despachada, Jules 2069284888834209850 |
+| 5 | `webtyp/avatar` | v0.2.0: D7–D10, D12, D13, D19; corrige los defectos 1–7 (`docs/PLAN.md` escrito) | plan listo; despachar al publicarse la 4 (anotar su tag en la etapa 1) |
+| 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href` | plan tras cerrar la 5 |
+| 6a | `webtyp/agentworker` | `EventReply.DecideMs`/`TurnMs` (D18) (`docs/PLAN.md`) | [Claude · 2026-10-20 21:45] despachada, Jules 12012621688757113334 |
+| 6b | `webtyp/agenteval` | panel: mensajes de ejemplo + línea de tiempos (`docs/PLAN.md` escrito) | plan listo; despachar al publicarse la 6a |
+| 6c | `mjosefa-cote` | `web/workers/cote/main.go` (`agentworker.Serve` con `cote.Config` y `business_calendar` por `mcp.NewLocalClient`) + página con `agenteval/ui.New(scripts, ejemplos de Cote...)`; luego medir por tier. Fusionar con su `docs/PLAN.md` (escenarios, revalidar contra agenteval v0.4.x). Antes: publicar su trabajo local sin commitear (integración del avatar) | escribir el plan al publicarse la 6b, leyendo las firmas de ese tag |
 | 7 | `agent`, `agentworker` | `Reply.Tone` (D17) y eventos de fase hacia la página | espera 6 |
 | 8 | `qwen`, `agenteval` | medir la pregunta de tono del decider (D16) | espera 6 |
 | 9 | `mjosefa-cote` | migrar `web/client.go`, no ignorar el error de `AddLayers`, CSS por `widget/style`, borrar `docs/avatar/preview.html` | espera 5 |
@@ -76,7 +81,8 @@ sequenceDiagram
 
 ## Bloqueos
 
-- 2026-10-20 · Verificación visual de 1b: el daemon webtyp no vuelve a extraer el sprite (`restart_development` solo se reengancha; tocar `svg.go` no dispara nada). Espera que el usuario reinicie el daemon.
+- 2026-10-20 · `mjosefa-cote` tiene sin commitear la integración del avatar (`avatar.go`, `svg.go`, `web/client.go`, cambios al `.svg` y a `preview.html`): Jules no la ve hasta publicarla. Espera el OK del usuario.
+- 2026-10-20 · Daemon webtyp: `restart_development` solo se reengancha y no vuelve a extraer el sprite cuando cambia una dependencia (hubo que reiniciarlo a mano). Defecto de `webtyp/app` sin trazar.
 
 ## Relación con otras olas
 
