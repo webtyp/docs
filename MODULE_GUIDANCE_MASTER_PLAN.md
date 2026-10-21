@@ -43,7 +43,7 @@ Ninguna.
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
 | H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | **cerrada** v0.2.3 |
-| H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | [Antigravity · 2026-10-21 16:44] en revisión (PR #2, sesión 16563578987340549225) |
+| H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | **cerrada** v0.1.3 |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
 | H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | `pharmacy_manager` **cerrada** v0.1.11; `supply_manager` en curso (sesión 2078816032640775252) |
