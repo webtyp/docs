@@ -1,5 +1,5 @@
 # Unidades de tiempo explícitas — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · ola 2a y 2b cerradas; `appointment_booking`/`clinical_encounter` en curso (Antigravity); `misitio` desbloqueada (espera cierre de SECURITY_BY_DEFAULT §9)
+> **Status:** IN PROGRESS · 2026-10-21 · olas 2a y 2b cerradas; SECURITY_BY_DEFAULT cerrada 100% (misitio v0.0.11); `appointment_booking`/`clinical_encounter` en curso (Antigravity); `misitio` lista para 2e.
 
 Por qué y cómo: `webtyp/time/docs/ARCHITECTURE.md` (los dos tipos y por qué `time` importa `calendar`).
 
@@ -26,8 +26,8 @@ Ninguna.
 | T4b | `webtyp/outbox`, `webtyp/idempotency` | tipar su reloj y sus instantes (`time.Nano`), ruptura de API | cerradas (`outbox` v0.1.6, `idempotency` v0.1.1) |
 | T4c | `webtyp/dbsync` | quitar las conversiones `int64(...)` hacia `outbox` e `idempotency` | cerrada (`dbsync` v0.3.6) |
 | 2b | `staff_manager` | ídem | cerrada v0.1.119 |
-| 2c | `appointment_booking` | ídem (dos relojes duplicados, 15 campos de fecha, constantes `OnlineHoldSeconds`/`PaymentWindowSeconds` tipadas sin renombrar) | `[Antigravity · 2026-10-21 02:26]` en curso (Jules ejecutando suite final) |
-| 2d | `clinical_encounter` | ídem | `[Antigravity · 2026-10-21 02:26]` en espera de cierre de 2c |
+| 2c | `appointment_booking` | ídem (dos relojes duplicados, 15 campos de fecha, constantes `OnlineHoldSeconds`/`PaymentWindowSeconds` tipadas sin renombrar) | `[Antigravity · 2026-10-21 02:49]` en curso (Jules ejecutando suite final) |
+| 2d | `clinical_encounter` | ídem | `[Antigravity · 2026-10-21 02:49]` en espera de cierre de 2c |
 | 2e | `mjosefa-cms`, `misitio`, `mjosefa-cote`, `alert_manager` (local) | ídem o en local si son 2 archivos o menos | tras todo lo anterior |
 | T5 | `devskills` | regla en **module-layout** | cerrada |
 

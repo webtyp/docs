@@ -1,6 +1,6 @@
 # Security by default — master plan
 
-> **Status:** IN PROGRESS · 2026-10-20 · every framework piece shipped; `iam` closed v0.0.28; misitio: D1 schema sync closed (v0.0.10); **§9 despachada** (`docs/PLAN.md`, Jules, sesión 4525363837779143163) — ya no espera nada.
+> **Status:** CLOSED · 2026-10-21 · every framework piece shipped; `iam` closed v0.0.28; misitio: D1 schema sync closed (v0.0.10); **§9 cerrada** (v0.0.11) — ola 100% completada.
 
 Trigger: the API explorer in `veltylabs/iam` reports 22 of 25 routes as
 `public`. The framework's own rule (skill **api-design**, `webtyp/router`
@@ -245,8 +245,8 @@ self-contained `docs/PLAN.md` in that repo, ready for `codejob dispatch`.
 | `webtyp/webauthn` | PLAN ✅ v0.1.6 | browser: send `publicKey`/`publicKeyAlgorithm`/`authenticatorData`, ES256 only; new `webauthn/server`: `VerifyRegistration`, `VerifyAssertion` | [webauthn/docs/PLAN.md](https://github.com/webtyp/webauthn/blob/main/docs/PLAN.md) |
 | `webtyp/auth` | PLAN ✅ v0.0.75 | DEV_AUTOLOGIN opt-in (`dev` tag); session policy (idle, absolute, domain, `__Host-`, assurance, revocation); `Identity`; step-up strategy; `auth/passkey`; `auth/clientassertion`; delete `session/jwt` | PR [#7](https://github.com/webtyp/auth/pull/7) |
 | `webtyp/goflare` | PLAN ✅ v0.5.39 (+ v0.5.40: deps and routes file = routescan.DefaultFile) | `RATE_LIMIT_PER_10S` (default 100) → zone `http_ratelimit` rule per deploy; fail the deploy if the token lacks permission | [goflare/docs/PLAN.md](https://github.com/webtyp/goflare/blob/main/docs/PLAN.md) |
-| `veltylabs/iam` | PLAN · **running** (session 12558430203965191498) | Back inside the framework: `RunServer` with `Authorize`; `.Requires` everywhere; `iam_admin`/`iam_client` roles; opaque sessions; admin step-up cookie; passkey panel UI; `private_key_jwt`; token exchange; protected `/_routes`; audit of machine mutations; public inventory test; e2e matrix | [iam/docs/PLAN.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN.md) |
-| `veltylabs/misitio` | migration ✅ v0.0.7; D6 ✅ v0.0.10; §9 `[Antigravity · 2026-10-21 02:26]` **en curso** (sesión 4525363837779143163) | `IAM_CLIENT_PRIVATE_KEY`; one `Consumer` (delete local `IAMAuthn`/`AuthzCache`/`authctx`); public inventory test | §9 below (ya copiado a `misitio/docs/PLAN.md`) |
+| `veltylabs/iam` | PLAN ✅ v0.0.28 | Back inside the framework: `RunServer` with `Authorize`; `.Requires` everywhere; `iam_admin`/`iam_client` roles; opaque sessions; admin step-up cookie; passkey panel UI; `private_key_jwt`; token exchange; protected `/_routes`; audit of machine mutations; public inventory test; e2e matrix | [iam/docs/PLAN.md](https://github.com/veltylabs/iam/blob/main/docs/PLAN.md) |
+| `veltylabs/misitio` | migration ✅ v0.0.7; D6 ✅ v0.0.10; §9 ✅ v0.0.11 `[Antigravity · 2026-10-21 02:49]` **cerrada** | `IAM_CLIENT_PRIVATE_KEY`; one `Consumer` (delete local `IAMAuthn`/`AuthzCache`/`authctx`); public inventory test | §9 below (cerrada v0.0.11) |
 
 Every plan carries: the repo's `AGENTS.md` constraints inline (TinyGo/WASM:
 no maps, `webtyp/fmt`, tests in `tests/`, no API exported for tests); a
