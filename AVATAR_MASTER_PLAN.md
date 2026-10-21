@@ -1,5 +1,5 @@
 # Avatar en vivo (`webtyp/avatar`) — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.0) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b completadas. Próximas: 5b (`avatarc`) y 6c (medición de laboratorio).
+> **Status:** IN PROGRESS · 2026-10-21 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.0) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b completadas. `mjosefa-cote` ya commiteó su integración (`600b900`): fase 9 queda libre para despachar. Próximas: 5b (`avatarc`), 6c (medición local) y 9.
 > **Antigravity coordina la revisión (`codejob pull` + **plan-review**) y el despacho de las fases siguientes.**
 
 Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
@@ -45,7 +45,7 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | 6d | `mjosefa-cote` | solo escenarios `evals/`: revalidar su `docs/PLAN.md` (escrito para agenteval v0.3.0) contra v0.4.x. Sin página de laboratorio propia (D20) | plan tras la 6c |
 | 7 | `agent`, `agentworker` | `Reply.Tone` (D17) y eventos de fase hacia la página | espera 6c |
 | 8 | `qwen`, `agenteval` | medir la pregunta de tono del decider (D16) | espera 6c |
-| 9 | `mjosefa-cote` | importar `avatar/reference` y borrar su copia (`svg.go`, `docs/avatar/img/cote-base-v1.2.svg`, `docs/avatar/preview.html`); su `web/client.go` de prueba se borra (el laboratorio lo reemplaza, D20) | espera 5 |
+| 9 | `mjosefa-cote` | importar `avatar/reference` y borrar su copia (`svg.go`, `docs/avatar/img/cote-base-v1.2.svg`, `docs/avatar/preview.html`); su `web/client.go` de prueba se borra (el laboratorio lo reemplaza, D20) | lista para despachar (integración ya commiteada) |
 
 ### Dependencias (quién importa a quién)
 
@@ -84,8 +84,7 @@ sequenceDiagram
 
 ## Bloqueos
 
-- 2026-10-20 · `mjosefa-cote` tiene sin commitear la integración del avatar (`avatar.go`, `svg.go`, `web/client.go`, cambios al `.svg` y a `preview.html`): Jules no la ve hasta publicarla. Espera el OK del usuario.
-- 2026-10-20 · Daemon webtyp: `restart_development` solo se reengancha y no vuelve a extraer el sprite cuando cambia una dependencia (hubo que reiniciarlo a mano). Defecto de `webtyp/app` sin trazar.
+- 2026-10-21 · Daemon webtyp: `restart_development` solo se reengancha y no vuelve a extraer el sprite cuando cambia una dependencia (hubo que reiniciarlo a mano). Defecto de `webtyp/app` sin trazar.
 
 ## Relación con otras olas
 

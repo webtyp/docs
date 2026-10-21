@@ -1,5 +1,5 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · D1, P2–P11, P6/P9/P10 (con cambios), P8 (rename) y H1–H3/K2–K4 cerradas; **M0–M4 cerradas (M3 cash_manager v0.1.0, M4 agreement_manager v0.1.13, M2 payment_manager v0.1.21)**; **K1 (TUU) sigue abierta** y bloquea M4b/M5
+> **Status:** IN PROGRESS · 2026-10-21 · D1, P2–P11, P6/P9/P10 (con cambios), P8 (rename) y H1–H3/K2–K4 cerradas; **M0–M4 cerradas (M3 cash_manager v0.1.0, M4 agreement_manager v0.1.13, M2 payment_manager v0.1.21)**; **K1 (TUU) confirmada sin respuesta aún** — M4b/M5 fuera de esta ola hasta preguntar a TUU y al contador
 
 Por qué y cómo (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md). Forma de trabajo: skill **master-plan**.
 

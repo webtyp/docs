@@ -1,6 +1,6 @@
 # Destinos de compilación — master plan
 
-> **Status:** PENDING · 2026-10-15 · D1–D15 cerradas (dos ejes: `wasm` de plataforma + `browser` de destino; `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`); planes de `js`, `html` y `sitec` escritos; P5 abierta (tests por plataforma). **Cambio sin retrocompatibilidad en todo webtyp.**
+> **Status:** IN PROGRESS · 2026-10-21 · D1–D16 cerradas (dos ejes: `wasm` de plataforma + `browser` de destino; `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`); `js`, `html`, `sitec` **despachados** (sesiones 1056176574103482956, 1466854644911309856, 11030676366596612176); faltan los planes de `devflow` y `router` (gates, ya desbloqueados por D16). **Cambio sin retrocompatibilidad en todo webtyp.**
 
 **Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker) que se prueba en local
 con `web/server.go`. `//go:build wasm`/`!wasm` no distingue el Worker del navegador (los dos son
@@ -37,7 +37,7 @@ bloque base de **agents-md**. Confirma D34 de DEPLOY_WIZARD (`config/deploy.go` 
 | D5 | **El vocabulario completo** (D15): `browser`, `wasm && !browser`, `!wasm`, `wasm`, `!browser`, y sin etiqueta. | Cubre las 6 combinaciones posibles de 3 destinos con una sola etiqueta nueva. |
 | D6 | **Módulos** (skill **app-modules**): `server.go` → `//go:build !browser`; `browser.go` → `//go:build browser`; `module.go` sin etiqueta. | Hoy `server.go` es `!wasm` y por eso no entra al Worker; con `!browser` entra al Worker y al servidor, y sale del navegador. |
 | D7 | **Archivos que lee `sitec` en tiempo de build** (`css.go`, `svg.go`, `html.go`, `js.go`, `favicon.go`) **siguen con `//go:build !wasm`**. En `sitec` solo cambian la entrada/salida por defecto del navegador (`web/browser.go` → `browser.wasm` compilado con `-tags browser`) y el sondeo de paquetes alcanzables (`-tags=browser` en `js/wasm`). | `!wasm` ya deja los productores de assets fuera del navegador **y** del Worker (con `!browser` entrarían al Worker y pesarían en su límite de 1 MB); el sondeo con `-tags=browser` evita perder el CSS de paquetes importados solo por archivos `browser`. |
-| D8 | **`gotest` corre una pasada por destino presente** en el módulo: nativo sin etiqueta (servidor), `GOOS=js GOARCH=wasm` sin etiqueta (Worker y wasm compartido) y `GOOS=js GOARCH=wasm -tags browser` (navegador), más la de `dev` que ya existe en `devflow` v0.4.132; la plataforma de cada pasada la decide P5. | Los archivos `browser` no compilan en `go test` simple; sin esto, los tests de vista (`tests/<m>_view_test.go`) dejarían de correr. |
+| D8 | **`gotest` corre una pasada por destino presente** en el módulo: nativo sin etiqueta (servidor), `GOOS=js GOARCH=wasm` sin etiqueta (Worker y wasm compartido) y `GOOS=js GOARCH=wasm -tags browser` (navegador) con Chrome headless (`wasmbrowsertest`), más la de `dev` que ya existe en `devflow` v0.4.132 (D16). | Los archivos `browser` no compilan en `go test` simple; sin esto, los tests de vista (`tests/<m>_view_test.go`) dejarían de correr. |
 | D9 | **La declaración de despliegue sigue en `config/deploy.go` con `//go:build deploy`** (D34 de DEPLOY_WIZARD sin cambios). | Ya cumple D1: el nombre del archivo es su etiqueta, y ningún binario lo compila. |
 | D10 | **`layoutscan` (`webtyp/router`) verifica**: cada `main` de `web/` lleva exactamente la etiqueta de D1; `browser` nunca se combina con `!wasm`; no existe `edge/`. **`goflare` rechaza `-tags browser`.** | El Worker se define por ausencia de `browser` (D15): estos chequeos impiden que un build olvidado o mal etiquetado salga en silencio como otro destino. |
 
@@ -86,41 +86,31 @@ defecto es nativa sin etiquetas (servidor); los archivos `browser`/wasm se verif
 
 ## Preguntas abiertas
 
-Responde inline con `respuesta: X` (o texto libre) y luego «consolida el master».
+Ninguna.
 
-### P5 — ¿Dónde corren los tests de lo que va al navegador y al Worker?
+### D16 (cierra P5) — Dónde corren los tests de lo que va al navegador y al Worker
 
-Hoy `browser.go` de un módulo no lleva etiqueta para que su test de vista corra en Go nativo
-(skill **app-modules**), y los archivos que llaman `syscall/js` quedan fuera de los tests nativos
-porque `wasm` es la arquitectura. Con D6/D15 un archivo `browser` que importa `syscall/js`
-**no compila en nativo** (`syscall/js` solo existe en `js/wasm`), así que `go test -tags browser`
-nativo falla. D14 deja las librerías como hoy, así que la pregunta afecta solo a los archivos
-`browser` de apps y módulos y a `web/edge.go`. D8 necesita decir en qué plataforma corre cada pasada.
-
-- **A) (recomendada)** **Cada destino se prueba en su plataforma**: servidor en nativo; navegador
-  con `GOOS=js GOARCH=wasm -tags browser` en navegador headless (`webtyp/wasmbrowsertest`, que el
-  ecosistema ya tiene y `gotest` ya sabe invocar para wasm); Worker compila y pasa `vet` con
-  `GOOS=js GOARCH=wasm` sin etiqueta (más el test de tamaño con TinyGo que ya existe). Es la prueba
-  honesta: el binario real de esos destinos es wasm. Contra: los tests de vista dejan de ser
-  "stdlib rápidos" y piden Chrome headless (ya requerido por los tests wasm actuales).
-- B) Mantener los tests de vista en nativo: los archivos `browser` de las apps no pueden importar
-  `syscall/js` (solo librerías), y las librerías de navegador traen un doble nativo para tests.
-  Duplica código en cada librería de navegador.
+**Cada destino se prueba en su plataforma**: servidor en nativo; navegador con
+`GOOS=js GOARCH=wasm -tags browser` en navegador headless (`webtyp/wasmbrowsertest`, que el
+ecosistema ya tiene y `gotest` ya sabe invocar para wasm); Worker compila y pasa `vet` con
+`GOOS=js GOARCH=wasm` sin etiqueta (más el test de tamaño con TinyGo que ya existe). Es la prueba
+honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de vista dejan de ser
+"stdlib rápidos" y piden Chrome headless (ya requerido por los tests wasm actuales).
 
 ---
 
-## Repos afectados (los planes dependientes de P5 se escriben al cerrarla)
+## Repos afectados
 
 | Repo | Cambio | Tipo | Plan |
 |---|---|---|---|
-| devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**, **wasm**, bloque base de **agents-md**: dos ejes y tabla de D15, D6, `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`, salida única en `web/` (D12) | primero (lo leen los agentes de todos los planes) | directo al cerrar P5 |
-| `webtyp/js` | `DefaultWasmURL = "/browser.wasm"` (D1); docs y tests (`browser.wasm` / `browser.<hash>.wasm`) | **gate** de `sitec` y `app` | [js/docs/PLAN.md](https://github.com/webtyp/js/blob/main/docs/PLAN.md) · escrito |
-| `webtyp/html` | `scaffold/client.go` → `scaffold/browser.go` con `//go:build browser` (`tests/scaffold_test.go` compila con `-tags browser` hacia `browser.wasm`, D1/D4) | **gate** de `app` | [html/docs/PLAN.md](https://github.com/webtyp/html/blob/main/docs/PLAN.md) · escrito |
-| `webtyp/sitec` | `WasmBuildOptions` por defecto `web/browser.go` → `browser.wasm` (`browser.<hash>.wasm` en release) pasando `-tags browser` cuando compila `browser.go` (D1, D4, D7); `build.go` detecta `web/browser.go`; `reach.go` pasa `-tags=browser` en el sondeo `js/wasm` | **gate** de `goflare` y `app` (tras `js`) | [sitec/docs/PLAN.md](https://github.com/webtyp/sitec/blob/main/docs/PLAN.md) · escrito |
-| `webtyp/devflow` | `gotest`: una pasada por destino, cada una en su plataforma (D8, P5); plantillas de `gonew` | **gate** | espera P5 |
-| `webtyp/router` | `layoutscan` (D10) | **gate** | espera P5 |
+| devskills | **project-layout**, **app-modules**, **app-server-main**, **app-rest-edge**, **wasm**, bloque base de **agents-md**: dos ejes y tabla de D15, D6, `web/{browser,edge,server}.go` → `{browser.wasm,edge.wasm,server}`, salida única en `web/` (D12) | primero (lo leen los agentes de todos los planes) | **pendiente por escribir** — siguiente paso de esta ola |
+| `webtyp/js` | `DefaultWasmURL = "/browser.wasm"` (D1); docs y tests (`browser.wasm` / `browser.<hash>.wasm`) | **gate** de `sitec` y `app` | **despachado** (sesión 1056176574103482956) |
+| `webtyp/html` | `scaffold/client.go` → `scaffold/browser.go` con `//go:build browser` (`tests/scaffold_test.go` compila con `-tags browser` hacia `browser.wasm`, D1/D4) | **gate** de `app` | **despachado** (sesión 1466854644911309856) |
+| `webtyp/sitec` | `WasmBuildOptions` por defecto `web/browser.go` → `browser.wasm` (`browser.<hash>.wasm` en release) pasando `-tags browser` cuando compila `browser.go` (D1, D4, D7); `build.go` detecta `web/browser.go`; `reach.go` pasa `-tags=browser` en el sondeo `js/wasm` | **gate** de `goflare` y `app` (tras `js`) | **despachado** (sesión 11030676366596612176) |
+| `webtyp/devflow` | `gotest`: una pasada por destino, cada una en su plataforma (D8, D16); plantillas de `gonew` | **gate** | plan por escribir |
+| `webtyp/router` | `layoutscan` (D10) | **gate** | plan por escribir |
 | `webtyp/app` | cliente `-tags browser` (`web/browser.go` → `web/public/browser.wasm`, `scaffold/browser.go`); servidor sin etiqueta de destino; configuración del IDE | tras gates (`js`, `html`, `sitec`, `devflow`, `router`) | se fusiona al cerrar el plan en ejecución |
-| `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | tras gates | espera P5 |
+| `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | tras gates | plan por escribir |
 | `webtyp/goflare` | compila `web/edge.go` sin etiqueta de destino (deja de leer `edge/`) y rechaza `-tags browser` (D10); `OutputDir` por defecto `web/` (D12) | tras gates (`sitec`); se fusiona al cerrar el plan en ejecución (D41 de DEPLOY_WIZARD) | espera cierre de `goflare` |
-| módulos (`veltylabs/modules` y los que siguen **app-modules**) y los pocos archivos de librería importados por navegador y Worker a la vez | D6 y D14: `server.go` `!wasm` → `!browser`, `browser.go` → `browser`, demo `web/client.go` → `web/browser.go` | tras gates, en paralelo, un plan por repo | espera P5 |
-| `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | espera P5 |
+| módulos (`veltylabs/modules` y los que siguen **app-modules**) y los pocos archivos de librería importados por navegador y Worker a la vez | D6 y D14: `server.go` `!wasm` → `!browser`, `browser.go` → `browser`, demo `web/client.go` → `web/browser.go` | tras gates, en paralelo, un plan por repo | plan por escribir |
+| `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | plan por escribir |
