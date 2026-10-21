@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · D1–D9 fijadas; esperan tus respuestas P1–P5; P3 (sistema operativo del servidor) bloquea S3–S5. Nada despachado.
+> **Status:** IN PROGRESS · 2026-10-21 · D1–D10 fijadas; esperan tus respuestas P1–P6; P3 (sistema operativo del servidor) bloquea S3–S5. Nada despachado.
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando un módulo publica en su rama `release`, la app debe llegar sola al
@@ -51,19 +51,25 @@ las migraciones son **solo aditivas** (expandir; contraer en una versión poster
 actualización **nunca** es automática: exige al administrador. **Recomiendo A para lo aditivo y B para lo destructivo**:
 tras un corte de luz no debe borrarse nada sin que alguien lo apruebe. Respuesta:
 
+**P6 — El bot de D3 y la rama protegida.** El commit del bot a `release` necesita un token con escritura, y una rama
+protegida con PR obligatorio lo bloquea. A) `release` sin protección; entra el bot y las personas con escritura.
+B) protegida, con el bot como excepción. C) el bot abre un PR que se fusiona solo si pasan los tests. **Recomiendo B**:
+las personas pasan por PR y el bot solo sube `go.mod`/`go.sum`. Respuesta:
+
 ## Decisiones por implementar
 
 | # | Decisión | Dónde se implementa |
 |---|---|---|
 | D1 (P1 anterior) | **`release` es una rama como `main`.** `Plan.Branch` (def. `main`); el workflow generado corre en push a esa rama; el tag lo publica ese workflow/`gopush` desde ella. | S1, S2, S6 |
 | D2 | **El servidor pregunta, la nube construye.** Nada entra a la LAN; el artefacto es un Release de GitHub de `mjosefa-cms` (`server` + `web/public/` + checksums + firma). | S3, S4 |
-| D3 | **Módulo → app**: workflow programado en la app (y `workflow_dispatch`) sube las versiones de su `go.mod` en `release`, prueba y publica el Release. Sin tocar ~50 repos. Si un módulo no cambió, no publica. | S2 |
+| D3 | **Módulo → app**: la action de la app (por push a `release`, horario o `workflow_dispatch`) sube a su última versión publicada todo `veltylabs/*` y `webtyp.com/*` de su `go.mod` (sin `-rc`), corre `go mod tidy` y los tests de todos los destinos; si fallan, no publica y el servidor conserva su versión; si pasan, un commit del bot guarda `go.mod` en `release` y publica el Release firmado. Sin cambios, no publica. Sin tocar ~50 repos. | S2 |
 | D4 | **La actualización es un módulo integrado** (`webtyp/selfupdate`, sin TUI): pantalla "Actualizaciones" para el administrador, recurso RBAC propio y contador en el menú cuando hay una pendiente. | S4, S7 |
 | D5 | **Política de reinicio:** con una actualización pendiente y clientes conectados, **solo el administrador** la aplica (botón). Con **cero clientes** se aplica **sola**: caso típico, el servidor se reinició por un corte de luz y arrancó con una versión pendiente; mientras se instala, los clientes PWA esperan y reintentan. | S4 |
 | D6 | **Revisión asíncrona y nunca bloqueante**: al arrancar, y en la segunda ocasión (P1). Un fallo de red es una línea de log, nunca un error para el usuario (como `core/update.go:23`). | S4 |
 | D7 | **Reusar `webtyp.com/update`** (`Swap`/`Rollback`/checksum); `selfupdate` añade política, firma, estado persistente y vigilancia. Un supervisor (NSSM o `systemd`) relanza el proceso; la versión nueva vive en su carpeta y se apunta a ella (Windows no deja reemplazar un `.exe` en uso). | S4 |
 | D8 | **Vigilancia tras reiniciar:** si `/health` no responde en N segundos, se vuelve a la versión anterior y se marca la nueva como mala (no se reintenta sola). | S4 |
 | D9 | **Secretos de producción solo en el servidor** (`DATABASE_URL`, `ROUTER_URL`, token de lectura): sin API ni conexión entrante, D1/D29 de DEPLOY_WIZARD se cumplen tal cual. La app informa lo que falta al arrancar (mismo texto de `Missing`). | S4, S7 |
+| D10 | **Un binario por sistema operativo, un solo cliente.** La action compila `server` para cada `GOOS/GOARCH` listado (como `core/.github/workflows/release.yml`) y publica `web/public/` una vez; el servidor baja el que corresponde a su plataforma (`core/update.go:40`). Cambiar de Windows a Linux no cambia el flujo. Compilar en la nube no resuelve el mínimo de Go (P3). | S2, S4 |
 
 ## Fases
 
@@ -74,9 +80,9 @@ ni `devflow` (fuera de esta sesión): sus filas se afinan al leerlos.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| S0 | docs | Contestar P1–P5; consolidar | pendiente (tú) |
+| S0 | docs | Contestar P1–P6; consolidar | pendiente (tú) |
 | S1 | `deploy` | `Plan.Branch`; D8 de DEPLOY_WIZARD pasa a "push a `Plan.Branch`"; `Scan`/validate | pendiente |
-| S2 | `github` | Workflow generado: rama, prueba, compila, firma, publica Release; job programado de D3 | espera S1 |
+| S2 | `github` | Workflow generado: rama, `go get` de dependencias, prueba, compila por plataforma (D10), firma, publica Release; disparos de D3 | espera S1 |
 | S3 | `selfupdate` (`Target`) | `Check`: secreto de firma en Actions, workflow, último Release; `Provision`: par ed25519 (privada a Actions, pública en `config/update_key.go`) | espera S1, P4 |
 | S4 | `selfupdate` (módulo) | Estado `idle→disponible→descargada→aplicando`, política D5 con `ActiveClients()`, firma, intercambio de versión (D7), vigilancia (D8), migración (P5), pantalla y RBAC | espera P1–P3, P5 |
 | S5 | `sitec` / `mjosefa-cms` | `cmd/build` (3 líneas) empaqueta `web/server` + `web/public/` con versión; el servidor expone su versión y `/health` | espera BUILD_DESTINATIONS |
