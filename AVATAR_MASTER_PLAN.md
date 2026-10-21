@@ -1,5 +1,5 @@
 # Avatar en vivo (`webtyp/avatar`) — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.0) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b completadas. 5b (`avatarc`, ids en una sola lista, hrefs precalculados) **despachada** (sesión 203486620831700554). Lo de agentes (6c en adelante y 9) queda para la etapa final; pruebas solo en `agenteval`, nunca en `mjosefa-cms` hasta decidir la arquitectura (dueño, 2026-10-21).
+> **Status:** IN PROGRESS · 2026-10-21 · `widget` (v0.6.44), `agentworker` (v0.1.23), `avatar` (v0.2.1 con `avatarc`) y `agenteval` (v0.4.33) **cerradas**. Fases 1–6b y 5b completadas. Lo de agentes (6c en adelante y 9) queda para la etapa final; pruebas solo en `agenteval`, nunca en `mjosefa-cms` hasta decidir la arquitectura (dueño, 2026-10-21).
 > **Antigravity coordina la revisión (`codejob pull` + **plan-review**) y el despacho de las fases siguientes.**
 
 Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
@@ -38,7 +38,7 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | 3 | `webtyp/avatar` | motor v0.1.0 | cerrada v0.1.0; la reemplaza la 5 |
 | 4 | `webtyp/widget` | `Blink()`, `Breathe()`, `Frame(i, n, Cadence)` + movimiento reducido + validación "una animación por elemento" (`docs/PLAN.md`) | **cerrada** v0.6.44 |
 | 5 | `webtyp/avatar` | v0.2.0: D7–D10, D12, D13, D19; corrige los defectos 1–7; subpaquete `reference` con `cote.svg` (ya copiado) y test que cruza motor y dibujo (D20) (`docs/PLAN.md` escrito) | **cerrada** v0.2.0 |
-| 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href`; `RequiredSymbols` y hrefs precalculados (D13) | [Antigravity · 2026-10-21 17:03] en revisión (PR #3, sesión 203486620831700554) |
+| 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href`; `RequiredSymbols` y hrefs precalculados (D13) | **cerrada** v0.2.1 |
 | 6a | `webtyp/agentworker` | `EventReply.DecideMs`/`TurnMs` (D18) (`docs/PLAN.md`) | **cerrada** v0.1.23 |
 | 6b | `webtyp/agenteval` | panel: mensajes de ejemplo, línea de tiempos y el avatar de referencia junto al chat (piensa mientras espera, habla la respuesta) (`docs/PLAN.md` escrito) | **cerrada** v0.4.33 |
 | 6c | — (local) | correr el laboratorio con los 4 ejemplos por tier (plano/SIMD) y anotar tiempos y fallas en `agenteval/docs/REAL_TESTS.md`; con esos números se reabre P12 | tras cerrar la 6b |
