@@ -6,7 +6,7 @@ Registro de v0.1.0, prior art de la industria, medición y defectos encontrados:
 
 ## Preguntas abiertas
 
-Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los números de la fase 6.
+Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los números de la fase 6c.
 
 ## Decisiones por implementar
 
@@ -25,6 +25,7 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | D17 (P14) | El tono es `agent.Reply.Tone` (tipo de `agent`); la página de Cote lo traduce a `avatar.Emotion` (~6 líneas); `tts` v2 leerá el mismo `Tone` | `agent`, Cote |
 | D18 (D15) | `agentworker` construye el decider y la app no puede envolverlo: `agentworker` mide cada `Decide` y el turno, y `EventReply` lleva `DecideMs []int64` y `TurnMs` (como `timings` de llama.cpp). El panel del laboratorio muestra una línea por turno y ofrece mensajes de ejemplo | `agentworker`, `agenteval/ui` |
 | D19 | Sin estado `Happy` en el SVG: `Happy` usa las variantes `greeting`. `Viseme` no se agrega hasta que exista TTS (v2) | `avatar` |
+| D20 | Toda integración con modelos reales (agente + avatar + UI) corre en el laboratorio de `agenteval` y sus fallas van a `agenteval/docs/REAL_TESTS.md` (skill `testing`). `agenteval` es público y Cote privado: ni `replace` (solo existe en una máquina) ni repo nuevo (`agentlab` ya se creó y borró, D31). El dibujo de Cote se publica como personaje de referencia en `webtyp/avatar/reference` (el dueño lo aprobó); lo de Cote se prueba con sus escenarios `evals/` | `avatar`, `agenteval`, Cote |
 
 ## Fases
 
@@ -35,14 +36,15 @@ Ninguna. La fuente de la actividad (ex P12) se vuelve a preguntar con los númer
 | 2 | `webtyp/widget` | recetas `Wave`, `Pulse`, `Pivot` | cerrada v0.6.42 |
 | 3 | `webtyp/avatar` | motor v0.1.0 | cerrada v0.1.0; la reemplaza la 5 |
 | 4 | `webtyp/widget` | `Blink()`, `Breathe()`, `Frame(i, n, Cadence)` + movimiento reducido + validación "una animación por elemento" (`docs/PLAN.md`) | [Claude · 2026-10-20 21:40] despachada, Jules 2069284888834209850 |
-| 5 | `webtyp/avatar` | v0.2.0: D7–D10, D12, D13, D19; corrige los defectos 1–7 (`docs/PLAN.md` escrito) | plan listo; despachar al publicarse la 4 (anotar su tag en la etapa 1) |
+| 5 | `webtyp/avatar` | v0.2.0: D7–D10, D12, D13, D19; corrige los defectos 1–7; subpaquete `reference` con `cote.svg` (ya copiado) y test que cruza motor y dibujo (D20) (`docs/PLAN.md` escrito) | plan listo; despachar al publicarse la 4 (anotar su tag en la etapa 1) |
 | 5b | `webtyp/avatar` | `cmd/avatarc` (D14): valida el `.svg`, lista lo que falta, genera constantes de `href` | plan tras cerrar la 5 |
 | 6a | `webtyp/agentworker` | `EventReply.DecideMs`/`TurnMs` (D18) (`docs/PLAN.md`) | [Claude · 2026-10-20 21:45] despachada, Jules 12012621688757113334 |
-| 6b | `webtyp/agenteval` | panel: mensajes de ejemplo + línea de tiempos (`docs/PLAN.md` escrito) | plan listo; despachar al publicarse la 6a |
-| 6c | `mjosefa-cote` | `web/workers/cote/main.go` (`agentworker.Serve` con `cote.Config` y `business_calendar` por `mcp.NewLocalClient`) + página con `agenteval/ui.New(scripts, ejemplos de Cote...)`; luego medir por tier. Fusionar con su `docs/PLAN.md` (escenarios, revalidar contra agenteval v0.4.x). Antes: publicar su trabajo local sin commitear (integración del avatar) | escribir el plan al publicarse la 6b, leyendo las firmas de ese tag |
-| 7 | `agent`, `agentworker` | `Reply.Tone` (D17) y eventos de fase hacia la página | espera 6 |
-| 8 | `qwen`, `agenteval` | medir la pregunta de tono del decider (D16) | espera 6 |
-| 9 | `mjosefa-cote` | migrar `web/client.go`, no ignorar el error de `AddLayers`, CSS por `widget/style`, borrar `docs/avatar/preview.html` | espera 5 |
+| 6b | `webtyp/agenteval` | panel: mensajes de ejemplo, línea de tiempos y el avatar de referencia junto al chat (piensa mientras espera, habla la respuesta) (`docs/PLAN.md` escrito) | plan listo; despachar al publicarse la 6a **y** la 5 |
+| 6c | — (local) | correr el laboratorio con los 4 ejemplos por tier (plano/SIMD) y anotar tiempos y fallas en `agenteval/docs/REAL_TESTS.md`; con esos números se reabre P12 | tras cerrar la 6b |
+| 6d | `mjosefa-cote` | solo escenarios `evals/`: revalidar su `docs/PLAN.md` (escrito para agenteval v0.3.0) contra v0.4.x. Sin página de laboratorio propia (D20) | plan tras la 6c |
+| 7 | `agent`, `agentworker` | `Reply.Tone` (D17) y eventos de fase hacia la página | espera 6c |
+| 8 | `qwen`, `agenteval` | medir la pregunta de tono del decider (D16) | espera 6c |
+| 9 | `mjosefa-cote` | importar `avatar/reference` y borrar su copia (`svg.go`, `docs/avatar/img/cote-base-v1.2.svg`, `docs/avatar/preview.html`); su `web/client.go` de prueba se borra (el laboratorio lo reemplaza, D20) | espera 5 |
 
 ### Dependencias (quién importa a quién)
 
@@ -86,6 +88,6 @@ sequenceDiagram
 
 ## Relación con otras olas
 
-- `AGENT_ECOSYSTEM` (`agent/docs/AGENT_ECOSYSTEM_MASTER_PLAN.md`): fases 6–8; Cote en `mjosefa-cms` sigue esperando las pruebas en el laboratorio.
+- `AGENT_ECOSYSTEM` (`agent/docs/AGENT_ECOSYSTEM_MASTER_PLAN.md`): fases 6a–8. D20 reemplaza el punto 5 de su «Start here» (Cote ya no tiene página de laboratorio propia); Cote en `mjosefa-cms` sigue esperando las pruebas en el laboratorio.
 - `UI_CONSISTENCY`: todo CSS desde `widget/style`, incluido el de `mjosefa-cote/web/client.go`.
 - `BUILD_DESTINATIONS`: `svg.go` y `css.go` con `//go:build !wasm`.
