@@ -1,5 +1,5 @@
 # Ayuda integrada en los módulos, avisos por módulo y rediseño de `alert_manager` — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · P1–P16 aceptadas (todas); H1, H2a, H3, H4, H7 cerradas; **despachadas**: `layout` (H2b + H2d + `platformd.Describe`), `notify` (H4b), `supply_manager` y `pharmacy_manager` (H8 avisos); H5 escrita y estacionada; H2c, H6 y la descripción de H8 esperan; `alert_manager` local, sin publicar
+> **Status:** IN PROGRESS · 2026-10-21 · P1–P16 aceptadas (todas); H1, H2a, H3, H4, H4b (v0.2.3), H7 cerradas; **despachadas**: `layout` (H2b + H2d), `supply_manager` y `pharmacy_manager` (H8), `email` (H5); H2c, H6 y H8b esperan; `alert_manager` local, sin publicar
 
 Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se explica solo y guía paso a paso; nadie debe tener que explicarlo.
 
@@ -42,8 +42,8 @@ Ninguna.
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **despachada** junto con H2b (mismo plan) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
-| H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | [Antigravity · 2026-10-21 16:10] en revisión (PR #4, sesión 15697860841372215455) |
-| H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | plan escrito y estacionado: `email/docs/PLAN_DRIVER_FIELDS.md`; al cerrar H4b, poner el tag y renombrar a `PLAN.md` |
+| H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | **cerrada** v0.2.3 |
+| H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | **despachada** (sesión 16563578987340549225) |
 | H6 | `alert_manager` | rediseño completo (D8–D17) sobre el código local actual; luego v0.1.0 | espera cierre de H2–H4 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
 | H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | **despachadas** (sesiones 1520402411300222046 y 2078816032640775252) |
