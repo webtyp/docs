@@ -1,5 +1,5 @@
 # Ayuda integrada en los módulos, avisos por módulo y rediseño de `alert_manager` — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · P1–P16 aceptadas (todas); H1, H2a, H3, H4, H4b (v0.2.3), H7 cerradas; **despachadas**: `layout` (H2b + H2d), `supply_manager` y `pharmacy_manager` (H8), `email` (H5); H2c, H6 y H8b esperan; `alert_manager` local, sin publicar
+> **Status:** IN PROGRESS · 2026-10-21 · P1–P16 aceptadas (todas); H1, H2a, H2b, H2c (v0.3.64), H2d, H3, H4, H4b (v0.2.3), H5 (v0.1.3), H7, H8 (`supply_manager` v0.2.11, `pharmacy_manager` v0.1.11), H8b (`pharmacy_manager` v0.1.14) cerradas; **en vuelo**: `supply_manager` (H8b); H6 espera; `alert_manager` local, sin publicar
 
 Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se explica solo y guía paso a paso; nadie debe tener que explicarlo.
 
@@ -38,7 +38,7 @@ Ninguna.
 | H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **cerrada** v0.6.40 |
 | H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | **cerrada** v0.3.57 |
 | H2b | `webtyp/layout` (`platformd.go`) | botón «?» con panel de descripción + `platformd.Describe(m, text, steps...)` (conserva `UseNotifier`, `Badged`, grupo) | **cerrada** v0.3.63 |
-| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | [Antigravity · 2026-10-21 19:01] revisando PR #46 |
+| H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | **cerrada** v0.3.64 |
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **cerrada** v0.3.63 (junto con H2b) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
