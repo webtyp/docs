@@ -115,10 +115,10 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `veltylabs/modules/appointment_booking` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.3.14 |
 | `veltylabs/modules/pharmacy_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.12 |
 | `veltylabs/modules/supply_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.12 |
-| `veltylabs/modules/service_catalog` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:12] revisando PR #14 |
-| `veltylabs/modules/patient_directory` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:12] revisando PR #8 |
-| `veltylabs/modules/staff_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:12] revisando PR #6 |
-| `veltylabs/modules/business_calendar` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:12] revisando PR #9 |
+| `veltylabs/modules/service_catalog` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.5.12 |
+| `veltylabs/modules/patient_directory` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.41 |
+| `veltylabs/modules/staff_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.129 |
+| `veltylabs/modules/business_calendar` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.4.95 |
 | `veltylabs/modules/payment_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 17:51] despachado (sesión 9886713861479132384) |
 | `veltylabs/modules/cash_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:03] despachado (sesión 16532598082358078486) |
 | `veltylabs/modules/room_layout` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | [Antigravity · 2026-10-21 18:04] despachado (sesión 378554101422698965) |
