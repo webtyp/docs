@@ -37,7 +37,7 @@ Ninguna.
 |---|---|---|---|
 | H1 | `webtyp/view` | `WithDescription`, `WithEmpty` | **cerrada** v0.6.40 |
 | H2a | `webtyp/layout` (`platformd/capabilities.go`) | solo tipos `Described`/`Step`/`AlertedModule`/`ModuleAlert`, sin tocar `platformd.go` | **cerrada** v0.3.57 |
-| H2b | `webtyp/layout` (`platformd.go`) | botón «?» con panel de descripción + `platformd.Describe(m, text, steps...)` (conserva `UseNotifier`, `Badged`, grupo) | [Antigravity · 2026-10-21 17:00] en curso (sesión 13023297444321200271) |
+| H2b | `webtyp/layout` (`platformd.go`) | botón «?» con panel de descripción + `platformd.Describe(m, text, steps...)` (conserva `UseNotifier`, `Badged`, grupo) | [Antigravity · 2026-10-21 18:18] revisando PR #45 |
 | H2c | `webtyp/layout` (`platformd.go`) | tarjeta de bienvenida con pasos, persistencia primera visita | tras cierre de H2b |
 | H2d | `webtyp/layout` (`platformd.go`) | franja de avisos (D19) | **despachada** junto con H2b (mismo plan) |
 | H3 | `webtyp/layout` (`crudview`) | descripción y estado vacío | **cerrada** v0.3.58 |
