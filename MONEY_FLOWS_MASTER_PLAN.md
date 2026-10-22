@@ -39,7 +39,7 @@ Ninguna.
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | M0 | `notify`, `email`, `whatsapp` | canales configurables en BD | cerrada (`notify` v0.2.1) |
-| M0b | `alert_manager` | quién recibe qué alerta | local, espera MODULE_GUIDANCE P15/P16 |
+| M0b | `alert_manager` | quién recibe qué alerta | cerrada v0.1.0 |
 | M1 | `webtyp/money` | hechos, eventos, idempotencia | cerrada v0.1.3 |
 | M1b | `webtyp/money` | `Fact.Means` (CASH/CARD/TRANSFER, obligatorio en Charged/Refunded) y `Fact.Actor` | cerrada v0.2.0 |
 | M2 | `payment_manager` | comprobante, hechos | cerrada v0.1.21 |

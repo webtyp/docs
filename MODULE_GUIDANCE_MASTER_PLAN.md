@@ -1,5 +1,5 @@
 # Ayuda integrada en los módulos, avisos por módulo y rediseño de `alert_manager` — master plan
-> **Status:** IN PROGRESS · 2026-10-22 · P1–P16 aceptadas (todas); H1–H5, H7, H8, H8b cerradas; H6 (`alert_manager` v0.1.0) despachado
+> **Status:** CLOSED · 2026-10-22 · Todas las fases (H1–H8b) cerradas y publicadas; H6 (`alert_manager` v0.1.0) cerrada
 
 Regla que origina la ola (ya en la skill **ui-consistency**): un módulo se explica solo y guía paso a paso; nadie debe tener que explicarlo.
 
@@ -44,7 +44,7 @@ Ninguna.
 | H4 | `webtyp/notify` | catálogo de tipos, áreas, origen del aviso | **cerrada** v0.2.2 (el «visto» vive en `alert_manager`, D18) |
 | H4b | `webtyp/notify` | cada `Driver` declara `Label()` y `Fields()`; `Registry.DriverKinds/DriverOf`; `Load` exige los requeridos (D10) | **cerrada** v0.2.3 |
 | H5 | `veltylabs/email` | declarar sus datos (`Label`, `Fields`) | **cerrada** v0.1.3 |
-| H6 | `alert_manager` | rediseño completo (D8–D17, D18) sobre el código local actual; luego v0.1.0 | [Antigravity · 2026-10-22 12:54] despachado (v0.1.0) |
+| H6 | `alert_manager` | rediseño completo (D8–D17, D18) sobre el código local actual; luego v0.1.0 | **cerrada** v0.1.0 |
 | H7 | `devskills` | regla de `Field.Help` y de descripción de módulo | **cerrada** |
 | H8 | `pharmacy_manager`, `supply_manager` | avisos: bajo el mínimo al cruzarlo (`stock.CrossedLow`, `stock` v0.1.4) y revisión diaria `ReviewExpiring`; `AlertKinds(area)` | **cerradas** (`pharmacy_manager` v0.1.11, `supply_manager` v0.2.11) |
 | H8b | `pharmacy_manager`, `supply_manager` | descripción de cada pantalla con `platformd.Describe` | **cerradas** (`pharmacy_manager` v0.1.14, `supply_manager` v0.2.14) |
