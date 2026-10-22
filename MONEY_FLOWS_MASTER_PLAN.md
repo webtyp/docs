@@ -1,5 +1,5 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-22 · M1b (`money` v0.2.0), M4b-0, M4b-1, M4c (v0.2.0), M4c-1 (v0.2.1), `business_calendar` (v0.5.0), `tuu` (v0.1.0) cerrados; paso 1 en curso (`payment_manager`, `cash_manager`, `agreement_manager`); sin preguntas abiertas
+> **Status:** IN PROGRESS · 2026-10-22 · M1b (`money` v0.2.0), M4b-0, M4b-1, M4c (v0.2.0), M4c-1 (v0.2.1), M4d-1 (`agreement_manager` v0.3.0), `business_calendar` (v0.5.0), `tuu` (v0.1.0) cerrados; paso 1 en curso (`payment_manager`, `cash_manager`); sin preguntas abiertas
 
 Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de TUU: [tuu/docs/ARCHITECTURE.md](../../veltylabs/packages/tuu/docs/ARCHITECTURE.md) · **Diagrama del cobro (hoy y decidido):** [clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md](../../veltylabs/modules/clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md) · Forma de trabajo: skill **master-plan**.
 
@@ -56,7 +56,7 @@ Ninguna.
 | M3b | `cash_manager` `docs/PLAN.md` (v0.2.0) | cierre de turno solo efectivo de la cajera (`Means`/`Actor`); guarda medio y autor; id de hecho acepta `_` | [Antigravity · 2026-10-22] despachado |
 | M4c | `agreement_manager` | D15 + **defecto encontrado**: los hechos de dinero salían por el tema `"money"` (no `money.fact`) e incompletos → `cash_manager` nunca los recibía; porcentaje con `float` | cerrada v0.2.0 |
 | M4c-1 | `agreement_manager` | traducción al español de documentación y comentarios de código | cerrada v0.2.1 |
-| M4d-1 | `agreement_manager` `docs/PLAN.md` (v0.3.0) | diez operaciones (terceros, acuerdos, devengos, saldar, saldar con boleta, estado de cuenta) y las vistas apuntando a ellas | [Antigravity · 2026-10-22] despachado |
+| M4d-1 | `agreement_manager` | diez operaciones (terceros, acuerdos, devengos, saldar, saldar con boleta, estado de cuenta) y las vistas apuntando a ellas | cerrada v0.3.0 |
 | M4d-2 | `agreement_manager` | pantallas (diseño con el usuario: textos, flujo de saldar con boleta) | sin plan: necesita preguntas de pantalla |
 | M9 | `clinical_encounter`, `cash_manager`, `payment_manager` (`ChargeSource` de la atención), QR con `webtyp/qr` | cobro desde la atención, sin papel (D6–D8, D11) | espera M4b-1c y M4b-2/3 |
 | M10 | `service_catalog`, `appointment_booking` | abono al reservar (D17) y su devolución | espera M4b-1c |
@@ -67,7 +67,7 @@ Ninguna.
 
 ## Bloqueos
 
-- 2026-10-22 · **Despacho**: `business_calendar` cerrado v0.5.0, `tuu` cerrado v0.1.0. Resto del paso 1 en ejecución con Jules (`payment_manager` v0.3.0, `cash_manager` v0.2.0, `agreement_manager` v0.3.0). **Paso 2** (con `payment_manager` v0.3.0): `transbank` PLAN_GATEWAY_V3 · **Paso 3** (con `business_calendar` v0.5.0 y `payment_manager` v0.3.0): `payment_manager` PLAN_PAYOUT · **Paso 4** (con `payment_manager` v0.4.0 y `tuu` v0.1.0): `tuu` PLAN_PAYOUT.
+- 2026-10-22 · **Despacho**: `business_calendar` v0.5.0, `tuu` v0.1.0, `agreement_manager` v0.3.0 cerrados. Resto del paso 1 en ejecución con Jules (`payment_manager` v0.3.0, `cash_manager` v0.2.0). **Paso 2** (con `payment_manager` v0.3.0): `transbank` PLAN_GATEWAY_V3 · **Paso 3** (con `business_calendar` v0.5.0 y `payment_manager` v0.3.0): `payment_manager` PLAN_PAYOUT · **Paso 4** (con `payment_manager` v0.4.0 y `tuu` v0.1.0): `tuu` PLAN_PAYOUT.
 - 2026-10-22 · Payment Intent de TUU: la documentación no dice qué devuelve la creación (¿URL de pago?, ¿campo?). Hace falta una llamada al ambiente de integración (credenciales públicas de prueba en developers.tuu.cl) o preguntarlo a TUU; sin eso no se escribe M4b-2b.
 - 2026-10-22 · `webtyp/driver` (M4b-1b): el repo se crea con `gonew driver "<descripción>"`; lo corre el usuario.
 - 2026-10-22 · Preguntar a TUU comisión del Payment Intent y devolución parcial por API (D24, no bloquea). El contador verifica el modelo de emisión declarado (D13).
