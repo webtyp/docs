@@ -52,7 +52,7 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 | M4b-2 | `veltylabs/tuu` (búsqueda: nada de TUU en el ecosistema, `transbank` es el modelo) | `Terminal` por Pago Remoto (IVA por máquina, D19) + `Gateway` por Payment Intent (D20) | plan se escribe con `payment_manager` v0.3.0 publicado (las firmas se leen del tag); repo creado sin `gonew`: falta `go.mod`, `.gitignore`, tag |
 | M4b-3 | `transbank` | adaptar a D20: `Provider()`, commit dentro de su ruta de retorno, `OnlineResult` | plan se escribe con `payment_manager` v0.3.0 publicado |
 | M4c | `agreement_manager` | D15 + **defecto encontrado**: los hechos de dinero salían por el tema `"money"` (no `money.fact`) e incompletos → `cash_manager` nunca los recibía; porcentaje con `float` | cerrada v0.2.0 |
-| M4c-1 | `agreement_manager` | traducción al español de documentación y comentarios de código | [Antigravity · 2026-10-22 12:30] despachado (v0.2.1) |
+| M4c-1 | `agreement_manager` | traducción al español de documentación y comentarios de código | cerrada v0.2.1 |
 | M4d | `agreement_manager` | operaciones y pantalla (hoy `MountOperations` está vacío: nadie puede saldar desde una pantalla) | lista para planificar/despachar |
 | M9 | `clinical_encounter`, `cash_manager`, `payment_manager` (`ChargeSource` de la atención), QR con `webtyp/qr` | cobro desde la atención, sin papel (D6–D8, D11) | espera M4b-1c y M4b-2/3 |
 | M10 | `service_catalog`, `appointment_booking` | abono al reservar (D17) y su devolución | espera M4b-1c |
