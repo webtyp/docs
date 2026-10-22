@@ -1,5 +1,5 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-22 · P21, P23–P28 consolidadas (D13–D19); P22 ya no bloquea (D20); M4b-1 y M4c despachados
+> **Status:** IN PROGRESS · 2026-10-22 · M4b-0 (dom v0.13.27) y M4b-1 (payment_manager v0.2.0) cerrados; M4c despachado; M4b-1c listo para despachar
 
 Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de TUU: [tuu/docs/ARCHITECTURE.md](../../veltylabs/packages/tuu/docs/ARCHITECTURE.md) · **Diagrama del cobro (hoy y decidido):** [clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md](../../veltylabs/modules/clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md) · Forma de trabajo: skill **master-plan**.
 
@@ -41,10 +41,10 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 | M2 | `payment_manager` | comprobante, hechos | cerrada v0.1.21 |
 | M3 | `cash_manager` | turnos, arqueo, `Sink` | cerrada v0.1.0 |
 | M4 | `agreement_manager` | acuerdos, excepciones, estado de cuenta | cerrada v0.1.13 |
-| M4b-1 | `payment_manager` | puerto `Terminal` (D10, mitad máquina), saldo por referencia `Due` (D16), procesador guardado en cada pago, `ReconcilePayments` | [Claude · 2026-10-22 10:19] despachado (v0.2.0) |
-| M4b-1c | `payment_manager` (`docs/PLAN_GATEWAY.md`, v0.3.0, escrito) | D20: `Gateway` sin `Commit`, `OnlineResult`, `Payer`, `MethodCard`, sin `Deps.ReturnURL` | espera cerrar M4b-1 y `dom` v0.13.27 |
-| M4b-0 | `webtyp/dom` | `Navigate(url)` por GET (TUU no usa POST) | [Claude · 2026-10-22 11:01] despachado (v0.13.27) |
-| M4b-1b | `webtyp/driver` (nuevo; búsqueda: `notify/driver.go` tiene la única copia de `Config`/`Setting`/`Field`/`SecretResolver`/`Driver`) + `notify` + `payment_manager` | D9 (procesador elegido en BD por alcance) sin duplicar el patrón de `notify`: extraerlo a una librería que ambos usen | espera M4b-1; crear el repo con `gonew` (lo corre el usuario) |
+| M4b-1 | `payment_manager` | puerto `Terminal` (D10, mitad máquina), saldo por referencia `Due` (D16), procesador guardado en cada pago, `ReconcilePayments` | cerrada v0.2.0 |
+| M4b-1c | `payment_manager` (`docs/PLAN_GATEWAY.md`, v0.3.0, escrito) | D20: `Gateway` sin `Commit`, `OnlineResult`, `Payer`, `MethodCard`, sin `Deps.ReturnURL` | listo para despachar |
+| M4b-0 | `webtyp/dom` | `Navigate(url)` por GET (TUU no usa POST) | cerrada v0.13.27 |
+| M4b-1b | `webtyp/driver` (nuevo; búsqueda: `notify/driver.go` tiene la única copia de `Config`/`Setting`/`Field`/`SecretResolver`/`Driver`) + `notify` + `payment_manager` | D9 (procesador elegido en BD por alcance) sin duplicar el patrón de `notify`: extraerlo a una librería que ambos usen | crear el repo con `gonew` (lo corre el usuario) |
 | M4b-2 | `veltylabs/tuu` (búsqueda: nada de TUU en el ecosistema, `transbank` es el modelo) | `Terminal` por Pago Remoto (IVA por máquina, D19) + `Gateway` por Payment Intent (D20) | plan se escribe con `payment_manager` v0.3.0 publicado (las firmas se leen del tag); repo creado sin `gonew`: falta `go.mod`, `.gitignore`, tag |
 | M4b-3 | `transbank` | adaptar a D20: `Provider()`, commit dentro de su ruta de retorno, `OnlineResult` | plan se escribe con `payment_manager` v0.3.0 publicado |
 | M4c | `agreement_manager` | D15 + **defecto encontrado**: los hechos de dinero salían por el tema `"money"` (no `money.fact`) e incompletos → `cash_manager` nunca los recibía; porcentaje con `float` | [Claude · 2026-10-22 11:40] redespachado con plan detallado (v0.2.0) |
