@@ -12,7 +12,7 @@ Dentro de alcance: el modelo de dinero (libro, cuentas, asientos), cómo cada m�
 
 ## 2. Contexto del usuario (2026-10-19)
 
-Contador externo (la contabilidad propia de `veltylabs` es un módulo futuro inyectable). Farmacia cobra con máquina de tarjeta. Cada profesional emite su propia boleta; el paciente paga antes en caja y vuelve con el comprobante. Cobra el profesional; la administradora necesita saber cuánto pagarle. No hay Fonasa/Isapre (los `Agreement` de `item_catalog` probablemente no se usan). Dos cajas y dos máquinas de tarjeta (consultorio, farmacia) — luego corregido: no son cajas fijas, es el turno de quien cobra (ver P9 en el master).
+Contador externo (la contabilidad propia de `veltylabs` es un módulo futuro inyectable). Farmacia cobra con máquina de tarjeta. El paciente paga antes en caja y vuelve con el comprobante; la boleta autorizada por el SII la emite la máquina TUU de la clínica (corrección 2026-10-22: el profesional no emite la boleta de la consulta, solo una boleta de honorarios si se la piden). Cobra el profesional; la administradora necesita saber cuánto pagarle. No hay Fonasa/Isapre (los `Agreement` de `item_catalog` probablemente no se usan). Dos cajas y dos máquinas de tarjeta (consultorio, farmacia) — luego corregido: no son cajas fijas, es el turno de quien cobra (ver P9 en el master).
 
 ## 3. Qué hace la industria
 
@@ -45,7 +45,7 @@ Idea común: un **acuerdo** con **cláusulas** (reparto de servicio, monto fijo 
 
 ## 7. Tercera y cuarta ronda — cambios y hallazgos (6e–6g)
 
-- **P6 cambia:** nada manual. El documento tributario de la **farmacia** se emite automáticamente por un puerto `Issuer` con proveedor certificado; las consultas no generan documento (cada profesional emite el suyo); el comprobante de pago de caja lo genera el sistema solo.
+- **P6 cambia:** nada manual. El documento tributario de la **farmacia** se emite automáticamente por un puerto `Issuer` con proveedor certificado; las consultas no generan documento (cada profesional emite el suyo — **error corregido 2026-10-22**: la boleta de la consulta la emite la clínica con su TUU); el comprobante de pago de caja lo genera el sistema solo.
 - **P9 cambia:** no hay «2 cajas» fijas — la unidad es el **turno de caja de una persona** (abre, cobra, cierra con arqueo de efectivo); el alcance sale de los permisos de quien cobra, no de una caja física. Tarjetas no se concilian a mano (eso lo ve el contador en el portal de la máquina).
 - **P10 cambia:** el contador tiene su propia cuenta de solo lectura; no hay «Exportar» como flujo central.
 - **P8:** `provider_payouts` → **`agreement_manager`** (hecho, v0.1.8+).

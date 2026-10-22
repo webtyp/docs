@@ -106,3 +106,4 @@ rojo → queda la versión anterior; (4) un Release sin firma válida se rechaza
 - BUILD_DESTINATIONS define el artefacto que empaqueta S5: `web/server/server` + `web/public/browser.wasm` (D18), y que las rutas relativas se resuelven contra el directorio de trabajo (D20); P9 decide dónde viven la migración y el empaquetado.
 - OFFLINE_FIRST (mjosefa-cms): sin él los clientes no sobreviven al reinicio; S8 depende de `outbox` y del service worker.
 - SECURITY_BY_DEFAULT: el módulo exige permiso explícito, no expone datos en `/health` y verifica firma antes de ejecutar.
+- MONEY_FLOWS D14 (2026-10-22): el servidor de `mjosefa-cms` recibe avisos de pago desde internet por **Cloudflare Tunnel** (solo rutas públicas) + respaldo 4G; un solo servicio local.
