@@ -1,11 +1,11 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-22 · P21, P23–P28 consolidadas (D13–D19); **P22 espera al usuario**; M4b-1 y M4c despachados
+> **Status:** IN PROGRESS · 2026-10-22 · P21, P23–P28 consolidadas (D13–D19); P22 ya no bloquea (D20); M4b-1 y M4c despachados
 
 Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de TUU: [tuu/docs/ARCHITECTURE.md](../../veltylabs/packages/tuu/docs/ARCHITECTURE.md) · **Diagrama del cobro (hoy y decidido):** [clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md](../../veltylabs/modules/clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md) · Forma de trabajo: skill **master-plan**.
 
 ## Preguntas abiertas
 
-**P22 — Pago en línea (QR y abono al reservar): ¿TUU o Webpay?** Reescrita con lo que encontré (tuu.cl y comocobro.cl, mayo 2026). **TUU Link de Pago**: se activa en el mismo Espacio de Trabajo de tus máquinas, sin mensualidad ni costo de inicio, débito/crédito/prepago, comisión «desde 0,98 % + IVA» con abono a 25 días hábiles (más caro mientras antes quieras el dinero; sus máquinas: 1,49 % + IVA plano). **Webpay Plus**: crédito 2,35 % + IVA, débito 1,75 % + IVA, con mínimo en UF por transacción, abono 1–2 días; el adaptador `transbank` ya existe. Lo que **no** está publicado de TUU: si su API en línea (Payment Intent / «Checkout eCommerce») cobra lo mismo que el link, y si permite **devolver por API** (su documentación no muestra ninguna operación de devolución; tú pediste devolución parcial simple del abono). A) Webpay: devoluciones por API (parcial solo en crédito), cero adaptador nuevo, más caro. B) TUU: más barato y un solo proveedor, pero falta un adaptador en línea y generalizar `Gateway` (D10). **Recomiendo B si TUU confirma por escrito dos cosas: comisión del Payment Intent y devolución total/parcial por API; si no, A.** Pregunta a TUU: «¿El Payment Intent cobra la misma comisión que el Link de Pago, con qué plazo de abono, y cómo se hace una devolución parcial por API?». Respuesta:
+**P22 — ¿Cuál procesador en línea se activa primero, TUU o Webpay?** Ya **no bloquea** (D20): se construyen los dos adaptadores y elegir es configuración. Datos (mayo 2026): TUU Link de Pago sin mensualidad, «desde 0,98 % + IVA» a 25 días; Webpay crédito 2,35 % / débito 1,75 % + IVA, abono 1–2 días. **Recomiendo activar TUU si confirma por escrito la comisión del Payment Intent y la devolución parcial por API; si no, Webpay.** Respuesta:
 
 ## Decisiones por implementar
 
@@ -27,6 +27,7 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 | D16 (P26) | **Cuenta por atención con saldo**: varios pagos hasta saldo cero, cada uno cobra lo que falta (`Due`; el monto sigue sin venir del cliente) | M4b-1 (`payment_manager`); que el abono de la reserva se descuente de la atención lo hace el `ChargeReader` de la atención (M9/M10) |
 | D18 (P21) | **Efectivo:** la cajera recibe el dinero, digita esa venta en efectivo en la TUU (que imprime la boleta) y confirma en el sistema; es la única digitación que queda. No se construye emisor por API en esta ola (sin segundo proveedor ni puerto `Issuer`) | M9 (`cash_manager`) |
 | D19 (P28) | **Tratamiento de IVA por máquina, sin cobros mixtos**: el consultorio cobra solo prestaciones exentas y la farmacia solo productos afectos; consultorio **exenta**, farmacia **afecta** (IVA 19 %). Es configuración de cada máquina en el adaptador (`tuu`: tipo de documento y monto exento por número de serie), no del puerto `Terminal`, que sigue sin saber de impuestos | M4b-2 (`tuu`), M5 (la venta de farmacia separa neto e IVA para el contador) |
+| D20 | **`Gateway` se generaliza sí o sí y se construyen los dos adaptadores en línea** (`transbank` y `tuu`); el adaptador verifica lo que manda su procesador (Webpay: commit; TUU: firma HMAC) y entrega a `payment_manager` un resultado ya verificado (`OnlineResult`). Cuál está activo es configuración (D9) | M4b-1c, M4b-2, M4b-3 |
 | D17 (P27) | El abono obligatorio (porcentaje o monto) y la regla de devolución por anticipación viven en el servicio | M10 (`service_catalog`) |
 | K3 | WhatsApp fuera de la primera etapa | hecho (`notify` v0.2.1) |
 
@@ -41,13 +42,15 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 | M3 | `cash_manager` | turnos, arqueo, `Sink` | cerrada v0.1.0 |
 | M4 | `agreement_manager` | acuerdos, excepciones, estado de cuenta | cerrada v0.1.13 |
 | M4b-1 | `payment_manager` | puerto `Terminal` (D10, mitad máquina), saldo por referencia `Due` (D16), procesador guardado en cada pago, `ReconcilePayments` | [Claude · 2026-10-22 10:19] despachado (v0.2.0) |
+| M4b-1c | `payment_manager` (`docs/PLAN_GATEWAY.md`, v0.3.0, escrito) | D20: `Gateway` sin `Commit`, `OnlineResult`, `Payer`, `MethodCard`, sin `Deps.ReturnURL` | espera cerrar M4b-1 y `dom` v0.13.27 |
+| M4b-0 | `webtyp/dom` | `Navigate(url)` por GET (TUU no usa POST) | [Claude · 2026-10-22 11:01] despachado (v0.13.27) |
 | M4b-1b | `webtyp/driver` (nuevo; búsqueda: `notify/driver.go` tiene la única copia de `Config`/`Setting`/`Field`/`SecretResolver`/`Driver`) + `notify` + `payment_manager` | D9 (procesador elegido en BD por alcance) sin duplicar el patrón de `notify`: extraerlo a una librería que ambos usen | espera M4b-1; crear el repo con `gonew` (lo corre el usuario) |
-| M4b-2 | `veltylabs/tuu` (búsqueda: nada de TUU en el ecosistema, `transbank` es el modelo) | `Terminal` por Pago Remoto (no depende de P22); `Gateway` por Payment Intent si P22 = B | espera M4b-1; repo creado sin `gonew`: falta `go.mod`, `.gitignore`, tag |
-| M4b-3 | `transbank` | `Provider()` en `Gateway` (ruptura de M4b-1); la mitad en línea de D10 (`Confirm`) espera P22 | espera M4b-1 |
+| M4b-2 | `veltylabs/tuu` (búsqueda: nada de TUU en el ecosistema, `transbank` es el modelo) | `Terminal` por Pago Remoto (IVA por máquina, D19) + `Gateway` por Payment Intent (D20) | plan se escribe con `payment_manager` v0.3.0 publicado (las firmas se leen del tag); repo creado sin `gonew`: falta `go.mod`, `.gitignore`, tag |
+| M4b-3 | `transbank` | adaptar a D20: `Provider()`, commit dentro de su ruta de retorno, `OnlineResult` | plan se escribe con `payment_manager` v0.3.0 publicado |
 | M4c | `agreement_manager` | D15 + **defecto encontrado**: los hechos de dinero salían por el tema `"money"` (no `money.fact`) e incompletos → `cash_manager` nunca los recibía; porcentaje con `float` | [Claude · 2026-10-22 10:19] despachado (v0.2.0) |
 | M4d | `agreement_manager` | operaciones y pantalla (hoy `MountOperations` está vacío: nadie puede saldar desde una pantalla) | espera M4c |
-| M9 | `clinical_encounter`, `cash_manager`, `payment_manager` (`ChargeSource` de la atención), QR con `webtyp/qr` | cobro desde la atención, sin papel (D6–D8, D11) | espera M4b-1/2; QR espera P22 |
-| M10 | `service_catalog`, `appointment_booking` | abono al reservar (D17) y su devolución | espera M4b-1, P22 |
+| M9 | `clinical_encounter`, `cash_manager`, `payment_manager` (`ChargeSource` de la atención), QR con `webtyp/qr` | cobro desde la atención, sin papel (D6–D8, D11) | espera M4b-1c y M4b-2/3 |
+| M10 | `service_catalog`, `appointment_booking` | abono al reservar (D17) y su devolución | espera M4b-1c |
 | M5 | venta de farmacia | venta, cobro por `Terminal`, boleta, stock | espera M4b, CATALOG_SPLIT (F) |
 | M6 | `purchase_manager` (nuevo) | compras con costo de lote | después de M3/M4 |
 | M7 | contable de `veltylabs` | partida doble | después de M1-M6 |
@@ -55,7 +58,7 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 
 ## Bloqueos
 
-- 2026-10-22 · P22 espera al usuario (preguntar a TUU su tarifa en línea). El contador verifica el modelo de emisión declarado (D13).
+- 2026-10-22 · Preguntar a TUU comisión del Payment Intent y devolución parcial por API (decide P22, no bloquea). El contador verifica el modelo de emisión declarado (D13).
 - `alert_manager`: UX rechazada; depende de MODULE_GUIDANCE (P15/P16), fuera de esta ola.
 
 ## Relación con otras olas
