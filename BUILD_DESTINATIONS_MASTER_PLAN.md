@@ -1,6 +1,6 @@
 # Destinos de compilación — master plan
 
-> **Status:** IN PROGRESS · 2026-10-21 · D18–D20 cerradas (un main por carpeta en `web/`; `ui/` sin etiqueta de destino; rutas relativas al directorio de trabajo); planes de `sitec`, `server`, `router`, `devflow`, `html`, `goflare` despachados, `app` tras ellos; **P7–P9 esperan al usuario**; módulos y apps después. **Cambio sin retrocompatibilidad en todo webtyp.**
+> **Status:** IN PROGRESS · 2026-10-22 · D18–D20 cerradas; gates D18 cerrados (sitec, server, router, devflow, html, goflare); plan de app despachado; **P7–P9 esperan al usuario**; módulos y apps después. **Cambio sin retrocompatibilidad en todo webtyp.**
 
 **Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker) que se prueba en local
 con `web/server.go`. `//go:build wasm`/`!wasm` no distingue el Worker del navegador (los dos son
@@ -129,7 +129,7 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | — | **cerrado**: `maingen.go` ya lo emite |
 | `webtyp/goflare` | compila `web/edge.go` sin etiqueta de destino (deja de leer `edge/`) y rechaza `-tags browser` (D10); `OutputDir` por defecto `web/` (D12) | tras gates (`sitec`) | **cerrado** v0.5.43 |
 | 14 módulos `veltylabs/modules/*` (appointment_booking … clinical_encounter) | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrados** (versiones en el historial git de este archivo); D18/D19 los vuelven a tocar |
-| `webtyp/sitec`, `server`, `router`, `devflow`, `html`, `goflare` | D18: entradas y salidas por carpeta (`docs/PLAN.md` de cada repo) | gates de D18 | [Antigravity · 2026-10-21 23:17] despachados |
-| `webtyp/app` | D18: cliente, servidor y Worker por carpeta; corrige `Entry` del Worker (hoy pasa `cmd/edgeworker` a `goflare`, `app/section-deploy.go:41`) | tras `sitec`, `server`, `html` | plan escrito, por despachar |
+| `webtyp/sitec`, `server`, `router`, `devflow`, `html`, `goflare` | D18: entradas y salidas por carpeta (`docs/PLAN.md` de cada repo) | gates de D18 | **cerrados** (sitec v0.2.70, server v0.2.89, router v0.4.6, devflow v0.4.147, html v0.0.29, goflare v0.5.46) |
+| `webtyp/app` | D18: cliente, servidor y Worker por carpeta; corrige `Entry` del Worker (hoy pasa `cmd/edgeworker` a `goflare`, `app/section-deploy.go:41`) | tras `sitec`, `server`, `html` | [Antigravity · 2026-10-22 07:43] despachado |
 | todos los módulos `veltylabs/modules/*` | D18 + D19: `web/browser.go` → `web/browser/main.go`; `ui/` sin etiqueta | tras los gates de D18 | por escribir |
 | `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración directa a D18: `edge/main.go` → `web/edge/main.go`, `web/client.go` → `web/browser/main.go`, `web/server.go` → `web/server/main.go`, `config/client.go` → `config/browser.go`, etiquetas según D2/D15/D19, sin `.build/` | al final; misitio primero (re-layout M1–M8); espera P8 | plan por escribir |
