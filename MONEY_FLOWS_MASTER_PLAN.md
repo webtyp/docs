@@ -1,11 +1,15 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-22 · M4b-0, M4b-1, M4c (v0.2.0) cerrados; M4b-1c listo para despachar; M4d desbloqueada
+> **Status:** IN PROGRESS · 2026-10-22 · M4b-0, M4b-1, M4c (v0.2.0) cerrados; M4b-1c listo para despachar; M4d desbloqueada; **P29–P30 (abono diferido y comisión de tarjetas) esperan al usuario**
 
 Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de TUU: [tuu/docs/ARCHITECTURE.md](../../veltylabs/packages/tuu/docs/ARCHITECTURE.md) · **Diagrama del cobro (hoy y decidido):** [clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md](../../veltylabs/modules/clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md) · Forma de trabajo: skill **master-plan**.
 
 ## Preguntas abiertas
 
 **P22 — ¿Cuál procesador en línea se activa primero, TUU o Webpay?** Ya **no bloquea** (D20): se construyen los dos adaptadores y elegir es configuración. Datos (mayo 2026): TUU Link de Pago sin mensualidad, «desde 0,98 % + IVA» a 25 días; Webpay crédito 2,35 % / débito 1,75 % + IVA, abono 1–2 días. **Recomiendo activar TUU si confirma por escrito la comisión del Payment Intent y la devolución parcial por API; si no, Webpay.** Respuesta:
+
+**P29 — ¿Qué plan tiene contratado cada máquina?** Con tarjeta el dinero **no llega el mismo día**: TUU lo deposita según el plan (al instante solo con cuenta AndCo, 1, 2, 5 o 10 días hábiles; más tarde = más barato) y **descuenta su comisión**: porcentual 1,49 % o mixta 0,79 % + $65 por venta, **más IVA sobre la comisión**. Ejemplo: consulta de $30.000 con tarjeta, plan porcentual a 2 días → el lunes se cobra $30.000, el miércoles llegan $29.468 ($30.000 − 1,49 % − IVA de esa comisión). Para la clínica y para la farmacia (cuentas separadas, D9): A) dime plazo y modelo de cada una; B) no lo sé, lo reviso en el Espacio de Trabajo de TUU. **Recomiendo B** y anotarlo aquí: son datos de configuración, no de diseño. Respuesta:
+
+**P30 — ¿Cómo entra eso a la caja y a la proyección de 30 días?** A) El sistema calcula, por cada cobro con tarjeta, **cuánto y cuándo** llega (monto neto, día hábil del depósito usando los feriados de `business_calendar`) y registra la comisión como gasto; la «Caja 30 días» muestra el dinero el día que llega y el cierre de turno cuenta **solo efectivo**. Plazo y comisión son configuración de cada cuenta de procesador (la misma fila de D9). B) Solo el plazo, sin comisión. C) Nada: lo ve el contador en el portal de TUU. **Recomiendo A**: la comisión es plata real (≈1,77 % con IVA en el plan porcentual: unos $17.700 por cada millón cobrado) y sin el plazo la proyección muestra dinero que todavía no está. Requiere que cada hecho de dinero diga **con qué medio** se pagó (hoy no lo dice: ver Bloqueos). Respuesta:
 
 ## Decisiones por implementar
 
@@ -27,6 +31,7 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 | D18 (P21) | **Efectivo:** la cajera recibe el dinero, digita esa venta en efectivo en la TUU (que imprime la boleta) y confirma en el sistema; es la única digitación que queda. No se construye emisor por API en esta ola (sin segundo proveedor ni puerto `Issuer`) | M9 (`cash_manager`) |
 | D19 (P28) | **Tratamiento de IVA por máquina, sin cobros mixtos**: el consultorio cobra solo prestaciones exentas y la farmacia solo productos afectos; consultorio **exenta**, farmacia **afecta** (IVA 19 %). Es configuración de cada máquina en el adaptador (`tuu`: tipo de documento y monto exento por número de serie), no del puerto `Terminal`, que sigue sin saber de impuestos | M4b-2 (`tuu`), M5 (la venta de farmacia separa neto e IVA para el contador) |
 | D20 | **`Gateway` se generaliza sí o sí y se construyen los dos adaptadores en línea** (`transbank` y `tuu`); el adaptador verifica lo que manda su procesador (Webpay: commit; TUU: firma HMAC) y entrega a `payment_manager` un resultado ya verificado (`OnlineResult`). Cuál está activo es configuración (D9) | M4b-1c, M4b-2, M4b-3 |
+| D21 | Con tarjeta el dinero llega **después y menos**: plazo de abono (instante/1/2/5/10 días hábiles) y comisión (porcentual o mixta + IVA) según el plan de cada cuenta de procesador | P29, P30 |
 | D17 (P27) | El abono obligatorio (porcentaje o monto) y la regla de devolución por anticipación viven en el servicio | M10 (`service_catalog`) |
 | K3 | WhatsApp fuera de la primera etapa | hecho (`notify` v0.2.1) |
 
@@ -60,6 +65,8 @@ Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de
 
 - 2026-10-22 · Preguntar a TUU comisión del Payment Intent y devolución parcial por API (decide P22, no bloquea). El contador verifica el modelo de emisión declarado (D13).
 - `alert_manager`: UX rechazada; depende de MODULE_GUIDANCE (P15/P16), fuera de esta ola.
+
+- 2026-10-22 · **Defecto en `cash_manager` (M3)**: el cierre de turno suma como efectivo esperado **todos** los cobros del tenant desde la apertura, también los con tarjeta y los de otros cajeros (`cash_manager/ops.go:146`), porque `money.Fact` no dice con qué medio se pagó. Se corrige junto con P30 (`webtyp/money` agrega el medio al hecho; `payment_manager` lo llena; `cash_manager` filtra efectivo y cajero).
 
 ## Relación con otras olas
 
