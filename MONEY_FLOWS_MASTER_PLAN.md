@@ -53,7 +53,7 @@ Ninguna.
 | M4b-2b | `veltylabs/tuu` (Payment Intent) | `Gateway` en línea de TUU (D20, D24) | **sin plan**: la respuesta de creación del Payment Intent no está documentada (ver Bloqueos) |
 | M4b-3 | `transbank` | adaptar a D20: `Provider()`, commit dentro de su ruta de retorno, `OnlineResult`, `Config.ReturnURL` | cerrada v0.2.0 |
 | M4b-5 | `business_calendar` (v0.5.0) → `payment_manager` (v0.4.0) → `tuu` (v0.2.0) | `BankDayAfter`; puerto `PayoutTerms` + `BankDays`, hechos con `Means`/`Actor`, tarjeta = `Accrued` con `DueAt` y comisión; plan de abono de TUU configurable | cerrada (pasos 3 y 4 completados) |
-| M3b | `cash_manager` `docs/PLAN.md` (v0.2.0) | cierre de turno solo efectivo de la cajera (`Means`/`Actor`); guarda medio y autor; id de hecho acepta `_` | [Antigravity · 2026-10-22] despachado |
+| M3b | `cash_manager` `docs/PLAN.md` (v0.2.0) | cierre de turno solo efectivo de la cajera (`Means`/`Actor`); guarda medio y autor; id de hecho acepta `_` | cerrada v0.2.0 |
 | M4c | `agreement_manager` | D15 + **defecto encontrado**: los hechos de dinero salían por el tema `"money"` (no `money.fact`) e incompletos → `cash_manager` nunca los recibía; porcentaje con `float` | cerrada v0.2.0 |
 | M4c-1 | `agreement_manager` | traducción al español de documentación y comentarios de código | cerrada v0.2.1 |
 | M4d-1 | `agreement_manager` | diez operaciones (terceros, acuerdos, devengos, saldar, saldar con boleta, estado de cuenta) y las vistas apuntando a ellas | cerrada v0.3.0 |
@@ -67,7 +67,7 @@ Ninguna.
 
 ## Bloqueos
 
-- 2026-10-22 · **Despacho**: `payment_manager` v0.4.0, `transbank` v0.2.0, `agreement_manager` v0.3.0, `business_calendar` v0.5.0, `tuu` v0.2.0 cerrados. Pasos 1, 2, 3 y 4 completados; solo `cash_manager` v0.2.0 en curso.
+- 2026-10-22 · **Despacho**: `payment_manager` v0.4.0, `transbank` v0.2.0, `agreement_manager` v0.3.0, `business_calendar` v0.5.0, `tuu` v0.2.0, `cash_manager` v0.2.0 cerrados. Pasos 1, 2, 3, 4 y M3b completados.
 - 2026-10-22 · Payment Intent de TUU: la documentación no dice qué devuelve la creación (¿URL de pago?, ¿campo?). Hace falta una llamada al ambiente de integración (credenciales públicas de prueba en developers.tuu.cl) o preguntarlo a TUU; sin eso no se escribe M4b-2b.
 - 2026-10-22 · `webtyp/driver` (M4b-1b): el repo se crea con `gonew driver "<descripción>"`; lo corre el usuario.
 - 2026-10-22 · Preguntar a TUU comisión del Payment Intent y devolución parcial por API (D24, no bloquea). El contador verifica el modelo de emisión declarado (D13).
