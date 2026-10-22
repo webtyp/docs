@@ -1,6 +1,6 @@
 # Destinos de compilación — master plan
 
-> **Status:** IN PROGRESS · 2026-10-21 · D1–D16 cerradas; D7 corregida (`style.css` vacío, arreglado en `sitec` v0.2.68); planes de `sitec` (autochequeo) y `goflare` escritos, por despachar; **P7 (quién compila `browser.wasm`) espera al usuario**; siguiente: migración de apps. **Cambio sin retrocompatibilidad en todo webtyp.**
+> **Status:** IN PROGRESS · 2026-10-21 · D18–D20 cerradas (un main por carpeta en `web/`; `ui/` sin etiqueta de destino; rutas relativas al directorio de trabajo); planes de `sitec`, `server`, `router`, `devflow`, `html`, `goflare` despachados, `app` tras ellos; **P7–P9 esperan al usuario**; módulos y apps después. **Cambio sin retrocompatibilidad en todo webtyp.**
 
 **Disparador:** misitio es un proyecto **100 % cloud** (Cloudflare Worker) que se prueba en local
 con `web/server.go`. `//go:build wasm`/`!wasm` no distingue el Worker del navegador (los dos son
@@ -57,6 +57,14 @@ defecto es nativa sin etiquetas (servidor); los archivos `browser`/wasm se verif
 | D14 (cierra P4, reescrita por D15) | **Las librerías conservan `wasm`/`!wasm`** cuando la separación se debe a una API de plataforma (`syscall/js`, `os`, `net`): `env`, `fetch`, `dom`, `keyring/browser`, `cloudflare/*`, `json`, `time`, `fmt`… **no se tocan.** Solo suman `browser`/`!browser` los archivos de un paquete que importan **a la vez** el navegador y el Worker y deben comportarse distinto en cada uno. | En una librería la importación ya decide el destino: `dom` lleva `wasm` y nunca entra al Worker porque el Worker no lo importa. La migración de librerías baja de 297 archivos a los módulos (D6) y esos pocos casos mixtos. |
 | D15 (cierra P6) | **Dos ejes, una sola etiqueta nueva.** Plataforma: `wasm`/`!wasm` (automática, la fija el compilador). Destino: `browser`/`!browser` (la pasa solo el compilador del cliente). Tabla completa: solo navegador → `browser`; solo Worker → `wasm && !browser`; solo servidor nativo → `!wasm`; navegador + Worker → `wasm`; servidor + Worker → `!browser`; los tres → sin etiqueta. Regla para el agente: *"¿por qué se separa? Si la API no existe en esa plataforma → `wasm`/`!wasm`; si pertenece a otro binario → `browser`/`!browser`."* | Se eliminan las etiquetas `edge` y `server` del diseño anterior. `wasm && !browser` aparece en la práctica solo en `web/edge.go` (las librerías del Worker ya llevan `wasm` y el navegador no las importa). **Costos aceptados:** (1) el Worker se define por ausencia de `browser`: lo cubren D4 (una sola herramienta pasa la etiqueta) y D10; (2) vale mientras exista un solo destino wasm además del navegador: un tercer runtime wasm agregaría su propia etiqueta en ese momento. **Nombre `browser`:** precedente directo en las condiciones de `exports`/campo `browser` de `package.json` (`browser`, `node`, `workerd`), que separan exactamente navegador de Worker; coincide con el nombre de archivo ya usado (`browser.go` de módulos, `web/browser.go`); `js` está tomada por `GOOS=js` (navegador **y** Worker), y `client` choca con `fetch/client_*.go` y es ambiguo (el Worker también es cliente HTTP). |
 
+### Cerradas por el usuario (2026-10-21)
+
+| # | Decisión | Consecuencia |
+|---|---|---|
+| D18 (reescribe el nombre de archivo de D1 y la salida de D12) | **Un `main` por carpeta dentro de `web/`; la carpeta es el binario**: `web/browser/main.go` → `web/public/browser.wasm`; `web/server/main.go` → `web/server/server`; `web/edge/main.go` → `web/edge/edge.wasm` + `web/edge/edge.js`. `web/public/` sigue siendo lo único que se sirve; lo demás no se sirve. | La carpeta separa los binarios, así que **los `main` no llevan etiqueta de destino** (a lo sumo `wasm`/`!wasm`, que gopls entiende). `browser` sigue siendo flag del compilador del cliente para dejar fuera los archivos `!browser`. `.gitignore`: `/web/public/`, `/web/server/server`, `/web/edge/edge.*`. Motivo: gopls no analiza archivos con una etiqueta propia positiva. |
+| D19 (reescribe `ui/browser.go` de D17) | **En un módulo reutilizable, los archivos de render de `ui/` no llevan etiqueta**: los importa solo el `main` del navegador, así que el grafo de imports ya decide el destino (como D14). Los productores de assets (`css.go`, `svg.go`, `html.go`, `js.go`, `image.go`, `favicon.go`…) **siguen `!wasm`** (D7). | Cada repo lo verifica con `gotest` (que `ui/` compile en nativo); un `ui/` que no compile en nativo es un hallazgo de ese plan, no un cambio de esta regla. |
+| D20 | **Las rutas relativas (`web/public`) se resuelven contra el directorio de trabajo del proceso**, no contra la carpeta del binario. Todo lanzador fija el directorio de trabajo en la raíz del proyecto o del paquete: en desarrollo ya lo hace `gorun` (`server/strategies.go:368`) y `app` además pasa `-server_public_dir` absoluto (`app/section-build.go`); en servidor propio, el supervisor de SELFHOST_DEPLOY. | Mover el binario a `web/server/` no cambia cómo encuentra `web/public`. |
+
 ---
 
 ## Por qué romper todo webtyp (justificación)
@@ -85,6 +93,10 @@ defecto es nativa sin etiquetas (servidor); los archivos `browser`/wasm se verif
 ---
 
 ## Preguntas abiertas
+
+**P8 — Módulos propios de una app (`modules/<m>/`).** Ahí `browser.go` vive en el **mismo paquete** que `server.go` (lo importan los dos lados de `config`), así que sigue necesitando `//go:build browser` y gopls no lo analiza (`router/layoutscan/layoutscan.go:227` lo exige). A) aceptarlo. B) la misma forma que un módulo reutilizable: `modules/<m>/ui/` como subpaquete sin etiqueta (D19). **Recomiendo B**: un solo molde de módulo en todo el ecosistema, y ningún archivo de UI fuera de gopls. Respuesta:
+
+**P9 — `cmd/` en la raíz.** Quedan `cmd/migrate/main.go` (opcional, **project-layout** y **app-rest-edge**) y `cmd/build` (S5 de SELFHOST_DEPLOY), y dijiste que `cmd/` no dice nada. A) dejar `cmd/` solo para herramientas que no se entregan. B) moverlos a carpetas con intención (p. ej. `web/migrate/`), o que el servidor migre al arrancar (P5 de SELFHOST_DEPLOY ya lo propone) y el empaquetado lo haga la herramienta sin `main` propio. **No recomiendo todavía**: depende de P5 de SELFHOST_DEPLOY y de cómo migra el Worker (D1), que no revisé. Respuesta:
 
 **P7 — ¿Quién compila `browser.wasm`?** Hoy hay dos compiladores del mismo binario con flags distintos: `app/client_builder_init.go:33-63` (`gobuild`, tamaños L/M/S, `-tags browser,dev`, cancelable, recompila al guardar) y `sitec/wasm_builder_exec.go` (`WasmBuilder`, una sola vez, lo usan `goflare` y el build de release). Desarrollo y release no compilan igual. A) `sitec` es dueño del *qué* (entrada, etiquetas, flags por tamaño) y `app` del *cuándo* (vigilar, cancelar, cambiar de tamaño): `app` pide a `sitec` los argumentos y sigue usando `gobuild`. B) `app` usa directamente `sitec.WasmBuilder`, y `sitec` suma cancelación y tamaños. **Recomiendo A**: separa política (sitec) de ciclo de vida (app) sin meter en `sitec` cosas de desarrollo; es API pública nueva en `sitec` → gate de **api-design** en su plan. Respuesta:
 
@@ -116,19 +128,8 @@ honesta: el binario real de esos destinos es wasm. Costo aceptado: los tests de 
 | `webtyp/app` | cliente `-tags browser` (`web/browser.go` → `web/public/browser.wasm`, `scaffold/browser.go`); servidor sin etiqueta de destino; configuración del IDE | tras gates (`js`, `html`, `sitec`, `devflow`, `router`) | **cerrado** v0.7.6 |
 | `webtyp/server` | generador de `web/server.go` con `//go:build !wasm` | — | **cerrado**: `maingen.go` ya lo emite |
 | `webtyp/goflare` | compila `web/edge.go` sin etiqueta de destino (deja de leer `edge/`) y rechaza `-tags browser` (D10); `OutputDir` por defecto `web/` (D12) | tras gates (`sitec`) | **cerrado** v0.5.43 |
-| `veltylabs/modules/appointment_booking` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.3.14 |
-| `veltylabs/modules/pharmacy_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.12 |
-| `veltylabs/modules/supply_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.12 |
-| `veltylabs/modules/service_catalog` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.5.12 |
-| `veltylabs/modules/patient_directory` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.41 |
-| `veltylabs/modules/staff_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.129 |
-| `veltylabs/modules/business_calendar` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.4.95 |
-| `veltylabs/modules/payment_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.26 |
-| `veltylabs/modules/cash_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.2 |
-| `veltylabs/modules/room_layout` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.3.48 |
-| `veltylabs/modules/chat_room` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.84 |
-| `veltylabs/modules/device_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.63 |
-| `veltylabs/modules/network_manager` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.1.63 |
-| `veltylabs/modules/clinical_encounter` | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrado** v0.2.20 |
-| demás módulos (`veltylabs/modules/*`) | D6 y D14/D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | tras gates, en paralelo, un plan por repo | por despachar |
-| `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración: `edge/` → `web/edge.go` (`edge.wasm`), `web/client.go` → `web/browser.go` (`browser.wasm`), `config/client.go` → `config/browser.go`, etiquetas según D1/D2/D15, sin `.build/` ni `/edge.wasm` | al final; misitio primero (re-layout M1–M8) | plan por escribir |
+| 14 módulos `veltylabs/modules/*` (appointment_booking … clinical_encounter) | D17: `web/browser.go` y `ui/browser.go` con `//go:build browser` | módulos | **cerrados** (versiones en el historial git de este archivo); D18/D19 los vuelven a tocar |
+| `webtyp/sitec`, `server`, `router`, `devflow`, `html`, `goflare` | D18: entradas y salidas por carpeta (`docs/PLAN.md` de cada repo) | gates de D18 | despachados |
+| `webtyp/app` | D18: cliente, servidor y Worker por carpeta; corrige `Entry` del Worker (hoy pasa `cmd/edgeworker` a `goflare`, `app/section-deploy.go:41`) | tras `sitec`, `server`, `html` | plan escrito, por despachar |
+| todos los módulos `veltylabs/modules/*` | D18 + D19: `web/browser.go` → `web/browser/main.go`; `ui/` sin etiqueta | tras los gates de D18 | por escribir |
+| `veltylabs/misitio`, `veltylabs/iam`, `veltylabs/mjosefa-cms`, demás apps | migración directa a D18: `edge/main.go` → `web/edge/main.go`, `web/client.go` → `web/browser/main.go`, `web/server.go` → `web/server/main.go`, `config/client.go` → `config/browser.go`, etiquetas según D2/D15/D19, sin `.build/` | al final; misitio primero (re-layout M1–M8); espera P8 | plan por escribir |

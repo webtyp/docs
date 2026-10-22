@@ -45,7 +45,7 @@ app (`config/update_key.go`, archivo generado por `Provision`). B) solo checksum
 instala solo es el mejor objetivo de un ataque a la cuenta de GitHub. El repo es privado: el servidor necesita un token
 de **solo lectura de Releases**, tecleado una vez por el administrador en la pantalla de actualización. Respuesta:
 
-**P5 — Migraciones al aplicar la versión.** El binario nuevo corre `cmd/migrate` antes de servir. A) `pg_dump` previo →
+**P5 — Migraciones al aplicar la versión.** El binario nuevo corre la migración antes de servir (dónde vive: P9 de BUILD_DESTINATIONS, hoy `cmd/migrate`). A) `pg_dump` previo →
 migrar → `/health`; si falla, vuelve el binario anterior (la base solo se restaura si la migración fue destructiva), y
 las migraciones son **solo aditivas** (expandir; contraer en una versión posterior). B) con migraciones pendientes la
 actualización **nunca** es automática: exige al administrador. **Recomiendo A para lo aditivo y B para lo destructivo**:
@@ -61,15 +61,15 @@ las personas pasan por PR y el bot solo sube `go.mod`/`go.sum`. Respuesta:
 | # | Decisión | Dónde se implementa |
 |---|---|---|
 | D1 (P1 anterior) | **`release` es una rama como `main`.** `Plan.Branch` (def. `main`); el workflow generado corre en push a esa rama; el tag lo publica ese workflow/`gopush` desde ella. | S1, S2, S6 |
-| D2 | **El servidor pregunta, la nube construye.** Nada entra a la LAN; el artefacto es un Release de GitHub de `mjosefa-cms` (`server` + `web/public/` + checksums + firma). | S3, S4 |
+| D2 | **El servidor pregunta, la nube construye.** Nada entra a la LAN; el artefacto es un Release de GitHub de `mjosefa-cms` con **el mismo árbol que en desarrollo** (`web/server/server` + `web/public/`, D18 de BUILD_DESTINATIONS) + checksums + firma. | S3, S4 |
 | D3 | **Módulo → app**: la action de la app (por push a `release`, horario o `workflow_dispatch`) sube a su última versión publicada todo `veltylabs/*` y `webtyp.com/*` de su `go.mod` (sin `-rc`), corre `go mod tidy` y los tests de todos los destinos; si fallan, no publica y el servidor conserva su versión; si pasan, un commit del bot guarda `go.mod` en `release` y publica el Release firmado. Sin cambios, no publica. Sin tocar ~50 repos. | S2 |
 | D4 | **La actualización es un módulo integrado** (`webtyp/selfupdate`, sin TUI): pantalla "Actualizaciones" para el administrador, recurso RBAC propio y contador en el menú cuando hay una pendiente. | S4, S7 |
 | D5 | **Política de reinicio:** con una actualización pendiente y clientes conectados, **solo el administrador** la aplica (botón). Con **cero clientes** se aplica **sola**: caso típico, el servidor se reinició por un corte de luz y arrancó con una versión pendiente; mientras se instala, los clientes PWA esperan y reintentan. | S4 |
 | D6 | **Revisión asíncrona y nunca bloqueante**: al arrancar, y en la segunda ocasión (P1). Un fallo de red es una línea de log, nunca un error para el usuario (como `core/update.go:23`). | S4 |
-| D7 | **Reusar `webtyp.com/update`** (`Swap`/`Rollback`/checksum); `selfupdate` añade política, firma, estado persistente y vigilancia. Un supervisor (NSSM o `systemd`) relanza el proceso; la versión nueva vive en su carpeta y se apunta a ella (Windows no deja reemplazar un `.exe` en uso). | S4 |
+| D7 | **Reusar `webtyp.com/update`** (`Swap`/`Rollback`/checksum); `selfupdate` añade política, firma, estado persistente y vigilancia. Un supervisor (NSSM o `systemd`) relanza el proceso; la versión nueva vive en su carpeta y se apunta a ella (Windows no deja reemplazar un `.exe` en uso). El supervisor arranca `web/server/server` **con el directorio de trabajo en la carpeta de esa versión**, porque `web/public` se resuelve contra el directorio de trabajo (D20 de BUILD_DESTINATIONS); o le pasa `-server_public_dir`. | S4 |
 | D8 | **Vigilancia tras reiniciar:** si `/health` no responde en N segundos, se vuelve a la versión anterior y se marca la nueva como mala (no se reintenta sola). | S4 |
 | D9 | **Secretos de producción solo en el servidor** (`DATABASE_URL`, `ROUTER_URL`, token de lectura): sin API ni conexión entrante, D1/D29 de DEPLOY_WIZARD se cumplen tal cual. La app informa lo que falta al arrancar (mismo texto de `Missing`). | S4, S7 |
-| D10 | **Un binario por sistema operativo, un solo cliente.** La action compila `server` para cada `GOOS/GOARCH` listado (como `core/.github/workflows/release.yml`) y publica `web/public/` una vez; el servidor baja el que corresponde a su plataforma (`core/update.go:40`). Cambiar de Windows a Linux no cambia el flujo. Compilar en la nube no resuelve el mínimo de Go (P3). | S2, S4 |
+| D10 | **Un binario por sistema operativo, un solo cliente.** La action compila `web/server/main.go` para cada `GOOS/GOARCH` listado (como `core/.github/workflows/release.yml`) y publica `web/public/` una vez; el servidor baja el que corresponde a su plataforma (`core/update.go:40`). Cambiar de Windows a Linux no cambia el flujo. Compilar en la nube no resuelve el mínimo de Go (P3). | S2, S4 |
 
 ## Fases
 
@@ -85,7 +85,7 @@ ni `devflow` (fuera de esta sesión): sus filas se afinan al leerlos.
 | S2 | `github` | Workflow generado: rama, `go get` de dependencias, prueba, compila por plataforma (D10), firma, publica Release; disparos de D3 | espera S1 |
 | S3 | `selfupdate` (`Target`) | `Check`: secreto de firma en Actions, workflow, último Release; `Provision`: par ed25519 (privada a Actions, pública en `config/update_key.go`) | espera S1, P4 |
 | S4 | `selfupdate` (módulo) | Estado `idle→disponible→descargada→aplicando`, política D5 con `ActiveClients()`, firma, intercambio de versión (D7), vigilancia (D8), migración (P5), pantalla y RBAC | espera P1–P3, P5 |
-| S5 | `sitec` / `mjosefa-cms` | `cmd/build` (3 líneas) empaqueta `web/server` + `web/public/` con versión; el servidor expone su versión y `/health` | espera BUILD_DESTINATIONS |
+| S5 | `sitec` / `mjosefa-cms` | El empaquetador (hoy `cmd/build`; dónde vive: P9 de BUILD_DESTINATIONS) empaqueta `web/server/server` + `web/public/` con versión, conservando el árbol (D20); el servidor expone su versión y `/health` | espera BUILD_DESTINATIONS |
 | S6 | devflow (`gopush`) | Etiquetar desde la rama de `Plan.Branch`; sin cambios para el resto | espera S1 |
 | S7 | `mjosefa-cms` | `config/deploy.go`, rama `release`, `selfupdate` en `modules/`, supervisor; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S5, B3, B4 |
 | S8 | `pwa` / `devskills` | Cliente: ante reinicio del servidor muestra "actualizando" y reintenta sin perder la cola (`outbox`); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
@@ -103,6 +103,6 @@ rojo → queda la versión anterior; (4) un Release sin firma válida se rechaza
 ## Relación con otras olas
 
 - Extiende DEPLOY_WIZARD (cerrado): añade un `Target` y `Plan.Branch`; no cambia el resto de su contrato.
-- BUILD_DESTINATIONS define el artefacto `server` + `browser.wasm` que empaqueta S5.
+- BUILD_DESTINATIONS define el artefacto que empaqueta S5: `web/server/server` + `web/public/browser.wasm` (D18), y que las rutas relativas se resuelven contra el directorio de trabajo (D20); P9 decide dónde viven la migración y el empaquetado.
 - OFFLINE_FIRST (mjosefa-cms): sin él los clientes no sobreviven al reinicio; S8 depende de `outbox` y del service worker.
 - SECURITY_BY_DEFAULT: el módulo exige permiso explícito, no expone datos en `/health` y verifica firma antes de ejecutar.
