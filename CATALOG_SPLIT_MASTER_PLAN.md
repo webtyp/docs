@@ -1,5 +1,5 @@
 # Catálogo: servicios, farmacia e insumos — master plan
-> **Status:** IN PROGRESS · 2026-10-21 · A, B1, B2, C0, C1, C2, C3a cerradas; D23 (P22) cerrada; C3b (pantallas) va con E; E espera MODULE_GUIDANCE; F espera la caja de MONEY_FLOWS
+> **Status:** IN PROGRESS · 2026-10-23 · A, B1, B2, C0, C1, C2, C3a cerradas; D23 (P22) cerrada; C3b (pantallas) va con E; E y F desbloqueadas (MODULE_GUIDANCE y caja de MONEY_FLOWS M2–M4 cerradas)
 
 Razonamiento de las decisiones ya implementadas: [CATALOG_DESIGN.md](CATALOG_DESIGN.md).
 
@@ -38,8 +38,8 @@ Ninguna.
 | C2 | `supply_manager` | `room_id` en la ubicación (una activa por box) y `UseInRoom` | cerrada v0.2.0; **elegir el box** en el formulario va con E |
 | C3a | `clinical_encounter` | `tenant_id`, `service_id`, líneas de uso desde la receta, ajuste, `CompleteVisit` con rebaja, pendientes + aviso (D23), reintento | **cerrada** v0.2.19 |
 | C3b | `clinical_encounter` | pantallas: lista de insumos antes de cerrar (D21) y pendientes de Insumos; demo con `room_layout`/`supply_manager` | tras C3a, con E |
-| E | `pharmacy_manager`, `supply_manager`, `service_catalog` | pantallas de stock, entradas, salidas y próximos a vencer; elegir el box de una ubicación; armar la receta del servicio | espera MODULE_GUIDANCE |
-| F | módulo de venta (nuevo) | venta al público | después de la caja (MONEY_FLOWS M2–M4) y de K1 |
+| E | `pharmacy_manager`, `supply_manager`, `service_catalog` | pantallas de stock, entradas, salidas y próximos a vencer; elegir el box de una ubicación; armar la receta del servicio | lista para planificar (MODULE_GUIDANCE cerrada) |
+| F | módulo de venta (nuevo) | venta al público | lista para planificar tras caja (MONEY_FLOWS M2–M4 cerrado; espera K1) |
 | D | `mjosefa-cms` | grupos «Farmacia» e «Insumos» en el menú; permisos por módulo | pendiente, después de E |
 | — | `veltylabs/modules/*/AGENTS.md` | la línea «implementación de referencia: `item_catalog`» pasa a `service_catalog` al publicar cada módulo | pendiente menor |
 
@@ -49,5 +49,5 @@ Ninguno: solo faltan respuestas.
 
 ## Relación con otras olas
 
-- MONEY_FLOWS: costo por lote y `tax_treatment` ya implementados; la venta (F) depende de su caja (M2–M4) y de K1.
-- MODULE_GUIDANCE: la fase E y el aviso «falta X» con visto (D15) se construyen sobre su ayuda integrada y sus avisos.
+- MONEY_FLOWS: costo por lote y `tax_treatment` ya implementados; caja (M2–M4, M3b) cerrada; venta (F) espera K1.
+- MODULE_GUIDANCE: cerrada (v0.1.0); la fase E y el aviso «falta X» con visto (D15) pueden comenzar sobre su infraestructura.

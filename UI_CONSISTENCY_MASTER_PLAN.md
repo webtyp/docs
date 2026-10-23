@@ -1,5 +1,5 @@
 # Consistencia visual entre módulos — master plan
-> **Status:** IN PROGRESS · 2026-10-20 · ola 3 cerrada en casi todos los módulos (grupo, `Label`, `decktabs`→grupo, reloj 24h en `business_calendar`); `item_catalog`/`service_catalog` sigue con `replace` locales
+> **Status:** IN PROGRESS · 2026-10-23 · ola 3 cerrada en casi todos los módulos; P24–P25 cerradas; sigue pendiente que `crudview.autoSaveAction` pinte el campo que falló
 
 Índice de olas: [MASTER_PLANS.md](MASTER_PLANS.md). Forma de trabajo: skill **master-plan** (este documento es el estado; el chat no resume).
 
@@ -23,6 +23,8 @@ Lo ya decidido y verificado pasó a **documentación y skills**; aquí solo vive
 - **D8** — registro de paciente **en línea**: si el RUT no existe, el formulario de registro aparece en el mismo paso con el RUT cargado; se elimina el `modaldialog` del paso 4.
 - **D15 (resto)** — en `appointment_booking`: el selector de profesional de Horario y Servicios pasa a `crudview.Config.Scope` (ya existe en `layout`, local); «Máx. sobrecupo/día» → formulario de `CalendarConfig`. (El select de especialidad en `item_catalog` ya está publicado.)
 - **D16 (resto)** — Personal, `chat_room` y `business_calendar` pasan a `NewGroupUIModule`; entran los inputs a mano de `payment_manager` y `chat_room`; `room_layout` queda fuera (edición sobre lienzo). Se tomó por aceptada; corrígelo aquí si no.
+- **D24 (P24)** — un solo mensaje persistente por severidad, sin bandeja/historial (confirmado por el usuario). El toast entero ya es el área de cierre — tocarlo lo cierra (`layout/platformd/platformd.go:962,984-987`) — y un error nunca se autodescarta por WCAG 2.2.1 (`platformd.go:1003-1008`); el éxito sí, a los ≥4 s de `Auto()`. Lo que se vio en las capturas no es un bug: un guardado fallido deja su error fijo, y el guardado exitoso siguiente agrega su propio toast de éxito al lado — los dos mensajes son reales y correctos a la vez. Pendiente de implementar: el cierre por tap no tiene ninguna señal visual hoy (sin ícono ni cursor); agregar una afordancia visible de cierre en el toast (sin cambiar el comportamiento) → `webtyp/layout/platformd`.
+- **D25 (P25)** — se mantiene "severidad sin color" (el toast sigue `As(Inverse)` siempre, la severidad solo vive en `role`); no se reabre.
 
 ## 3. Preguntas abiertas
 
@@ -53,6 +55,7 @@ Los planes de módulos (ola 3) se escriben cuando estén publicados los tags de 
 - Escribir los planes de los demás módulos (ola 3) cuando estén los tags; migrar `appointment_booking` (hoy no compila: `decktabs` borrado, `RightPanel.Title/HeadControls` y `Config.Context` quitados de `layout`).
 - Borrar `widget.PartRadioChecked` / `PartRadioUnchecked` de `widget/field.go` (sin uso desde que el `Radio` es chips).
 - **Traducciones** («field Name is required», «Select an option», «Could not save/update/delete», etiquetas; 21+ claves en `item_catalog/lang.json`): `langc sync` y traducir.
+- **El error de guardado no pinta el campo que falló.** Cada input de `form` ya tiene su `span.vy-field__error` y lo pinta en blur (`form/render_input.go:106`, `form/validate.go`) — pero `crudview.autoSaveAction` (`layout/crudview/crudview.go:742,816`) guarda directo al servidor en cada commit de campo sin llamar antes a `v.form.Validate()`, y si el servidor rechaza, el error solo llega al toast general (`reportSave`→`notifyError`, `crudview.go:791-805`); el `span` del campo nunca se actualiza con esa causa. Confirmado en vivo: escribir "ecl" en «Código de referencia» y perder el foco no pinta nada bajo el campo; el toast «Could not save: …» solo aparece recién al autoguardar. Fix: en `autoSaveAction`, validar localmente primero (evita el viaje al servidor en el caso común) y, cuando el error del servidor venga de un campo identificable, setear también su `errorSignal` — no solo el toast.
 - Celdas huérfanas en la rejilla de 2 columnas: depende del orden de los campos del modelo; si molesta, el modelo declara `SpanFull`.
 - En móvil el botón flotante ↺ solapa ~14 px el borde derecho del último campo al final del scroll: margen en `crudview` (va en el plan de `layout`).
 - Icono de revelar contraseña activo (ámbar sobre fondo claro, ~1,7:1): vigilar el contraste.

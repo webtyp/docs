@@ -1,5 +1,5 @@
 # Dinero y contabilidad de la clínica — master plan
-> **Status:** IN PROGRESS · 2026-10-22 · M1b, M4b-0, M4b-1, M4b-1c, M4b-3 (`transbank` v0.2.0), M4c, M4c-1, M4d-1, `business_calendar` (v0.5.0), `tuu` (v0.2.0), `payment_manager` (v0.4.0) cerrados; pasos 1 a 4 completados; solo `cash_manager` v0.2.0 en curso
+> **Status:** IN PROGRESS · 2026-10-23 · Pasos 1, 2, 3, 4 y M3b cerrados (`dom` v0.13.27, `tuu` v0.2.0, `business_calendar` v0.5.0, `transbank` v0.2.0, `payment_manager` v0.4.0, `agreement_manager` v0.3.0, `cash_manager` v0.2.0)
 
 Por qué (histórico): [MONEY_FLOWS_DESIGN.md](MONEY_FLOWS_DESIGN.md) · APIs de TUU: [tuu/docs/ARCHITECTURE.md](../../veltylabs/packages/tuu/docs/ARCHITECTURE.md) · **Diagrama del cobro (hoy y decidido):** [clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md](../../veltylabs/modules/clinical_encounter/docs/diagrams/CHECKOUT_FLOW.md) · Forma de trabajo: skill **master-plan**.
 
@@ -72,7 +72,7 @@ Ninguna.
 - 2026-10-22 · `webtyp/driver` (M4b-1b): el repo se crea con `gonew driver "<descripción>"`; lo corre el usuario.
 - 2026-10-22 · Preguntar a TUU comisión del Payment Intent y devolución parcial por API (D24, no bloquea). El contador verifica el modelo de emisión declarado (D13).
 
-- 2026-10-22 · **Defecto en `cash_manager` (M3)**: el cierre de turno suma como efectivo esperado **todos** los cobros del tenant desde la apertura, también los con tarjeta y los de otros cajeros (`cash_manager/ops.go:146`), porque `money.Fact` no dice con qué medio se pagó. Se corrige en M1b → M4b-5 → M3b.
+- 2026-10-22 · **Defecto en `cash_manager` (M3)**: resuelto en M3b (`cash_manager` v0.2.0); el arqueo de turno ahora solo cuenta `Charged`/`Refunded` con `Means: CASH` de su propia cajera.
 
 ## Relación con otras olas
 
