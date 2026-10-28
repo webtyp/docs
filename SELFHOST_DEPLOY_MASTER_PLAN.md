@@ -36,8 +36,10 @@ B) cualquier petición en los últimos N minutos. **Recomiendo A**: ya existe, y
 **P3 — ¿Qué sistema operativo tendrá el servidor?** `DESPLIEGUE_WINDOWS.md` apunta a Windows Server 2012, pero
 `go.mod` pide Go 1.26.8 y Go exige Windows 10/Server 2016 desde Go 1.21 (el último que corre en 2012 es 1.20): **el binario
 no arrancaría** y la frase "2012 no es un límite" (`:131`) sería falsa. Con este enfoque ya no hace falta runner, así que
-solo importa el binario. A) Windows Server 2016+. B) Linux (mini-PC, `systemd`). C) 2012 (imposible con este Go).
-**Recomiendo B si el hardware alcanza, si no A.** Verificar en `go.dev/wiki/MinimumRequirements`. Respuesta:
+solo importa el binario. **Probado el 2026-10-23 en una VM réplica con 2012 R2** (P8 de `mjosefa-cms/docs/MVP_DEPLOYMENT_ROADMAP.md`):
+un binario de Go 1.26.8 sí corre, pero Go 1.27 y `cloudflared` 2026.10.3 declaran Windows 10 / Server 2016 como mínimo y Windows se niega a
+ejecutarlos. A) Windows Server 2016+. B) Linux (mini-PC, `systemd`). C) 2012 R2 (solo con Go congelado en 1.26, sin túnel en la misma máquina, y vence ~feb 2027).
+**Recomiendo B si el hardware alcanza, si no A.** Verificar en `go.dev/wiki/MinimumRequirements`. Respuesta: B — Debian 13 en el mismo servidor (HPE MicroServer Gen10 Plus), con el 2012 R2 de Pa100T como VM; el MVP corre antes en el PC del dev (D14 de `mjosefa-cms/docs/MVP_DEPLOYMENT_ROADMAP.md`).
 
 **P4 — ¿Cómo confía el servidor en lo que descarga y ejecuta?** `update` hoy verifica checksum (protege de corrupción, no
 de un Release falso). A) además **firma ed25519**: la clave privada es secreto de Actions, la pública va compilada en la
