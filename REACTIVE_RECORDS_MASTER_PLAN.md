@@ -1,5 +1,5 @@
 # Lo que se guarda se ve en todas partes: registros reactivos — master plan
-> **Status:** IN PROGRESS · 2026-10-28 · sin preguntas abiertas. **G1, G2 y G3 cerradas**; **F2b cerrada** (`dbsync` v0.3.11); **G4 en curso**: `access` cerrada v0.0.16; 3 módulos (`appointment_booking`, `chat_room`, `clinical_encounter`) en vuelo. F5 se escribe tras F2b (listo para redactar)
+> **Status:** IN PROGRESS · 2026-10-28 · sin preguntas abiertas. **G1, G2 y G3 cerradas**; **F2b cerrada** (`dbsync` v0.3.11); **G4**: `access` (v0.0.16), `appointment_booking` (v0.3.50) y `chat_room` (v0.2.104) cerradas; solo `clinical_encounter` en vuelo. F5 listo para redactar tras completar G4
 
 **Disparador (usuario, 2026-10-27):** al **editar** un registro la fila no cambia aunque salga «Guardado con éxito»,
 y lo que depende de él (las opciones de un selector) tampoco. **Regla del dueño:** lo que se edita queda ligado campo
@@ -35,7 +35,7 @@ Ninguna.
 | G1 | `model` → `ormc` → `view` (**puertas: ejecución local de Antigravity**, en ese orden) | `model.Item`, `ItemSlot`, `JoinItem`, `ValidateItem`; `ormc` genera `Item()`; `view.Record`, ítems calculados una vez, sin `view.Item` ni `RowOf` | 🟢 cerradas: model v0.2.9, ormc v0.1.26, view v0.6.48 |
 | G2 | `components` → `layout` | alias `Item = model.Item`; crudview y menú con `model.Item` / `view.Record` | 🟢 cerradas: `components` v0.8.57, `layout` v0.3.79 |
 | G3 | `alert_manager`, `business_calendar`, `device_manager`, `editorial`, `network_manager`, `patient_directory`, `payment_manager`, `pharmacy_manager`, `room_layout`, `staff_manager`, `supply_manager`, `work_schedule`, `cash_manager`, `webtyp/auth`, `service_catalog` | `Row:` → `Item:`, `ormc` regenera `Item()`, `RowOf` → `.Item()` | 🟢 cerradas 15 librerías (14 módulos + `auth`; incluye `patient_directory` v0.1.64 y `staff_manager` v0.1.157) |
-| G4 | en vuelo: `appointment_booking`, `chat_room`, `clinical_encounter`; `access` cerrada | `Item:` en modelos; `dbsync` recibe D11 | [Antigravity · 2026-10-28 17:45] `access` cerrada v0.0.16; 3 módulos en vuelo |
+| G4 | `access` (v0.0.16), `appointment_booking` (v0.3.50) y `chat_room` (v0.2.104) cerradas; `clinical_encounter` en vuelo | `Item:` en modelos; `dbsync` recibe D11 | [Antigravity · 2026-10-28 18:41] 3 de 4 cerrados; 1 en vuelo |
 | F2b | `dbsync`, `sse` | SSE «el head se movió» desde `changelog.OnChange`; pull → `view.Records` (`ClientConfig.Records` obligatorio) | 🟢 cerrada v0.3.11 |
 | F5 | `appkit`, `mjosefa-cms` | D10: `appkit` recibe la conexión de la app y arma `changelog` + servidor `dbsync` + en el navegador `view.NewRecords()` y `dbsync.Client`; `mjosefa-cms` solo pasa su conexión | ⚪ se escribe tras F2b y G1 (gate de api-design) |
 | Z | `mjosefa-cms` | dos sesiones: una edita un servicio y una especialidad; en ambas cambian la lista y el selector de Servicios; capturas revisadas | ⚪ al final |
