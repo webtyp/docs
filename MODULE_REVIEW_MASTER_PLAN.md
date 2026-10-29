@@ -1,5 +1,5 @@
 # Revisión de los módulos restantes antes de entrar a una app — master plan
-> **Status:** IN PROGRESS · 2026-10-29 · 7 módulos cerrados (A1 v0.3.20, A2 v0.1.30, A3 v0.5.29, A4 v0.2.19, A5 v0.2.118, A9 v0.4.28, A13 v0.3.52); 7 planes en vuelo (A6, A7, A8, A10, A11, A12, A14), 0 en cola. Despacho y revisión: **Antigravity**
+> **Status:** IN PROGRESS · 2026-10-29 · 9 módulos cerrados (A1 v0.3.20, A2 v0.1.30, A3 v0.5.29, A4 v0.2.19, A5 v0.2.118, A6 v0.0.45, A7 v0.1.96, A9 v0.4.28, A13 v0.3.52); 5 planes en vuelo (A8, A10, A11, A12, A14), 0 en cola. Despacho y revisión: **Antigravity**
 
 **De qué trata.** El MVP de `mjosefa-cms` ([MVP_DEPLOYMENT_ROADMAP](../../veltylabs/mjosefa-cms/docs/MVP_DEPLOYMENT_ROADMAP.md))
 lleva solo `service_catalog`, `device_manager`, `staff_manager` y `room_layout`. Esta ola deja **los demás módulos de
@@ -46,8 +46,8 @@ Ninguna.
 | A3 | `business_calendar` | errores (25 estados sueltos), 12 permisos literales, guardar/borrar de 3 pantallas, claves foráneas, traducciones | 🟢 cerrada v0.5.29 |
 | A4 | `cash_manager` | errores (24 estados sueltos), permiso de módulo `cashmanager` → por tabla, claves foráneas, traducciones | 🟢 cerrada v0.2.19 |
 | A5 | `chat_room` | errores (31 estados sueltos, R8), permiso const, guardar/borrar de grupos, traducciones | 🟢 cerrada v0.2.118 |
-| A6 | `editorial` | errores (19 estados sueltos), 3 permisos const, guardar/borrar de publicaciones, traducciones, demo nuevo | [Antigravity · 2026-10-29 14:30] 🟡 en vuelo |
-| A7 | `network_manager` | errores (13 estados sueltos), 2 permisos const, guardar de ajustes, claves foráneas, traducciones | [Antigravity · 2026-10-29 14:30] 🟡 en vuelo |
+| A6 | `editorial` | errores (19 estados sueltos), 3 permisos const, guardar/borrar de publicaciones, traducciones, demo nuevo | 🟢 cerrada v0.0.45 |
+| A7 | `network_manager` | errores (13 estados sueltos), 2 permisos const, guardar de ajustes, claves foráneas, traducciones | 🟢 cerrada v0.1.96 |
 | A8 | `patient_directory` | errores (13 estados sueltos), 7 permisos literales/const, guardar de pacientes, claves foráneas, traducciones | [Antigravity · 2026-10-29 14:30] 🟡 en vuelo |
 | A9 | `payment_manager` | errores, 3 permisos const, **traducciones de relleno** en 7 idiomas (490 valores falsos) | 🟢 cerrada v0.4.28 |
 | A10 | `pharmacy_manager` | errores (borra los `{records}` propios), 2 permisos literales, guardar/borrar de 2 pantallas, traducciones | [Antigravity · 2026-10-29 13:55] 🟡 en vuelo |
@@ -59,7 +59,7 @@ Ninguna.
 
 ## Bloqueos
 
-- Ninguno · Todos los 14 módulos despachados (7 cerrados, 7 en vuelo).
+- Ninguno · Todos los 14 módulos despachados (9 cerrados, 5 en vuelo).
 
 ## Relación con otras olas
 
