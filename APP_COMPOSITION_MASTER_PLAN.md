@@ -58,6 +58,7 @@ Ninguna.
 
 ## Bloqueos
 
+- 2026-10-29 · `view` importa `dom` desde R0c (`view.Screen.Component dom.Component`, `view/screen.go:42`): todo binario que importe la raíz de un módulo con presentadores (p. ej. `access`) arrastra `dom`; rompe `iam` (`tests/layering_test.go:66`, su `edge` no puede llevar UI) al subir a `access` v0.0.28. Falta decidir dónde vive `Screen` o cómo tipar `Component` sin `dom`.
 - 2026-10-28 · Revisión y cierres: Antigravity (temporizador de 15 min). Todo lo necesario está en este master, en REACTIVE_RECORDS y en el `docs/PLAN*.md` de cada repo.
 - 2026-10-27 · El menú cerrado por defecto deja sin pantallas los demos que crean `platformd.Platform` sin `CanView`: `access/web/browser/main.go` (su plan en vuelo debe pasar `Menu.CanView`).
 - 2026-10-24 · Fallan en la cascada por causas ajenas a esta ola: `goflare` (assets del Worker) y `app` (recarga del navegador).

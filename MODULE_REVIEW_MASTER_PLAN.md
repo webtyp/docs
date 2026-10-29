@@ -1,5 +1,5 @@
 # Revisión de los módulos restantes antes de entrar a una app — master plan
-> **Status:** IN PROGRESS · 2026-10-29 · 6 módulos cerrados (A1 v0.3.20, A3 v0.5.29, A4 v0.2.19, A5 v0.2.118, A9 v0.4.28, A13 v0.3.52); 8 planes en vuelo (A2, A6, A7, A8, A10, A11, A12, A14), 0 en cola. Despacho y revisión: **Antigravity**
+> **Status:** IN PROGRESS · 2026-10-29 · 7 módulos cerrados (A1 v0.3.20, A2 v0.1.30, A3 v0.5.29, A4 v0.2.19, A5 v0.2.118, A9 v0.4.28, A13 v0.3.52); 7 planes en vuelo (A6, A7, A8, A10, A11, A12, A14), 0 en cola. Despacho y revisión: **Antigravity**
 
 **De qué trata.** El MVP de `mjosefa-cms` ([MVP_DEPLOYMENT_ROADMAP](../../veltylabs/mjosefa-cms/docs/MVP_DEPLOYMENT_ROADMAP.md))
 lleva solo `service_catalog`, `device_manager`, `staff_manager` y `room_layout`. Esta ola deja **los demás módulos de
@@ -42,7 +42,7 @@ Ninguna.
 | Fase | Repo | Qué falta | Estado |
 |---|---|---|---|
 | A1 | `agreement_manager` | **`Item()` en sus registros** (no compila con `view` ≥ v0.6.47), errores, 3 permisos const, traducciones (7 idiomas vacíos), demo nuevo | 🟢 cerrada v0.3.20 |
-| A2 | `alert_manager` | errores (borra `wire.go`), 6 permisos literales, guardar/borrar de 4 pantallas, traducciones, demo nuevo | [Antigravity · 2026-10-29 14:30] 🟡 en vuelo |
+| A2 | `alert_manager` | errores (borra `wire.go`), 6 permisos literales, guardar/borrar de 4 pantallas, traducciones, demo nuevo | 🟢 cerrada v0.1.30 |
 | A3 | `business_calendar` | errores (25 estados sueltos), 12 permisos literales, guardar/borrar de 3 pantallas, claves foráneas, traducciones | 🟢 cerrada v0.5.29 |
 | A4 | `cash_manager` | errores (24 estados sueltos), permiso de módulo `cashmanager` → por tabla, claves foráneas, traducciones | 🟢 cerrada v0.2.19 |
 | A5 | `chat_room` | errores (31 estados sueltos, R8), permiso const, guardar/borrar de grupos, traducciones | 🟢 cerrada v0.2.118 |
@@ -59,7 +59,7 @@ Ninguna.
 
 ## Bloqueos
 
-- Ninguno · Todos los 14 módulos despachados (6 cerrados, 8 en vuelo).
+- Ninguno · Todos los 14 módulos despachados (7 cerrados, 7 en vuelo).
 
 ## Relación con otras olas
 
