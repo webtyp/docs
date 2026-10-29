@@ -36,6 +36,7 @@ Ninguna.
 | R6 | Demo que abre con `webtyp` y captura de cada pantalla en el PR | etapa 6 |
 | R7 (P1, P2) | **El tenant y el usuario que actúa nunca vienen del navegador** (= D32 de MVP): el tenant entra por `Deps.TenantID` (configuración del servidor) y el usuario sale siempre de `ctx.UserID()` (`loopback.ActingAs` en pruebas, sin respaldo en el body); se borran `TenantId`, `ActorId`, `CreatorUserId`, `RecipientId` y similares de los args | fase B (un plan por módulo afectado tras cerrar A1–A14) |
 | R8 (P4) | En `chat_room`, `ErrNotMember` es `model.NotFound` (404, no revela que una sala privada existe) y `ErrUnauthenticated` es `model.Invalid` (400, solo alcanzable como error de programación porque toda ruta lleva `Authenticated()`); no se agregan tipos a `model` | A5 (`chat_room`, etapa 1) |
+| R9 (= D35 de MVP) | **Un módulo nunca importa otro módulo, en ningún paquete** (raíz, `migrate/`, `ui/`, `seed/`, `web/`, `tests/`): lo que necesita de otro lo pide por una interfaz estrecha que él mismo declara, y la app la conecta; demo y pruebas usan un falso. Una pantalla que mezcla módulos vive en la app. Si un módulo no puede vivir sin otro, se fusionan o se rediseña el límite (regla en `veltylabs/modules/AGENTS.md` y skill **module-layout**). Hoy lo rompen `appointment_booking` (`ui/`, `seed/`, `web/`: 6 módulos) y `clinical_encounter` (también `model.go`) | fase C |
 
 ## Fases
 
@@ -56,6 +57,7 @@ Ninguna.
 | A13 | `appointment_booking` | errores, 30 permisos literales, `Close()` en `model_orm.go` (regenerar con `ormc`), **no tiene `lang.json`**, claves foráneas | 🟢 cerrada v0.3.52 |
 | A14 | `clinical_encounter` | errores (13 estados sueltos), 7 permisos, guardar visitas, traducciones; incluye Etapa 0 para limpiar marcas de conflicto | 🟢 cerrada v0.2.31 |
 | B | módulos con `args.TenantId` / `ActorId` | R7 (D32): el tenant desde `Deps.TenantID`, el usuario desde `ctx.UserID()` (`loopback.ActingAs` en pruebas); borrar esos campos de los args | ⚪ tras cerrar cada A1–A14 (un plan por repo) |
+| C | `appointment_booking`, `clinical_encounter` | R9: quitar todo import de otro módulo; diseño primero (qué interfaz pide cada uno, qué pantalla pasa a la app, o qué se fusiona), con capturas si mueve pantallas | ⚪ diseño, tras A y B |
 
 ## Bloqueos
 
