@@ -48,13 +48,13 @@ Ninguna.
 | A5 | `chat_room` | errores (31 estados sueltos, R8), permiso const, guardar/borrar de grupos, traducciones | 🟢 cerrada v0.2.118 |
 | A6 | `editorial` | errores (19 estados sueltos), 3 permisos const, guardar/borrar de publicaciones, traducciones, demo nuevo | 🟢 cerrada v0.0.45 |
 | A7 | `network_manager` | errores (13 estados sueltos), 2 permisos const, guardar de ajustes, claves foráneas, traducciones | 🟢 cerrada v0.1.96 |
-| A8 | `patient_directory` | errores (13 estados sueltos), 7 permisos literales/const, guardar de pacientes, claves foráneas, traducciones | [Antigravity · 2026-10-29 16:12] 🟡 en vuelo |
+| A8 | `patient_directory` | errores (13 estados sueltos), 7 permisos literales/const, guardar de pacientes, claves foráneas, traducciones | [Antigravity · 2026-10-29 17:12] 🟡 en vuelo |
 | A9 | `payment_manager` | errores, 3 permisos const, **traducciones de relleno** en 7 idiomas (490 valores falsos) | 🟢 cerrada v0.4.28 |
 | A10 | `pharmacy_manager` | errores (borra los `{records}` propios), 2 permisos literales, guardar/borrar de 2 pantallas, traducciones | [Antigravity · 2026-10-29 13:55] 🟡 en vuelo |
 | A11 | `supply_manager` | igual que `pharmacy_manager` | 🟢 cerrada v0.2.50 |
 | A12 | `work_schedule` | errores, 1 permiso literal, claves foráneas, demo nuevo (traducciones completas) | 🟢 cerrada v0.1.43 |
 | A13 | `appointment_booking` | errores, 30 permisos literales, `Close()` en `model_orm.go` (regenerar con `ormc`), **no tiene `lang.json`**, claves foráneas | 🟢 cerrada v0.3.52 |
-| A14 | `clinical_encounter` | errores (13 estados sueltos), 7 permisos, guardar visitas, traducciones; incluye Etapa 0 para limpiar marcas de conflicto | [Antigravity · 2026-10-29 16:12] 🟡 en vuelo |
+| A14 | `clinical_encounter` | errores (13 estados sueltos), 7 permisos, guardar visitas, traducciones; incluye Etapa 0 para limpiar marcas de conflicto | [Antigravity · 2026-10-29 17:12] 🟡 en vuelo |
 | B | módulos con `args.TenantId` / `ActorId` | R7 (D32): el tenant desde `Deps.TenantID`, el usuario desde `ctx.UserID()` (`loopback.ActingAs` en pruebas); borrar esos campos de los args | ⚪ tras cerrar cada A1–A14 (un plan por repo) |
 
 ## Bloqueos
