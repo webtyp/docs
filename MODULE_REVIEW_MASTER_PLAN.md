@@ -1,5 +1,5 @@
 # Revisión de los módulos restantes antes de entrar a una app — master plan
-> **Status:** IN PROGRESS · 2026-10-29 · 10 módulos cerrados (A1 v0.3.20, A2 v0.1.30, A3 v0.5.29, A4 v0.2.19, A5 v0.2.118, A6 v0.0.45, A7 v0.1.96, A9 v0.4.28, A12 v0.1.43, A13 v0.3.52); 4 planes en vuelo (A8, A10, A11, A14), 0 en cola. Despacho y revisión: **Antigravity**
+> **Status:** IN PROGRESS · 2026-10-29 · 11 módulos cerrados (A1 v0.3.20, A2 v0.1.30, A3 v0.5.29, A4 v0.2.19, A5 v0.2.118, A6 v0.0.45, A7 v0.1.96, A9 v0.4.28, A11 v0.2.50, A12 v0.1.43, A13 v0.3.52); 3 planes en vuelo (A8, A10, A14), 0 en cola. Despacho y revisión: **Antigravity**
 
 **De qué trata.** El MVP de `mjosefa-cms` ([MVP_DEPLOYMENT_ROADMAP](../../veltylabs/mjosefa-cms/docs/MVP_DEPLOYMENT_ROADMAP.md))
 lleva solo `service_catalog`, `device_manager`, `staff_manager` y `room_layout`. Esta ola deja **los demás módulos de
@@ -51,7 +51,7 @@ Ninguna.
 | A8 | `patient_directory` | errores (13 estados sueltos), 7 permisos literales/const, guardar de pacientes, claves foráneas, traducciones | [Antigravity · 2026-10-29 16:12] 🟡 en vuelo |
 | A9 | `payment_manager` | errores, 3 permisos const, **traducciones de relleno** en 7 idiomas (490 valores falsos) | 🟢 cerrada v0.4.28 |
 | A10 | `pharmacy_manager` | errores (borra los `{records}` propios), 2 permisos literales, guardar/borrar de 2 pantallas, traducciones | [Antigravity · 2026-10-29 13:55] 🟡 en vuelo |
-| A11 | `supply_manager` | igual que `pharmacy_manager` | [Antigravity · 2026-10-29 14:15] 🟡 en vuelo |
+| A11 | `supply_manager` | igual que `pharmacy_manager` | 🟢 cerrada v0.2.50 |
 | A12 | `work_schedule` | errores, 1 permiso literal, claves foráneas, demo nuevo (traducciones completas) | 🟢 cerrada v0.1.43 |
 | A13 | `appointment_booking` | errores, 30 permisos literales, `Close()` en `model_orm.go` (regenerar con `ormc`), **no tiene `lang.json`**, claves foráneas | 🟢 cerrada v0.3.52 |
 | A14 | `clinical_encounter` | errores (13 estados sueltos), 7 permisos, guardar visitas, traducciones; incluye Etapa 0 para limpiar marcas de conflicto | [Antigravity · 2026-10-29 16:12] 🟡 en vuelo |
@@ -59,7 +59,7 @@ Ninguna.
 
 ## Bloqueos
 
-- Ninguno · Todos los 14 módulos despachados (10 cerrados, 4 en vuelo).
+- Ninguno · Todos los 14 módulos despachados (11 cerrados, 3 en vuelo).
 
 ## Relación con otras olas
 
