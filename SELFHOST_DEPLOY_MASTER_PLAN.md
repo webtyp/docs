@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · esperan tus P11–P13 (claves en el contenedor, quién migra, imagen e instalación del supervisor); S4a–S4b cerradas, S4c (API HTTP) en Jules; S10: pruebas en Jules
+> **Status:** IN PROGRESS · 2026-10-30 · esperan tus P11–P13 (claves en el contenedor, quién migra, imagen e instalación del supervisor); S4a–S4b cerradas, S4c (API HTTP) en Jules; S10: pruebas cerradas (appkit v0.0.26, sqlite v0.3.26, erd v0.0.16, changelog v0.2.14); queda ddl
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -88,7 +88,7 @@ importar `goflare`).
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
-| S10 | 15 repos con `CreateTable`, sus pruebas, y luego `ddl` | D14: los 15 cerrados (migran con `Sync`); faltan las pruebas que aún llaman `CreateTable` en `appkit`, `changelog`, `erd`, `sqlite`; después `ddl` deja de exportarla (y su suite `conformance` pasa a `Sync`) | [Jules · 2026-10-30 18:30] 4 de pruebas despachados; luego `ddl` |
+| S10 | 15 repos con `CreateTable`, sus pruebas, y luego `ddl` | D14: los 15 cerrados; pruebas cerradas (`appkit` v0.0.26, `sqlite` v0.3.26, `erd` v0.0.16, `changelog` v0.2.14); falta quitar `CreateTable` de `ddl` (y su suite `conformance` pasarla a `Sync`) | [Antigravity · 2026-10-30 18:15] pruebas cerradas; sigue ddl |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
 administrador lo aplica; (2) apagar y encender el servidor con una versión pendiente → se instala sola antes de recibir
