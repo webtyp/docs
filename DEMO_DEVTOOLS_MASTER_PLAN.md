@@ -1,5 +1,5 @@
 # Herramientas de desarrollo en el demo de un módulo — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; en Jules X1a–X1c (`router`, `rpc`, `erd`); siguen `appkit` y `layout`
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1b (`rpc` v0.2.14) y X1c (`erd` v0.0.14) cerradas; X1a en Jules; siguen `appkit` y `layout`
 
 **Disparador:** en el demo de un módulo (`webtyp` en la raíz del módulo) el menú muestra «Explorador de API» y «Base
 de datos», pero salen vacíos: piden `/_routes` y `/_schema` (`layout/apiexplorer/explorer.go:58`, `erd.SchemaPath`) a un
@@ -33,9 +33,9 @@ Ecosistema (Step 0): no existe una fuente local de rutas ni de diagrama; `router
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | X1a | `router` | `router.Table(routes, policy)`: un solo armador de la tabla, el mismo de `/_routes`; se borran los escritores privados | [Jules · 2026-10-30 16:00] despachado |
-| X1b | `rpc` | `rpc.Routes(prefix, mods...)`: las rutas de cada operación con su permiso, sin servidor; `Mount` valida con lo mismo | [Jules · 2026-10-30 16:00] despachado |
-| X1c | `erd` | `erd.ReadSteps(steps...)`: el diagrama desde los pasos de migración | [Jules · 2026-10-30 16:00] despachado |
-| X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | espera X1c |
+| X1b | `rpc` | `rpc.Routes(prefix, mods...)`: las rutas de cada operación con su permiso, sin servidor; `Mount` valida con lo mismo | cerrada v0.2.14 |
+| X1c | `erd` | `erd.ReadSteps(steps...)`: el diagrama desde los pasos de migración | cerrada v0.0.14 |
+| X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | por escribir (desbloqueada por X1c) |
 | X2 | `layout` (`apiexplorer`, `schemaview`, `app`) | Las pantallas leen de una fuente; `BuildMenu(..., tools Tools)` obligatorio; el grupo y cada herramienta aparecen solo con fuente (D3) | espera X1a–X1c |
 | X3 | cada app y cada demo que llama `BuildMenu` | Declara sus herramientas: HTTP en una app con servidor, locales en un demo, ninguna sin API ni base; captura del explorador y del diagrama | espera X2 |
 
