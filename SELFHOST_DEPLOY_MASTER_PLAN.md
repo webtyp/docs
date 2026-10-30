@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S10: 2 en Jules; S4a cerrada, S4b (cambiar imagen y volver atrás) en Jules; siguen S3 (`deploy`), S4c, S2 (`gorelease`)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4a y S4b cerradas (`selfupdate` v0.0.3); siguen S3 (`deploy`), S4c, S2 (`gorelease`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -64,7 +64,7 @@ importar `goflare`).
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
 | S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13, la pública impresa para `install`) y `Compose(plan)`: el `compose.yaml` que sube `gorelease` (D17), con los nombres de `selfupdate/layout.go` | espera S4a publicado |
-| S4 | `selfupdate` (repo nuevo, `gonew`) | S4a: nombres del servidor, estado y revisión verificada ([CHECK_FLOW](https://github.com/webtyp/selfupdate/blob/main/docs/diagrams/CHECK_FLOW.md)); S4b: cambiar imagen, copia, salud y vuelta atrás ([APPLY_FLOW](https://github.com/webtyp/selfupdate/blob/main/docs/diagrams/APPLY_FLOW.md)); S4c: API HTTP con token e `install`; S4d: módulo de la app (pantalla, RBAC, `ActiveClients`) | S4a cerrada v0.0.2; S4b [Jules · 2026-10-30 18:00] despachado; S4c–S4d en orden |
+| S4 | `selfupdate` (repo nuevo, `gonew`) | S4a: nombres del servidor, estado y revisión verificada ([CHECK_FLOW](https://github.com/webtyp/selfupdate/blob/main/docs/diagrams/CHECK_FLOW.md)); S4b: cambiar imagen, copia, salud y vuelta atrás ([APPLY_FLOW](https://github.com/webtyp/selfupdate/blob/main/docs/diagrams/APPLY_FLOW.md)); S4c: API HTTP con token e `install`; S4d: módulo de la app (pantalla, RBAC, `ActiveClients`) | S4a cerrada v0.0.2; S4b cerrada v0.0.3; siguen S4c–S4d |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
