@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4c-1 cerrada v0.0.4; en Jules: `env` (`_FILE`, D22), `ddl` (S10); siguen S4b-2, S4c-2, S3 (`deploy`) y S2 (`gorelease`)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4c-1 cerrada v0.0.4, S11 (`env`) cerrada v0.1.3; en Jules: `ddl` (S10); siguen S4b-2, S4c-2, S3 (`deploy`) y S2 (`gorelease`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -72,7 +72,7 @@ importar `goflare`).
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
-| S11 | `env` | D22: `<CLAVE>_FILE` entre el entorno y `.env` | [Jules · 2026-10-30 19:45] despachado |
+| S11 | `env` | D22: `<CLAVE>_FILE` entre el entorno y `.env` | cerrada v0.1.3 |
 | S10 | `ddl`, luego docs | D14: los 15 módulos y todas las pruebas ya usan `Sync`; `ddl` deja de exportar `CreateTable` (su `conformance` pasa a `Sync`); al publicarse, barrido de los ~31 AGENTS.md/README que aún muestran el ejemplo viejo `d.CreateTable(...)` | [Jules · 2026-10-30 19:30] `ddl` despachado; barrido de docs después |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
