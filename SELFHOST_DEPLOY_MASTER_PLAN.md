@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S9 cerrada; S10: 11 cerrados, 4 en Jules; siguen `selfupdate` (supervisor), `deploy` y `gorelease`
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S10: 4 en Jules; S4a (supervisor: revisión verificada) en Jules; siguen S4b, S3 (`deploy`), S2 (`gorelease`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -43,12 +43,15 @@ Ninguna.
 | D10 (cambiada por P3) | **Una plataforma:** el servidor es Debian 13 amd64 en Docker; se publica solo `linux/amd64` | S2 |
 | D11 (P2) | **Cliente conectado** = sesión con latido reciente (30 s, en línea < 90 s, como CR-6 de `chat_room`) o stream SSE abierto, contado por una función que la app inyecta (`ActiveClients() int`); una PWA abierta sin servidor no cuenta | S4 |
 | D12 (P3) | **Servidor: Debian 13** en el HPE MicroServer Gen10 Plus, con Docker Compose; antes, el MVP en el PC del dev (D14 y D37 del roadmap) | S7 |
-| D13 (P4) | **Firma con `webtyp/crypto/asym`** (ECDSA P-256, ya existe; reemplaza el ed25519 propuesto, que habría sido una segunda forma de firmar): la clave privada vive en el `webtyp/keyring` de quien publica, la pública va compilada en la app (`config/update_key.go`); lo firmado es el manifiesto con el digest de la imagen, nunca un tag (como cosign). El repo es privado: el servidor usa un token de solo lectura | S2, S3, S4, S9 |
+| D13 (P4) | **Firma con `webtyp/crypto/asym`** (ECDSA P-256, ya existe): la privada vive en el `webtyp/keyring` de quien publica; la pública la guarda el servidor en `update.pub` al instalar (D19); lo firmado es el manifiesto con el digest de la imagen, nunca un tag (como cosign). El repo es privado: el supervisor usa un token de solo lectura | S2, S3, S4, S9 |
 | D14 (P5) | **Nadie escribe migraciones**: cada módulo migra con `ddl.Sync` (crea la tabla si falta, agrega columnas, borra solo columnas vacías); al arrancar una versión nueva el supervisor hace `pg_dump` y la app corre sus pasos; si algo falla, vuelve la imagen anterior con la base intacta. Renombrar una columna es el único caso a mano. Al final `ddl` deja de exportar `CreateTable`, para que nadie vuelva a crear tablas que nunca cambian | S4, S10 |
 | D15 (P7) | **Sin rama `release`**: lo que está en producción es lo que tiene un Release en GitHub; los tags de `main` son solo versiones. Se borran S1, S6 y el antiguo D1 | — |
 | D16 (P8) | **S8 mínima**: ante un reinicio del servidor la PWA muestra «actualizando…» y reintenta la petición; la cola sin conexión queda en OFFLINE_FIRST | S8 |
 | D17 (P9) | **Primera instalación con un comando**: `gorelease` genera el `compose.yaml` desde `config/deploy.go` y lo sube en el Release; en el servidor `selfupdate install <owner/repo>` lo baja, genera las claves de Postgres en archivos que solo lee root, pide una vez `TUNNEL_TOKEN` y el token de lectura de GitHub (sin mostrarlos) y levanta el compose. Cada versión trae su compose | S2, S4 |
 | D18 (P10) | **La app avisa al supervisor por HTTP** en la red interna del compose (sin puerto en el equipo), con un token generado al instalar: `POST /apply`; la pantalla muestra la respuesta o el error | S4 |
+| D19 | **Quien verifica es el supervisor, no la app** (consecuencia de D44 del roadmap: la app ya no descarga nada): la clave pública vive en `/opt/<app>/update.pub`, escrita al instalar (no es secreta); se borra la idea de `config/update_key.go` | S4 |
+| D20 | **El supervisor cambia de imagen con `docker compose`**: escribe `APP_IMAGE=<imagen>@<digest>` en `.env` (el compose usa `image: ${APP_IMAGE}`) y recrea solo el servicio `app`; volver atrás es escribir la anterior. Contrato del servidor (`/opt/<app>/`: compose, `.env`, `update.pub`, `secrets/`, `state.json`, `backups/`; servicios `db`, `app`, `cloudflared`, `selfupdate`) en [selfupdate/docs/ARCHITECTURE.md](https://github.com/webtyp/selfupdate/blob/main/docs/ARCHITECTURE.md) y sus nombres en `selfupdate/layout.go`, que importan `deploy` y `gorelease` | S2, S3, S4 |
+| D21 | **Antes de cambiar, copia de la base** en `backups/` (las últimas 7); la app migra sus tablas al arrancar con `Sync` (D14), así volver a la imagen anterior deja la base usable | S4 |
 
 ## Fases
 
@@ -60,8 +63,8 @@ importar `goflare`).
 |---|---|---|---|
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
-| S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13), `config/update_key.go` y `Compose(plan)`: el `compose.yaml` que sube `gorelease` (D17) | por escribir |
-| S4 | `selfupdate` | Supervisor (contenedor): instalación (P9), revisión, verificación del manifiesto, cambio de imagen, vigilancia (D8), migración (P5); módulo de la app: pantalla, RBAC, `ActiveClients()` (D11), aviso al supervisor (P10) | espera S9 publicado; se divide en supervisor, instalación y módulo de la app |
+| S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13, la pública impresa para `install`) y `Compose(plan)`: el `compose.yaml` que sube `gorelease` (D17), con los nombres de `selfupdate/layout.go` | espera S4a publicado |
+| S4 | `selfupdate` (repo nuevo, `gonew`) | S4a: nombres del servidor, estado y revisión verificada ([CHECK_FLOW](https://github.com/webtyp/selfupdate/blob/main/docs/diagrams/CHECK_FLOW.md)); S4b: cambiar imagen, copia, salud y vuelta atrás ([APPLY_FLOW](https://github.com/webtyp/selfupdate/blob/main/docs/diagrams/APPLY_FLOW.md)); S4c: API HTTP con token e `install`; S4d: módulo de la app (pantalla, RBAC, `ActiveClients`) | S4a [Jules · 2026-10-30 17:00] despachado; S4b–S4d en orden |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
