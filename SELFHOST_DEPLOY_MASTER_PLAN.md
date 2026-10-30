@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · imagen por versión + supervisor (D44 del roadmap); S9 (manifiesto firmado) en Jules; esperan tus P5, P7, P8, P9 y P10
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S9 cerrada (`update` v0.0.5); S10 en Jules (11 repos), revisión de Antigravity; siguen `selfupdate`, `deploy` y `gorelease`
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -26,46 +26,13 @@ en `mjosefa-cms`.
 
 ## Preguntas abiertas
 
-**P5 — Migraciones sin escribir migraciones (reescrita: pediste algo simple que cualquier dev entienda).** Hoy cada
-módulo solo crea las tablas que faltan (`CREATE TABLE IF NOT EXISTS`, `service_catalog/migrate`): si mañana agregas un
-campo a `Service`, la tabla de producción **no recibe la columna** y la pantalla falla. `webtyp/ddl` ya tiene `Sync`:
-compara el modelo con la tabla, agrega lo que falta y borra una columna solo si está vacía (`ddl/sync.go:213`, prueba
-`ddl/ddl_test.go:284`). Una sola regla: **al arrancar una versión nueva, la app copia la base (`pg_dump`) y llama
-`Sync`; nadie escribe migraciones.** A) Eso; si algo falla, vuelve la versión anterior con la base intacta, porque `Sync`
-nunca borra datos. B) Seguir solo creando tablas y escribir a mano cada cambio de columna. **Recomiendo A**: un cambio de
-modelo llega solo a producción y no hay archivos de migración que mantener. Único caso aparte: renombrar una columna
-(`Sync` ve una nueva vacía y una vieja con datos, que no borra); se hace a mano y se avisa en la versión.
-```go
-// hoy (service_catalog/migrate): la tabla se crea una vez y nunca cambia
-d := ddl.New(conn, compiler)
-d.CreateTable(&servicecatalog.Service{})
-// A: agrega las columnas nuevas; borra solo las que quedaron vacías
-d.Sync(&servicecatalog.Specialty{}, &servicecatalog.Service{}, &servicecatalog.ServiceSupply{}, &servicecatalog.ServiceAgreement{})
-```
-Respuesta:
-
-**P7 — ¿Sigue haciendo falta la rama `release`?** D1 la creó para que la nube supiera qué publicar; ahora publicas tú con
-`gorelease` sobre un tag (D42 del roadmap), y `gopush` ya etiqueta cada push (`mjosefa-cms` va en `v0.0.77`). A) Sin rama
-`release`: lo que está en producción es lo que tiene un Release en GitHub; los tags de `main` son solo versiones. B) Se
-mantiene: se fusiona `main` → `release` y se publica desde ahí. **Recomiendo A**: una rama menos que sincronizar, el
-Release ya marca qué se publicó, y se borran S1 y S6. Respuesta:
-
-**P8 — ¿Qué parte de S8 entra antes de salir en línea?** P31 del roadmap pide todo SELFHOST antes de salir, y S8 (la PWA
-muestra «actualizando» y reintenta sin perder lo escrito) usa `outbox` de OFFLINE_FIRST, que está fuera del MVP. A) S8
-mínima: la PWA muestra «actualizando…» y reintenta la petición; la cola sin conexión queda en OFFLINE_FIRST. B) S8
-completa con `outbox`, lo que mete OFFLINE_FIRST al MVP. **Recomiendo A**: D5 ya evita actualizar con clientes
-conectados, así que «alguien escribiendo mientras se reinicia» casi no ocurre. Respuesta:
-
-**P9 — ¿Cómo se instala la primera vez en el servidor?** D39 del roadmap dice que el `compose.yaml` no se escribe a mano, pero alguien tiene que ponerlo en el equipo la primera vez, y el servidor no tiene el repo (`config/deploy.go`). A) `gorelease` genera el `compose.yaml` desde `config/deploy.go` y lo sube **en el Release**, junto a la imagen; en el servidor un solo comando del supervisor (`selfupdate install <repo>`) lo baja, genera las claves de Postgres en archivos que solo lee root (D19), pide una vez `TUNNEL_TOKEN` y el token de lectura de GitHub (sin mostrarlos) y levanta el compose. Cada versión nueva trae su compose. B) `Provision` corre en el servidor leyendo `config/deploy.go`, lo que obliga a tener el repo privado allí. **Recomiendo A**: el compose viaja con la versión que lo necesita, las claves nacen en el servidor y nadie las ve, y el servidor solo necesita Docker y un comando. Respuesta:
-
-**P10 — ¿Cómo le dice la app al supervisor «actualiza ahora»?** La app decide cuándo (D5, D6) y el supervisor es el único con acceso a Docker (D44 del roadmap). A) Por HTTP en la red interna del compose: el supervisor escucha solo ahí (sin puerto en el equipo) y exige un token que genera la instalación (P9); la app llama `POST /apply` y la pantalla muestra la respuesta o el error. B) Un archivo en un volumen compartido que el supervisor vigila. **Recomiendo A**: un error vuelve a la pantalla del admin; con B, si el supervisor está caído, nadie se entera. Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
 | # | Decisión | Dónde se implementa |
 |---|---|---|
-| D1 (P1 anterior) | **`release` es una rama como `main`.** En revisión por P7: con publicación local puede sobrar | S1, S6 |
-| D2 (cambiada por P32 del roadmap) | **El servidor pregunta, el dev construye.** Nada entra a la LAN; `gorelease` publica desde el equipo del dev **el mismo árbol que en desarrollo** (`web/server/server` + `web/public/`, D18 de BUILD_DESTINATIONS) como imagen o Release según P35 del roadmap, con checksums y firma; se niega con cambios sin commit | S2 |
+| D2 (cambiada por P32 del roadmap) | **El servidor pregunta, el dev construye.** Nada entra a la LAN; `gorelease` publica desde el equipo del dev **el mismo árbol que en desarrollo** (`web/server/server` + `web/public/`, D18 de BUILD_DESTINATIONS) como imagen o Release imagen (D44 del roadmap), con checksums y firma; se niega con cambios sin commit | S2 |
 | D3 (cambiada por P32 del roadmap) | **Módulo → app, a mano:** el dev sube las dependencias (`gopush` ya hace los commits `deps: update …`), corre `gotest` y publica con `gorelease` cuando una pieza está lista. Sin GitHub Actions, sin horario y sin bot, por eso P6 ya no aplica | S2 |
 | D4 | **La actualización es un módulo integrado** (`webtyp/selfupdate`, sin TUI): pantalla "Actualizaciones" para el administrador, recurso RBAC propio y contador en el menú cuando hay una pendiente | S4, S7 |
 | D5 | **Política de reinicio:** con una actualización pendiente y clientes conectados, **solo el administrador** la aplica (botón). Con **cero clientes** se aplica **sola**: caso típico, el servidor se reinició por un corte de luz y arrancó con una versión pendiente; mientras se instala, los clientes PWA esperan y reintentan | S4 |
@@ -77,6 +44,11 @@ conectados, así que «alguien escribiendo mientras se reinicia» casi no ocurre
 | D11 (P2) | **Cliente conectado** = sesión con latido reciente (30 s, en línea < 90 s, como CR-6 de `chat_room`) o stream SSE abierto, contado por una función que la app inyecta (`ActiveClients() int`); una PWA abierta sin servidor no cuenta | S4 |
 | D12 (P3) | **Servidor: Debian 13** en el HPE MicroServer Gen10 Plus, con Docker Compose; antes, el MVP en el PC del dev (D14 y D37 del roadmap) | S7 |
 | D13 (P4) | **Firma con `webtyp/crypto/asym`** (ECDSA P-256, ya existe; reemplaza el ed25519 propuesto, que habría sido una segunda forma de firmar): la clave privada vive en el `webtyp/keyring` de quien publica, la pública va compilada en la app (`config/update_key.go`); lo firmado es el manifiesto con el digest de la imagen, nunca un tag (como cosign). El repo es privado: el servidor usa un token de solo lectura | S2, S3, S4, S9 |
+| D14 (P5) | **Nadie escribe migraciones**: cada módulo migra con `ddl.Sync` (crea la tabla si falta, agrega columnas, borra solo columnas vacías); al arrancar una versión nueva el supervisor hace `pg_dump` y la app corre sus pasos; si algo falla, vuelve la imagen anterior con la base intacta. Renombrar una columna es el único caso a mano. Al final `ddl` deja de exportar `CreateTable`, para que nadie vuelva a crear tablas que nunca cambian | S4, S10 |
+| D15 (P7) | **Sin rama `release`**: lo que está en producción es lo que tiene un Release en GitHub; los tags de `main` son solo versiones. Se borran S1, S6 y el antiguo D1 | — |
+| D16 (P8) | **S8 mínima**: ante un reinicio del servidor la PWA muestra «actualizando…» y reintenta la petición; la cola sin conexión queda en OFFLINE_FIRST | S8 |
+| D17 (P9) | **Primera instalación con un comando**: `gorelease` genera el `compose.yaml` desde `config/deploy.go` y lo sube en el Release; en el servidor `selfupdate install <owner/repo>` lo baja, genera las claves de Postgres en archivos que solo lee root, pide una vez `TUNNEL_TOKEN` y el token de lectura de GitHub (sin mostrarlos) y levanta el compose. Cada versión trae su compose | S2, S4 |
+| D18 (P10) | **La app avisa al supervisor por HTTP** en la red interna del compose (sin puerto en el equipo), con un token generado al instalar: `POST /apply`; la pantalla muestra la respuesta o el error | S4 |
 
 ## Fases
 
@@ -86,16 +58,15 @@ importar `goflare`).
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| S0 | docs | Contestar P5, P7, P8, P9 y P10; consolidar | pendiente (tú) |
-| S1 | `deploy` | `Plan.Branch`; D8 de DEPLOY_WIZARD pasa a "push a `Plan.Branch`" | solo si P7 = B |
-| S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y, según P9, el `compose.yaml`; negarse con cambios sin commit | espera S9, P9 |
-| S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13) y `config/update_key.go`; lo demás según P9 | espera P9 |
-| S4 | `selfupdate` | Supervisor (contenedor): instalación (P9), revisión, verificación del manifiesto, cambio de imagen, vigilancia (D8), migración (P5); módulo de la app: pantalla, RBAC, `ActiveClients()` (D11), aviso al supervisor (P10) | espera S9, P5, P9, P10 |
+| S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
+| S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
+| S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13), `config/update_key.go` y `Compose(plan)`: el `compose.yaml` que sube `gorelease` (D17) | por escribir |
+| S4 | `selfupdate` | Supervisor (contenedor): instalación (P9), revisión, verificación del manifiesto, cambio de imagen, vigilancia (D8), migración (P5); módulo de la app: pantalla, RBAC, `ActiveClients()` (D11), aviso al supervisor (P10) | espera S9 publicado; se divide en supervisor, instalación y módulo de la app |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
-| S6 | devflow (`gopush`) | Etiquetar desde la rama de `Plan.Branch` | solo si P7 = B |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
-| S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (alcance: P8); skill de despliegue en servidor propio y excepción D9 en **secrets** | espera P8, con S4 |
-| S9 | `update` | Manifiesto firmado: `Manifest{Version, Image, Digest}`, `SignManifest`, `VerifyManifest`, `Reference()` | [Jules · 2026-10-30] despachado |
+| S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
+| S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
+| S10 | 11 repos con `CreateTable` y luego `ddl` | D14: `service_catalog`, `device_manager`, `alert_manager`, `business_calendar`, `network_manager`, `pharmacy_manager`, `supply_manager`, `changelog`, `dbsync`, `idempotency`, `outbox` migran con `Sync` (pruebas de las ramas de [SYNC_FLOW](https://github.com/webtyp/ddl/blob/main/docs/diagrams/SYNC_FLOW.md)); faltan `agreement_manager`, `editorial`, `site_content`, `site_manager` (crean tablas en `New`); al final `ddl` deja de exportar `CreateTable` | [Jules · 2026-10-30 15:00] despachados; revisa Antigravity |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
 administrador lo aplica; (2) apagar y encender el servidor con una versión pendiente → se instala sola antes de recibir
