@@ -1,5 +1,5 @@
 # Herramientas de desarrollo en el demo de un módulo — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1–X2 cerradas; X3: `access` (v0.0.41), `agreement_manager` (v0.3.28) y `appointment_booking` (v0.3.67) cerradas; 3 en Jules (`mjosefa-cms`, `chat_room`, `clinical_encounter`)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1–X2 cerradas; X3: `access` (v0.0.41), `agreement_manager` (v0.3.28), `appointment_booking` (v0.3.67) y `mjosefa-cms` (v0.0.100) cerradas; 2 en Jules (`chat_room`, `clinical_encounter`)
 
 **Disparador:** en el demo de un módulo (`webtyp` en la raíz del módulo) el menú muestra «Explorador de API» y «Base
 de datos», pero salen vacíos: piden `/_routes` y `/_schema` (`layout/apiexplorer/explorer.go:58`, `erd.SchemaPath`) a un
@@ -37,7 +37,7 @@ Ecosistema (Step 0): no existe una fuente local de rutas ni de diagrama; `router
 | X1c | `erd` | `erd.ReadSteps(steps...)` | cerrada v0.0.14 |
 | X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | cerrada |
 | X2 | `layout` | `app.Tools`, `LocalTools`, fuentes, «Probar» solo con servidor | cerrada v0.3.99 |
-| X3 | `mjosefa-cms` (con M5) y los demos de `access`, `agreement_manager`, `appointment_booking`, `chat_room`, `clinical_encounter` | Declaran sus herramientas; captura del explorador y del diagrama en la revisión | `access` v0.0.41, `agreement_manager` v0.3.28, `appointment_booking` v0.3.67 cerradas; 3 repos en Jules |
+| X3 | `mjosefa-cms` (con M5) y los demos de `access`, `agreement_manager`, `appointment_booking`, `chat_room`, `clinical_encounter` | Declaran sus herramientas; captura del explorador y del diagrama en la revisión | `access` v0.0.41, `agreement_manager` v0.3.28, `appointment_booking` v0.3.67, `mjosefa-cms` v0.0.100 cerradas; 2 repos en Jules |
 
 ## Bloqueos
 
