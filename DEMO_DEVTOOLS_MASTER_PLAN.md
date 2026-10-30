@@ -1,5 +1,5 @@
 # Herramientas de desarrollo en el demo de un módulo — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1b y X1c cerradas; en Jules X1a (`router`) y X1d (`appkit`); sigue X2 (`layout`)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1a (`router` v0.4.17), X1b y X1c cerradas; en Jules X1d (`appkit`); sigue X2 (`layout`)
 
 **Disparador:** en el demo de un módulo (`webtyp` en la raíz del módulo) el menú muestra «Explorador de API» y «Base
 de datos», pero salen vacíos: piden `/_routes` y `/_schema` (`layout/apiexplorer/explorer.go:58`, `erd.SchemaPath`) a un
@@ -32,7 +32,7 @@ Ecosistema (Step 0): no existe una fuente local de rutas ni de diagrama; `router
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| X1a | `router` | `router.Table(routes, policy)`: un solo armador de la tabla, el mismo de `/_routes`; se borran los escritores privados | [Jules · 2026-10-30 16:00] despachado |
+| X1a | `router` | `router.Table(routes, policy)`: un solo armador de la tabla, el mismo de `/_routes`; se borran los escritores privados | cerrada v0.4.17 |
 | X1b | `rpc` | `rpc.Routes(prefix, mods...)` | cerrada (publicada) |
 | X1c | `erd` | `erd.ReadSteps(steps...)` | cerrada v0.0.14 |
 | X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | [Jules · 2026-10-30 17:30] despachado |
