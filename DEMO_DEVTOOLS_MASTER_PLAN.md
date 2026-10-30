@@ -1,5 +1,5 @@
 # Herramientas de desarrollo en el demo de un módulo — master plan
-> **Status:** PENDING · 2026-10-30 · espera tu P1 (cómo llegan al demo la tabla de rutas y el diagrama)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; en Jules X1a–X1c (`router`, `rpc`, `erd`); siguen `appkit` y `layout`
 
 **Disparador:** en el demo de un módulo (`webtyp` en la raíz del módulo) el menú muestra «Explorador de API» y «Base
 de datos», pero salen vacíos: piden `/_routes` y `/_schema` (`layout/apiexplorer/explorer.go:58`, `erd.SchemaPath`) a un
@@ -15,31 +15,15 @@ permiso pide cada operación; y las dos pantallas solo saben leer por `fetch`.
 
 ## Preguntas abiertas
 
-**P1 — ¿Cómo llegan al demo la tabla de rutas y el diagrama?** A) **Fuentes explícitas**: las dos pantallas reciben de
-dónde leer; en una app es HTTP (como hoy), en un demo es lo que el demo le pasa a `BuildMenu`, armado con las mismas
-piezas del servidor (`loopback` aprende a guardar el permiso de cada operación y devuelve su tabla; el diagrama, con
-`ddl.Capture` + `erd.ReadApp` sobre los pasos de migración del demo). B) **Servidor dentro del navegador**: el demo monta
-sus módulos en un router en memoria con el mismo `appkit.MountServer` del servidor, y `fetch` responde `/_routes`,
-`/_schema` y `/api/...` ahí mismo, sin red. **Recomiendo A**: el compilador obliga a cada demo a pasar sus fuentes y no
-hay que interceptar `fetch` (B cambia `fetch`, `rpc` y `loopback` a la vez, y un error ahí rompe también las apps
-reales); A reutiliza igual las piezas del servidor, sin su transporte.
-```go
-// hoy (access/web/browser/main.go): el explorador pide /_routes a un servidor que no existe
-menu, err := layout_app.BuildMenu(ui.Screens(caller), ids, allowAll)
-// A: el demo pasa lo que ya tiene; una app real no cambia (sin Tools = HTTP, como hoy)
-menu, err := layout_app.BuildMenu(ui.Screens(caller), ids, allowAll,
-	layout_app.LocalTools(loopback.Table(accessMod), migrate.Migrate))
-// B: el demo arma su «servidor» en memoria y todo pasa por fetch
-srv := appkit.InBrowser(appkit.ServerConfig{Operations: ops, Migrations: steps})
-menu, err := layout_app.BuildMenu(ui.Screens(srv.Caller()), ids, allowAll)
-```
-Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
 | # | Decisión | Dónde se implementa |
 |---|---|---|
 | D1 (P39 del roadmap) | El demo de un módulo muestra su API y su base de datos con lo que corre en el navegador; una app real sigue leyéndolas del servidor | según P1 |
+| D2 (P1) | **Fuentes explícitas**: las dos pantallas leen de una fuente; una app con servidor les da la de HTTP (como hoy), un demo les da la tabla y el diagrama armados en el navegador con las mismas piezas del servidor: `rpc.Routes` + `router.Table` y `erd.ReadSteps` | X1, X2 |
+| D3 (P1, regla del dev) | **Las herramientas aparecen solo si hay algo que mostrar**: sin API ni base, no hay grupo «Herramientas de desarrollo»; con solo API, solo el explorador; con solo base, solo el diagrama. Vale también para una app 100 % sin servidor. `BuildMenu` recibe las herramientas como parámetro **obligatorio** (`Tools{}` = ninguna), así cada app y cada demo declara lo que tiene y ninguna queda mostrando pantallas vacías por omisión | X2, X3 |
 
 ## Fases
 
@@ -48,10 +32,12 @@ Ecosistema (Step 0): no existe una fuente local de rutas ni de diagrama; `router
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| X0 | docs | Contestar P1; consolidar | pendiente (tú) |
-| X1 | `router` (`loopback`) | Guardar permiso, público y MFA de cada operación y devolver su tabla (según P1) | espera P1 |
-| X2 | `layout` (`apiexplorer`, `schemaview`, `app`) | Las pantallas leen de una fuente; `BuildMenu` recibe las del demo | espera X1 |
-| X3 | cada módulo con demo | El demo pasa sus fuentes; captura del explorador y del diagrama | espera X2 |
+| X1a | `router` | `router.Table(routes, policy)`: un solo armador de la tabla, el mismo de `/_routes`; se borran los escritores privados | [Jules · 2026-10-30 16:00] despachado |
+| X1b | `rpc` | `rpc.Routes(prefix, mods...)`: las rutas de cada operación con su permiso, sin servidor; `Mount` valida con lo mismo | [Jules · 2026-10-30 16:00] despachado |
+| X1c | `erd` | `erd.ReadSteps(steps...)`: el diagrama desde los pasos de migración | [Jules · 2026-10-30 16:00] despachado |
+| X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | espera X1c |
+| X2 | `layout` (`apiexplorer`, `schemaview`, `app`) | Las pantallas leen de una fuente; `BuildMenu(..., tools Tools)` obligatorio; el grupo y cada herramienta aparecen solo con fuente (D3) | espera X1a–X1c |
+| X3 | cada app y cada demo que llama `BuildMenu` | Declara sus herramientas: HTTP en una app con servidor, locales en un demo, ninguna sin API ni base; captura del explorador y del diagrama | espera X2 |
 
 ## Bloqueos
 
