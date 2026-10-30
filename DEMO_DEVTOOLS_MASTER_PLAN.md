@@ -35,7 +35,7 @@ Ecosistema (Step 0): no existe una fuente local de rutas ni de diagrama; `router
 | X1a | `router` | `router.Table(routes, policy)` | cerrada v0.4.17 |
 | X1b | `rpc` | `rpc.Routes(prefix, mods...)` | cerrada (publicada) |
 | X1c | `erd` | `erd.ReadSteps(steps...)` | cerrada v0.0.14 |
-| X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | [Jules · 2026-10-30 17:30] despachado |
+| X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | cerrada v0.0.25 |
 | X2 | `layout` (`apiexplorer`, `schemaview`, `app`) | `app.Tools{API, Database}` obligatorio en `BuildMenu`; `FromServer`/`FromTable`/`FromReport`; `app.LocalTools(modules, steps...)`; «Probar» solo con servidor | [Jules · 2026-10-30 18:00] despachado |
 | X3 | `mjosefa-cms` (`config/client.go`, servidor: `FromServer` en las dos) y los demos de `access`, `agreement_manager`, `appointment_booking`, `chat_room`, `clinical_encounter` (`LocalTools`) | Declaran sus herramientas; captura del explorador y del diagrama | espera X2 |
 
