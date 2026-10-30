@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S9 cerrada (`update` v0.0.5); S10: 5 cerradas, 6 en vuelo en Jules; siguen `selfupdate`, `deploy` y `gorelease`
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S9 cerrada (`update` v0.0.5); S10: 8 cerradas, 3 en vuelo en Jules; siguen `selfupdate`, `deploy` y `gorelease`
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -66,7 +66,7 @@ importar `goflare`).
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
-| S10 | 11 repos con `CreateTable` y luego `ddl` | D14: `service_catalog` (v0.6.33), `device_manager` (v0.2.89), `changelog` (v0.2.13), `idempotency` (v0.1.10), `outbox` (v0.1.17) cerradas; `alert_manager`, `business_calendar`, `network_manager`, `pharmacy_manager`, `supply_manager`, `dbsync` migran con `Sync` (pruebas de [SYNC_FLOW](https://github.com/webtyp/ddl/blob/main/docs/diagrams/SYNC_FLOW.md)); faltan `agreement_manager`, `editorial`, `site_content`, `site_manager`; al final `ddl` no exporta `CreateTable` | [Antigravity · 2026-10-30 15:38] 5 cerradas, 6 en vuelo |
+| S10 | 11 repos con `CreateTable` y luego `ddl` | D14: `service_catalog` (v0.6.33), `device_manager` (v0.2.89), `changelog` (v0.2.13), `idempotency` (v0.1.10), `outbox` (v0.1.17), `business_calendar` (v0.5.31), `network_manager` (v0.1.99), `dbsync` (v0.3.27) cerradas; `alert_manager`, `pharmacy_manager`, `supply_manager` migran con `Sync` (pruebas de [SYNC_FLOW](https://github.com/webtyp/ddl/blob/main/docs/diagrams/SYNC_FLOW.md)); faltan `agreement_manager`, `editorial`, `site_content`, `site_manager`; al final `ddl` no exporta `CreateTable` | [Antigravity · 2026-10-30 15:43] 8 cerradas, 3 en vuelo |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
 administrador lo aplica; (2) apagar y encender el servidor con una versión pendiente → se instala sola antes de recibir
