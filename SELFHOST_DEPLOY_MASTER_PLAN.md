@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4c-1 cerrada v0.0.4, S11 (`env`) cerrada v0.1.3, S10 (`ddl`) cerrada v0.0.37; siguen S4b-2, S4c-2, S3 (`deploy`) y S2 (`gorelease`)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; en Jules S4b-2 (migrar antes de cambiar); siguen S4c-2, S3 (`deploy`), S2 (`gorelease`), S4d
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -67,13 +67,13 @@ importar `goflare`).
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
 | S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13, la pública impresa para `install`) y `Compose(plan)`: el `compose.yaml` que sube `gorelease` (D17), con los nombres de `selfupdate/layout.go` | espera S4a publicado |
-| S4 | `selfupdate` | S4a, S4b, S4c-1 cerradas; luego S4b-2 (paso «migrar», D23), S4c-2 (`serve`, `install`, `Dockerfile`, Action de la imagen, D24) y S4d (módulo de la app) | S4c-1 cerrada v0.0.4; siguen S4b-2, S4c-2 |
+| S4 | `selfupdate` | S4a, S4b, S4c-1 cerradas (v0.0.4); S4b-2 paso «migrar» (D23) en Jules; luego S4c-2 (`serve`, `install`, `Dockerfile`, Action de la imagen, D24) y S4d (módulo de la app) | S4b-2 [Jules · 2026-10-30 20:30] despachado |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
-| S11 | `env` | D22: `<CLAVE>_FILE` entre el entorno y `.env` | cerrada v0.1.3 |
-| S10 | `ddl`, luego docs | D14: los 15 módulos y todas las pruebas ya usan `Sync`; `ddl` v0.0.37 cerrada (`CreateTable` ya no es pública); barrido de docs después | `ddl` cerrada v0.0.37; queda barrido de docs |
+| S11 | `env` | D22: `<CLAVE>_FILE` | cerrada |
+| S10 | `ddl`, docs | D14: `CreateTable` ya no es pública (`ddl` publicado); Antigravity barre los docs en local | barrido de docs en curso (Antigravity) |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
 administrador lo aplica; (2) apagar y encender el servidor con una versión pendiente → se instala sola antes de recibir
