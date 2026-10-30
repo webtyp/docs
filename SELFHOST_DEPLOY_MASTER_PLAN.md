@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4a y S4b cerradas (`selfupdate` v0.0.3); siguen S3 (`deploy`), S4c, S2 (`gorelease`)
+> **Status:** IN PROGRESS · 2026-10-30 · esperan tus P11–P13 (claves en el contenedor, quién migra, imagen e instalación del supervisor); S4a–S4b cerradas, S4c (API HTTP) en Jules; S10: pruebas en Jules
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -26,7 +26,26 @@ en `mjosefa-cms`.
 
 ## Preguntas abiertas
 
-Ninguna.
+**P11 — ¿Cómo recibe la app sus claves dentro del contenedor?** Docker entrega cada secreto como un archivo (`/run/secrets/<nombre>`), pero la app lee `DATABASE_URL` del entorno (`env.Get`, `mjosefa-cms/config/server.go`) y `webtyp/env` no sabe leer archivos de secretos. A) `webtyp/env` aprende la convención estándar `<CLAVE>_FILE`: si `DATABASE_URL` no está y `DATABASE_URL_FILE` sí, lee el archivo (lo mismo que hace la imagen oficial de Postgres con `POSTGRES_PASSWORD_FILE`). B) Las claves van como variables normales en el `.env`. **Recomiendo A**: con B cualquiera que pueda correr `docker inspect` o `docker compose config` ve las claves en texto plano; con A la app no cambia ni una línea.
+```yaml
+# A — compose.yaml generado: la app lee el archivo, nadie ve la clave
+app:
+  environment: { DATABASE_URL_FILE: /run/secrets/database_url }
+  secrets: [database_url]
+# B — .env: la clave queda en texto plano en el equipo y en docker inspect
+DATABASE_URL=postgres://app:Kd8...@db/shop
+```
+Respuesta:
+
+**P12 — ¿Quién migra la base al cambiar de versión?** D19 decidió dos usuarios de Postgres: uno que migra (dueño) y otro que solo lee y escribe filas; pero D14/D21 dicen que la app migra al arrancar, y la app corre con el usuario limitado, que no puede crear columnas. A) El supervisor migra antes de cambiar: corre el programa de migración de la imagen nueva con el usuario dueño (`docker compose run --rm app migrate`) y recién después cambia la app; si la migración falla, no se cambia nada. La imagen trae los dos programas (`mjosefa-cms` ya tiene `cmd/migrate`). B) Un solo usuario dueño para todo, y la app migra al arrancar. **Recomiendo A**: mantiene D19 (si alguien toma el control de la app, no puede borrar tablas), y como `Sync` solo agrega, la versión anterior sigue funcionando con la base ya migrada. El flujo de cambio queda: copia → bajar imagen → **migrar** → cambiar → salud. Respuesta:
+
+**P13 — ¿Cómo se publica la imagen del supervisor y cómo se instala?** A) Una Action del repo público `webtyp/selfupdate` construye `ghcr.io/webtyp/selfupdate:<versión>` en cada tag (repo público: minutos gratis), y la instalación en el servidor es un solo `docker run` de esa imagen: el servidor solo necesita Docker. B) `gorelease` la construye en tu equipo como a las apps (D42) y en el servidor se instala un binario de Go. **Recomiendo A**: D42 dejó fuera las Actions por los minutos del repo **privado** de la app; el supervisor es una herramienta pública de webtyp, igual que las que hoy publica `webtyp/gorelease@v1`.
+```bash
+# A — lo único que se escribe en el servidor recién formateado (con Docker instalado)
+docker run --rm -it -v /opt:/opt -v /var/run/docker.sock:/var/run/docker.sock \
+  ghcr.io/webtyp/selfupdate:v0.1.0 install acme/shop
+```
+Respuesta:
 
 ## Decisiones por implementar
 
