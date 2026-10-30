@@ -1,5 +1,5 @@
 # Herramientas de desarrollo en el demo de un módulo — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1a–X1c cerradas; en Jules X1d (`appkit`) y X2 (`layout`); X3 espera X2
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; X1a–X1d y X2 cerradas; X3 desbloqueada (espera despacho)
 
 **Disparador:** en el demo de un módulo (`webtyp` en la raíz del módulo) el menú muestra «Explorador de API» y «Base
 de datos», pero salen vacíos: piden `/_routes` y `/_schema` (`layout/apiexplorer/explorer.go:58`, `erd.SchemaPath`) a un
@@ -36,8 +36,8 @@ Ecosistema (Step 0): no existe una fuente local de rutas ni de diagrama; `router
 | X1b | `rpc` | `rpc.Routes(prefix, mods...)` | cerrada (publicada) |
 | X1c | `erd` | `erd.ReadSteps(steps...)` | cerrada v0.0.14 |
 | X1d | `appkit` | Usa `erd.ReadSteps` y borra `groupsOf` | cerrada v0.0.25 |
-| X2 | `layout` (`apiexplorer`, `schemaview`, `app`) | `app.Tools{API, Database}` obligatorio en `BuildMenu`; `FromServer`/`FromTable`/`FromReport`; `app.LocalTools(modules, steps...)`; «Probar» solo con servidor | [Jules · 2026-10-30 18:00] despachado |
-| X3 | `mjosefa-cms` (`config/client.go`, servidor: `FromServer` en las dos) y los demos de `access`, `agreement_manager`, `appointment_booking`, `chat_room`, `clinical_encounter` (`LocalTools`) | Declaran sus herramientas; captura del explorador y del diagrama | espera X2 |
+| X2 | `layout` (`apiexplorer`, `schemaview`, `app`) | `app.Tools{API, Database}` obligatorio en `BuildMenu`; `FromServer`/`FromTable`/`FromReport`; `app.LocalTools(modules, steps...)`; «Probar» solo con servidor | cerrada v0.3.99 |
+| X3 | `mjosefa-cms` (`config/client.go`, servidor: `FromServer` en las dos) y los demos de `access`, `agreement_manager`, `appointment_booking`, `chat_room`, `clinical_encounter` (`LocalTools`) | Declaran sus herramientas; captura del explorador y del diagrama | desbloqueada (sigue a X2) |
 
 ## Bloqueos
 
