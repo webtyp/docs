@@ -69,7 +69,7 @@ importar `goflare`).
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
-| S10 | 15 repos con `CreateTable` y luego `ddl` | D14: cerrados los 11 con paquete `migrate/`; `agreement_manager`, `editorial`, `site_content`, `site_manager` migran con un `Migrate` propio que `New` sigue llamando (sin cambio para `misitio`/`sitetheme`); al final `ddl` deja de exportar `CreateTable` | [Jules · 2026-10-30 16:30] 4 despachados; revisa Antigravity |
+| S10 | 15 repos con `CreateTable`, sus pruebas, y luego `ddl` | D14: los 15 cerrados (migran con `Sync`); faltan las pruebas que aún llaman `CreateTable` en `appkit`, `changelog`, `erd`, `sqlite`; después `ddl` deja de exportarla (y su suite `conformance` pasa a `Sync`) | [Jules · 2026-10-30 18:30] 4 de pruebas despachados; luego `ddl` |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
 administrador lo aplica; (2) apagar y encender el servidor con una versión pendiente → se instala sola antes de recibir
