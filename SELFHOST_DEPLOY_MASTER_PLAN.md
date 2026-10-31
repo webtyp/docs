@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; contrato del compose fijado (D25–D28); en Jules S12 (`update`) y S13 (`server`); siguen S3 (`deploy`), S4c-2 y S2 (`gorelease`)
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; contrato del compose fijado (D25–D28); S12 (`update` v0.0.6) y S13 (`server` v0.2.105) cerradas; siguen S3 (`deploy`), S4c-2 y S2 (`gorelease`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -71,14 +71,14 @@ importar `goflare`).
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
 | S3 | `deploy` (`Target` `selfhost`) | `Compose(plan)` exactamente según D25 y el par de claves (D13) | por escribir (contrato listo) |
-| S4 | `selfupdate` | S4a, S4b, S4b-2, S4c-1 cerradas (v0.0.6, con el contrato D25); S4c-2 (`serve`, `install` con claves e `initdb.sql`, verificación del compose D26, `Dockerfile`, Action D24) espera S12; luego S4d (módulo de la app) | espera S12 |
+| S4 | `selfupdate` | S4a, S4b, S4b-2, S4c-1 cerradas (v0.0.6, con el contrato D25); S4c-2 (`serve`, `install` con claves e `initdb.sql`, verificación del compose D26, `Dockerfile`, Action D24) desbloqueada por S12; luego S4d (módulo de la app) | desbloqueada por S12 (v0.0.6) |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
 | S11 | `env` | D22: `<CLAVE>_FILE` | cerrada |
-| S12 | `update` | D26: `ComposeDigest`, `Digest`, `CheckCompose` | [Jules · 2026-10-30 21:00] despachado |
-| S13 | `server` | `FromEnv` acepta `CLOUDFLARE_DNS_API_TOKEN_FILE` | [Jules · 2026-10-30 21:00] despachado |
+| S12 | `update` | D26: `ComposeDigest`, `Digest`, `CheckCompose` | cerrada v0.0.6 |
+| S13 | `server` | `FromEnv` acepta `CLOUDFLARE_DNS_API_TOKEN_FILE` | cerrada v0.2.105 |
 | S10 | `ddl`, docs | D14: `CreateTable` ya no es pública (`ddl` v0.0.37); barrido de docs completado | cerrada |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
