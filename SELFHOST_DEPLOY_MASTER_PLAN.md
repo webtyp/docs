@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-31 · sin preguntas; S2 cerrada (`gorelease` v0.1.10); S4c-2b (`selfupdate`) en Jules; después S4d (`selfupdate` módulo de la app) y S8 (`pwa`)
+> **Status:** IN PROGRESS · 2026-10-31 · sin preguntas; S2 (`gorelease` v0.1.10) y S4c-2b (`selfupdate` v0.0.9) cerradas; siguen S4d (`selfupdate` módulo de la app) y S8 (`pwa`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -73,7 +73,7 @@ importar `goflare`).
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | S2a `gorelease image`: imagen de la app (D27) en ghcr.io por su huella, se niega con árbol sucio, tag que no es HEAD o pruebas rojas; S2b manifiesto firmado (imagen + compose de `selfupdate.ComposeFile`) y Release en el mismo repo privado | cerrada v0.1.10 |
 | S3 | — | Absorbida por S4 (D29): `deploy` no cambia | cerrada sin código |
-| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1, S4c-2a (v0.0.7), S4e+S4f (v0.0.8); siguen S4c-2b (`serve` con la copia cada 24 h, `install` con dueño y permisos de cada clave, `Dockerfile`, Action) y S4d (módulo de la app) | S4c-2b [Antigravity · 2026-10-31 01:43] despachado; sigue S4d |
+| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1, S4c-2a (v0.0.7), S4e+S4f (v0.0.8), S4c-2b (v0.0.9); sigue S4d (módulo de la app) | S4a–S4f cerradas (v0.0.9); sigue S4d |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
