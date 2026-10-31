@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4b-2 cerrada v0.0.5; siguen S4c-2, S3 (`deploy`), S2 (`gorelease`), S4d
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; contrato del compose fijado (D25–D28); en Jules S12 (`update`) y S13 (`server`); siguen S3 (`deploy`), S4c-2 y S2 (`gorelease`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -55,6 +55,10 @@ Ninguna.
 | D22 (P11) | **Claves como archivos**: el compose entrega cada secreto en `/run/secrets/<nombre>` y la app lo lee con la convención `<CLAVE>_FILE` de `webtyp/env` (`DATABASE_URL_FILE`); ninguna clave en `.env` ni en `docker inspect` | `env`, S3 |
 | D23 (P12) | **El supervisor migra antes de cambiar**: tras bajar la imagen corre su programa de migración con el usuario dueño (`docker compose run --rm app migrate`); si falla, no cambia nada; la app corre con el usuario que solo lee y escribe filas (D19). La imagen trae los dos programas. Flujo: copia → bajar → **migrar** → cambiar → salud | S4, S2, S3 |
 | D24 (P13) | **Imagen pública del supervisor por Action** en `webtyp/selfupdate` en cada tag (`ghcr.io/webtyp/selfupdate:<versión>`); la instalación es un solo `docker run … ghcr.io/webtyp/selfupdate:<versión> install <owner/repo>`: el servidor solo necesita Docker | S4 |
+| D25 | **Contrato del compose** en [selfupdate/docs/ARCHITECTURE.md](https://github.com/webtyp/selfupdate/blob/main/docs/ARCHITECTURE.md#the-compose-file--contract): servicios `db`, `migrate` (perfil, solo lo corre el supervisor), `app`, `cloudflared`, `selfupdate`; claves como archivos `_FILE`; volumen `certs` (el certificado de Let's Encrypt sobrevive a cada actualización: sin él cada cambio pediría uno nuevo y Let's Encrypt limita los repetidos); la puerta de la clínica en `${LAN_ADDRESS}:443`, la de internet sin publicar | S3, S4, S2 |
+| D26 | **El manifiesto firma también la huella del `compose.yaml`** (`ComposeDigest`): un compose adulterado en el Release (por ejemplo, uno que monte el disco del servidor) se rechaza igual que una imagen adulterada | `update`, S4, S2 |
+| D27 | **Imagen de la app**: `/app/server` (arranque), `/app/migrate`, `/app/web/public`, carpeta de trabajo `/app`, usuario sin privilegios, `linux/amd64` | S2 |
+| D28 | **El usuario de la app** (solo filas) lo crea Postgres en su primer arranque con `secrets/initdb.sql`, que genera `install` junto con las claves | S4 |
 
 ## Fases
 
@@ -66,13 +70,15 @@ importar `goflare`).
 |---|---|---|---|
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
-| S3 | `deploy` (`Target` `selfhost`) | Par de claves (D13, la pública impresa para `install`) y `Compose(plan)`: el `compose.yaml` que sube `gorelease` (D17), con los nombres de `selfupdate/layout.go` | espera S4a publicado |
-| S4 | `selfupdate` | S4a, S4b-1, S4b-2, S4c-1 cerradas (v0.0.5); luego S4c-2 (`serve`, `install`, `Dockerfile`, Action de la imagen, D24) y S4d (módulo de la app) | S4b-2 cerrada v0.0.5; sigue S4c-2 |
+| S3 | `deploy` (`Target` `selfhost`) | `Compose(plan)` exactamente según D25 y el par de claves (D13) | por escribir (contrato listo) |
+| S4 | `selfupdate` | S4a, S4b, S4b-2, S4c-1 cerradas (v0.0.6, con el contrato D25); S4c-2 (`serve`, `install` con claves e `initdb.sql`, verificación del compose D26, `Dockerfile`, Action D24) espera S12; luego S4d (módulo de la app) | espera S12 |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
 | S11 | `env` | D22: `<CLAVE>_FILE` | cerrada |
+| S12 | `update` | D26: `ComposeDigest`, `Digest`, `CheckCompose` | [Jules · 2026-10-30 21:00] despachado |
+| S13 | `server` | `FromEnv` acepta `CLOUDFLARE_DNS_API_TOKEN_FILE` | [Jules · 2026-10-30 21:00] despachado |
 | S10 | `ddl`, docs | D14: `CreateTable` ya no es pública (`ddl` v0.0.37); barrido de docs completado | cerrada |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
