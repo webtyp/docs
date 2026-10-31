@@ -1,5 +1,5 @@
 # Pestaña DEPLOY para cualquier destino — master plan
-> **Status:** IN PROGRESS · 2026-10-31 · P1–P4 consolidadas; preparando despacho de fases W1–W4
+> **Status:** CLOSED · 2026-10-31 · Todas las fases W0–W6 completadas y probadas en mjosefa-cms
 
 **Disparador:** ejecutar `webtyp dev` en cualquier proyecto debe mostrar en la pestaña DEPLOY qué falta para desplegar, sea un Worker o un servidor propio (`mjosefa-cms` como caso de referencia).
 
@@ -36,7 +36,7 @@ Ninguna.
 | W2 | `selfupdate` | `selfupdate.NewTarget(cfg)` implementando `deploy.Target` (D2, D6, D7) | cerrada v0.0.11 |
 | W3 | `gorelease` | `gorelease.NewCI(cfg)` implementando `deploy.CI` (D3, D8) | cerrada v0.1.13 |
 | W4 | `app` | Tabla de targets/CI en `deploy_tools.go`, deducción por `web/` y wizard de `config/deploy.go` (D1, D5, D7) | cerrada v0.7.46 |
-| W5 | `mjosefa-cms` | Prueba real en `webtyp dev`, generación de `config/deploy.go` y captura de DEPLOY | en curso |
+| W5 | `mjosefa-cms` | Prueba real en `webtyp dev`, generación de `config/deploy.go` y captura de DEPLOY | cerrada v0.0.105 |
 | W6 | `devskills` | Actualizar skill **secrets** y **project-layout** | cerrada v0.0.33 |
 
 ## Bloqueos
