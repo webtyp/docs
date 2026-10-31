@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · esperan tus P14 (quién genera el compose) y P15 (copia diaria); en Jules S4c-2a (el compose viaja firmado con cada versión); siguen S4c-2b (`serve`, `install`, imagen), S3/S2
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; en Jules S4c-2a; siguen en `selfupdate` S4e (generador del compose), S4f, S4c-2b, S4d; en paralelo S2 (`gorelease`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -26,18 +26,7 @@ en `mjosefa-cms`.
 
 ## Preguntas abiertas
 
-**P14 — ¿Quién genera el `compose.yaml`?** D39 del roadmap dijo «el destino `selfhost` de `webtyp/deploy`», pero `deploy.Target` está hecho para destinos que despliegan **desde un CI**: exige `CI`, `Job`, `Provision` de secretos de CI (`deploy/interfaces.go`), y con D42 la app la publicas tú desde tu equipo, sin CI. A) El generador vive en `selfupdate`, junto al contrato que ya es suyo (`layout.go`, D25): `selfupdate.Compose(selfupdate.App{Name, Domain, Repo})`; `gorelease` lee `Name` y `Domain` de `config/deploy.go` y lo llama; `deploy` no cambia. B) `deploy` gana un `Target` `selfhost` y un `CI` «local» que cumplen la interfaz sin hacer nada (sin Job, sin secretos de CI). **Recomiendo A**: el contrato y quien lo escribe quedan en un solo repo (si cambia un nombre, cambia en un lugar), y no se agregan piezas vacías; `config/deploy.go` sigue siendo la única declaración de la app.
-```go
-// A — mjosefa-cms/config/deploy.go: lo que declara la app (deploy.Plan, sin cambios en deploy)
-return deploy.Plan{Name: "mjosefa-cms", Domain: "app.monjitaschillan.cl",
-	Target: selfupdate.Server, CI: gorelease.Local} // dos constantes de identidad, sin implementación de CI
-// gorelease, al publicar:
-compose := selfupdate.Compose(selfupdate.App{Name: plan.Name, Domain: plan.Domain, Repo: "veltylabs/mjosefa-cms"})
-// B — deploy/selfhost: Target con Check/Provision/Rotate/Runtime/Job, y deploy/local: CI con Release/Status vacíos
-```
-Respuesta:
-
-**P15 — ¿Copia diaria de la base, y fuera del equipo?** Hoy solo hay copia antes de cada cambio de versión (D21). D14 pedía en el servidor un disco solo para respaldos y una copia fuera del servidor. A) El supervisor también hace una copia diaria en `backups/` (las últimas 7, la misma función); en el servidor (M10) esa carpeta es el disco de respaldos; la copia fuera del equipo se decide en M10 (en el notebook del MVP los datos no importan, D40/D43). B) Copia diaria y fuera del equipo desde ya (por ejemplo a Google Drive con `rclone`). **Recomiendo A**: reutiliza lo que ya existe y no agrega otra clave (la de la nube) a un ensayo cuyos datos se descartan. Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -70,6 +59,8 @@ Respuesta:
 | D26 | **El manifiesto firma también la huella del `compose.yaml`** (`ComposeDigest`): un compose adulterado en el Release (por ejemplo, uno que monte el disco del servidor) se rechaza igual que una imagen adulterada | `update`, S4, S2 |
 | D27 | **Imagen de la app**: `/app/server` (arranque), `/app/migrate`, `/app/web/public`, carpeta de trabajo `/app`, usuario sin privilegios, `linux/amd64` | S2 |
 | D28 | **El usuario de la app** (solo filas) lo crea Postgres en su primer arranque con `secrets/initdb.sql`, que genera `install` junto con las claves | S4 |
+| D29 (P14) | **El `compose.yaml` lo genera `selfupdate`**, junto al contrato (D25): `selfupdate.Compose(selfupdate.App{Name, Domain, Repo})`; `gorelease` lee `Name` y `Domain` de `config/deploy.go` y lo llama. `deploy` no cambia: la app declara `Target: selfupdate.Server` y `CI: gorelease.Local`, dos constantes de identidad (corrige D39 del roadmap) | S4, S2 |
+| D30 (P15) | **Copia diaria de la base** por el supervisor en `backups/` (la misma copia de D21, las últimas 7); en el servidor esa carpeta es el disco de respaldos (D14); la copia fuera del equipo se decide en M10 | S4 |
 
 ## Fases
 
@@ -81,8 +72,8 @@ importar `goflare`).
 |---|---|---|---|
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
 | S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
-| S3 | `deploy` (`Target` `selfhost`) | `Compose(plan)` exactamente según D25 y el par de claves (D13) | por escribir (contrato listo) |
-| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1; S4c-2a (compose verificado, instalado y restaurado) en Jules; luego S4c-2b (`serve`, `install` con claves e `initdb.sql`, `Dockerfile`, Action D24) y S4d (módulo de la app) | S4c-2a [Jules · 2026-10-30 21:30] despachado |
+| S3 | — | Absorbida por S4 (D29): `deploy` no cambia | cerrada sin código |
+| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1; S4c-2a en Jules; siguen S4e `Compose(App)` + `Server` (D29), S4f copia diaria (D30), S4c-2b (`serve`, `install`, `Dockerfile`, Action) y S4d (módulo de la app) | S4c-2a [Jules · 2026-10-30 21:30] despachado |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
