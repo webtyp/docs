@@ -32,10 +32,10 @@ Ninguna.
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | W0 | docs | Preguntas P1–P4 consolidadas | cerrada 2026-10-31 |
-| W1 | `deploy` | `deploy.Write(rootDir, Plan)` (inverso de `Scan`, con tests de ida y vuelta) | [Antigravity · 2026-10-31 12:33] en vuelo (Jules 7544838604499152860) |
-| W2 | `selfupdate` | `selfupdate.NewTarget(cfg)` implementando `deploy.Target` (D2, D6, D7) | [Antigravity · 2026-10-31 12:34] en vuelo (Jules 9349263352996430607) |
-| W3 | `gorelease` | `gorelease.NewCI(cfg)` implementando `deploy.CI` (D3, D8) | [Antigravity · 2026-10-31 12:36] en vuelo (Jules 1664364813568236283) |
-| W4 | `app` | Tabla de targets/CI en `deploy_tools.go`, deducción por `web/` y wizard de `config/deploy.go` (D1, D5, D7) | tras W1–W3 |
+| W1 | `deploy` | `deploy.Write(rootDir, Plan)` (inverso de `Scan`, con tests de ida y vuelta) | cerrada v0.2.115 |
+| W2 | `selfupdate` | `selfupdate.NewTarget(cfg)` implementando `deploy.Target` (D2, D6, D7) | cerrada v0.0.11 |
+| W3 | `gorelease` | `gorelease.NewCI(cfg)` implementando `deploy.CI` (D3, D8) | cerrada v0.1.13 |
+| W4 | `app` | Tabla de targets/CI en `deploy_tools.go`, deducción por `web/` y wizard de `config/deploy.go` (D1, D5, D7) | [Antigravity · 2026-10-31 13:09] en vuelo (Jules 13879976192116444868) |
 | W5 | `mjosefa-cms` | Prueba real en `webtyp dev`, generación de `config/deploy.go` y captura de DEPLOY | tras W4 |
 | W6 | `devskills` | Actualizar skill **secrets** y **project-layout** | con W4 |
 
