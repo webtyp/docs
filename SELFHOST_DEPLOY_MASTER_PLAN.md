@@ -71,7 +71,7 @@ importar `goflare`).
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
-| S2 | `gorelease` | Construir la app de `webtyp` (`web/server` con Go, `web/public` con TinyGo), `gotest`, imagen `linux/amd64` en GHCR, manifiesto firmado (S9) y el `compose.yaml` (D17); negarse con cambios sin commit | espera S9 publicado y S3 |
+| S2 | `gorelease` | S2a `gorelease image`: imagen de la app (D27) en ghcr.io por su huella, se niega con árbol sucio, tag que no es HEAD o pruebas rojas; S2b manifiesto firmado (imagen + compose de `selfupdate.Compose`) y Release en el mismo repo privado | S2a [Jules · 2026-10-30 22:00] despachado; S2b espera S4e |
 | S3 | — | Absorbida por S4 (D29): `deploy` no cambia | cerrada sin código |
 | S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1; S4c-2a en Jules; siguen S4e `Compose(App)` + `Server` (D29), S4f copia diaria (D30), S4c-2b (`serve`, `install`, `Dockerfile`, Action) y S4d (módulo de la app) | S4c-2a [Jules · 2026-10-30 21:30] despachado |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
