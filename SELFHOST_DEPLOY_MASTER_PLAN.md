@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S2a (`gorelease` v0.1.9) y S4c-2a (`selfupdate` v0.0.7) cerradas; siguen en `selfupdate` S4e (generador del compose), S4f, S4c-2b, S4d; en paralelo S2b
+> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4e+S4f (`selfupdate`) en Jules; después S4c-2b y S4d; S2b (`gorelease`) cuando cierre S4e
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -59,7 +59,7 @@ Ninguna.
 | D26 | **El manifiesto firma también la huella del `compose.yaml`** (`ComposeDigest`): un compose adulterado en el Release (por ejemplo, uno que monte el disco del servidor) se rechaza igual que una imagen adulterada | `update`, S4, S2 |
 | D27 | **Imagen de la app**: `/app/server` (arranque), `/app/migrate`, `/app/web/public`, carpeta de trabajo `/app`, usuario sin privilegios, `linux/amd64` | S2 |
 | D28 | **El usuario de la app** (solo filas) lo crea Postgres en su primer arranque con `secrets/initdb.sql`, que genera `install` junto con las claves | S4 |
-| D29 (P14) | **El `compose.yaml` lo genera `selfupdate`**, junto al contrato (D25): `selfupdate.Compose(selfupdate.App{Name, Domain, Repo})`; `gorelease` lee `Name` y `Domain` de `config/deploy.go` y lo llama. `deploy` no cambia: la app declara `Target: selfupdate.Server` y `CI: gorelease.Local`, dos constantes de identidad (corrige D39 del roadmap) | S4, S2 |
+| D29 (P14) | **El `compose.yaml` lo genera `selfupdate`**, junto al contrato (D25): `selfupdate.ComposeFile(selfupdate.App{Name, Domain, Repo})` (`Compose` ya es el motor de docker); `gorelease` lee `Name` y `Domain` de `config/deploy.go` y lo llama. `deploy` no cambia: la app declara `Target: selfupdate.Server` y `CI: gorelease.Local`, dos constantes de identidad (corrige D39 del roadmap) | S4, S2 |
 | D30 (P15) | **Copia diaria de la base** por el supervisor en `backups/` (la misma copia de D21, las últimas 7); en el servidor esa carpeta es el disco de respaldos (D14); la copia fuera del equipo se decide en M10 | S4 |
 
 ## Fases
@@ -71,9 +71,9 @@ importar `goflare`).
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
-| S2 | `gorelease` | S2a `gorelease image`: imagen de la app (D27) en ghcr.io por su huella, se niega con árbol sucio, tag que no es HEAD o pruebas rojas; S2b manifiesto firmado (imagen + compose de `selfupdate.Compose`) y Release en el mismo repo privado | S2a cerrada v0.1.9; S2b espera S4e |
+| S2 | `gorelease` | S2a `gorelease image`: imagen de la app (D27) en ghcr.io por su huella, se niega con árbol sucio, tag que no es HEAD o pruebas rojas; S2b manifiesto firmado (imagen + compose de `selfupdate.ComposeFile`) y Release en el mismo repo privado | S2a cerrada v0.1.9; S2b espera S4e |
 | S3 | — | Absorbida por S4 (D29): `deploy` no cambia | cerrada sin código |
-| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1, S4c-2a (v0.0.7); siguen S4e `Compose(App)` + `Server` (D29), S4f copia diaria (D30), S4c-2b (`serve`, `install`, `Dockerfile`, Action) y S4d (módulo de la app) | S4c-2a cerrada v0.0.7; sigue S4e |
+| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1, S4c-2a (v0.0.7); S4e `ComposeFile(App)` + `Server` (D29) y S4f `Supervisor.Backup()` (D30) en un plan; siguen S4c-2b (`serve` con la copia cada 24 h, `install` con dueño y permisos de cada clave, `Dockerfile`, Action) y S4d (módulo de la app) | S4e+S4f [Jules · 2026-10-30] despachado |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
