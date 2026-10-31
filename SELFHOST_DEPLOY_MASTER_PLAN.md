@@ -88,8 +88,8 @@ importar `goflare`).
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
 | S9 | `update` | Manifiesto firmado | cerrada v0.0.5 |
 | S11 | `env` | D22: `<CLAVE>_FILE` | cerrada |
-| S12 | `update` | D26: `ComposeDigest` | cerrada v0.0.6 |
-| S13 | `server` | `FromEnv` acepta `_FILE` | cerrada |
+| S12 | `update` | D26: `ComposeDigest`, `Digest`, `CheckCompose` | cerrada v0.0.6 |
+| S13 | `server` | `FromEnv` acepta `CLOUDFLARE_DNS_API_TOKEN_FILE` | cerrada v0.2.105 |
 | S10 | `ddl`, docs | D14: `CreateTable` ya no es pública (`ddl` v0.0.37); barrido de docs completado | cerrada |
 
 **Aceptación:** (1) el dev publica con `gorelease` → el servidor lo detecta; con clientes conectados queda pendiente y el
