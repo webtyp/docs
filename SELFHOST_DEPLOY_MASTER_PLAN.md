@@ -1,5 +1,5 @@
 # Despliegue continuo en servidor propio — master plan
-> **Status:** IN PROGRESS · 2026-10-30 · sin preguntas; S4e+S4f (`selfupdate`) en Jules; después S4c-2b y S4d; S2b (`gorelease`) cuando cierre S4e
+> **Status:** IN PROGRESS · 2026-10-31 · sin preguntas; S4e+S4f cerradas (v0.0.8); siguen S2b (`gorelease`), S4c-2b (`serve`/`install`/Dockerfile/Action) y S4d (`selfupdate/ui`)
 
 **Disparador:** `mjosefa-cms` corre en un servidor propio dentro de la red del consultorio y depende de ~11 módulos
 `veltylabs/*` y ~40 librerías `webtyp/*`. Cuando el dev publica una versión de la app, tiene que llegar sola al servidor
@@ -71,9 +71,9 @@ importar `goflare`).
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | S0 | docs | Contestar P5, P7–P10; consolidar | cerrada 2026-10-30 |
-| S2 | `gorelease` | S2a `gorelease image`: imagen de la app (D27) en ghcr.io por su huella, se niega con árbol sucio, tag que no es HEAD o pruebas rojas; S2b manifiesto firmado (imagen + compose de `selfupdate.ComposeFile`) y Release en el mismo repo privado | S2a cerrada v0.1.9; S2b espera S4e |
+| S2 | `gorelease` | S2a `gorelease image`: imagen de la app (D27) en ghcr.io por su huella, se niega con árbol sucio, tag que no es HEAD o pruebas rojas; S2b manifiesto firmado (imagen + compose de `selfupdate.ComposeFile`) y Release en el mismo repo privado | S2a cerrada v0.1.9; S2b lista para plan |
 | S3 | — | Absorbida por S4 (D29): `deploy` no cambia | cerrada sin código |
-| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1, S4c-2a (v0.0.7); S4e `ComposeFile(App)` + `Server` (D29) y S4f `Supervisor.Backup()` (D30) en un plan; siguen S4c-2b (`serve` con la copia cada 24 h, `install` con dueño y permisos de cada clave, `Dockerfile`, Action) y S4d (módulo de la app) | S4e+S4f [Jules · 2026-10-30] despachado |
+| S4 | `selfupdate` | Cerradas S4a, S4b, S4b-2, S4c-1, S4c-2a (v0.0.7), S4e+S4f (v0.0.8); siguen S4c-2b (`serve` con la copia cada 24 h, `install` con dueño y permisos de cada clave, `Dockerfile`, Action) y S4d (módulo de la app) | S4e+S4f cerradas v0.0.8; sigue S4c-2b |
 | S5 | — | Absorbida por S2 (`gorelease` empaqueta) | cerrada sin código |
 | S7 | `mjosefa-cms` | `config/deploy.go`, `selfupdate` en `modules/`; al aceptar borrar `DESPLIEGUE_WINDOWS.md` §5 y B2 de `MASTER.md` | espera S2–S4 |
 | S8 | `pwa` / `devskills` | Cliente ante reinicio del servidor (D16: «actualizando…» y reintento); skill de despliegue en servidor propio y excepción D9 en **secrets** | con S4 |
