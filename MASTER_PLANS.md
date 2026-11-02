@@ -33,6 +33,8 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 
 ## Cerrados y archivados (ya no viven aquí)
 
+- **TUI_SIGNAL** — cerrada 2026-11-02: la TUI de `webtyp dev` muestra señal (arranque de `mjosefa-cms` 58 → 17 líneas, sin repetidas, etiqueta por pieza, tamaño del wasm); diccionario de app solo configuración; `model.Definition.Wire`. Publicado `app` v0.7.47 y dependencias. Reglas en las skills **langc**, **translations**, **form-codegen**, **master-plan**; pendiente pasado a APP_COMPOSITION (D-TUI) y `app/docs/BUG.md`.
+
 - **API_SURFACE** — cerrada 2026-10-21 (router, rpc, mcp, layout publicados; integración en `mjosefa-cms` corrida en local). Diseño archivado en `webtyp/router/docs/API_SURFACE_DESIGN.md`.
 - **SECURITY_BY_DEFAULT** — cerrada 2026-10-21, ola 100% completada (iam, misitio §9). Diseño archivado en `veltylabs/iam/docs/SECURITY_BY_DEFAULT_DESIGN.md`.
 - **LANG_SUPPORT** — cerrada 2026-10-23: P1 resuelta (A — toda librería siembra `lang.Supported()` menos `en`; `lang` v0.1.9, `model` v0.2.6 de muestra, 3 detectores de reutilización en `langc sync`). El resto de `webtyp/*` se traduce sin wave propia: skill **plan-authoring** exige una etapa de traducción en cualquier plan que ya toque una librería con texto traducible. Reglas archivadas en las skills **langc**, **agents-md** y **plan-authoring**.
