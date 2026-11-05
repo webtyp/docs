@@ -20,7 +20,7 @@ Ninguna todavía (se escriben al abrir la ola).
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| A1 | `layout` | El menú lateral se corta en escritorio (y en móvil al abrir «Usuarios y roles»): no tiene desplazamiento | por diseñar |
+| A1 | `layout` | (Bloquea uso diario) El menú lateral se corta en escritorio (y en móvil al abrir «Usuarios y roles»): no tiene desplazamiento | por diseñar |
 | A2 | `appointment_booking`, `staff_manager` | Dos «Personal» en el menú (fichas vs horario y servicios por profesional) | por diseñar, con U1 |
 | A3 | todos los módulos | Revisar cuántos enlaces aporta cada uno y justificar los que sean más de uno | por diseñar |
 | A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2): qué cambia en `appkit.App` | por diseñar |

@@ -9,6 +9,10 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 
 | Master plan | Estado | Relación con otras olas |
 |---|---|---|
+| [CODE_GUARD_MASTER_PLAN.md](CODE_GUARD_MASTER_PLAN.md) | IN PROGRESS · 2026-11-05 — sigue fase 0 y fase 1 (`gocheck`); espera P13 (gotest en rojo mientras no se migre) | Herramienta que hace cumplir las skills por línea; la consumen `gotest` y `app` |
+| [STDLIB_MIGRATION_MASTER_PLAN.md](STDLIB_MIGRATION_MASTER_PLAN.md) | PENDING · 2026-11-05 — sin preguntas; S1 (`fmt`) listo para otro agente, en local | Sale de CODE_GUARD: `fmt` sin copias de `strings`, errores con tipo, migración de todos los repos |
+| [TEST_DOMAIN_MASTER_PLAN.md](TEST_DOMAIN_MASTER_PLAN.md) | PENDING · 2026-11-05 — reglas en la skill **testing**; `gotest` y limpieza de repos al final | Documento de pruebas por repo, nombres por área, cada prueba en la librería dueña |
+| [IMPORT_SCREEN_MASTER_PLAN.md](IMPORT_SCREEN_MASTER_PLAN.md) | PENDING · 2026-11-05 — sin fecha; la importación se hace por consola | Sale de DATA_IMPORT; iría en «Base de datos» (`devtools`) |
 | [APP_USABILITY_MASTER_PLAN.md](APP_USABILITY_MASTER_PLAN.md) | PENDING · 2026-11-04 — anotados menú cortado, un enlace por módulo, agrupación en la app, filtros antes que búsqueda | Hallazgos de DATA_IMPORT con datos reales; extiende UI_CONSISTENCY a navegación |
 | [mjosefa-cms DATA_IMPORT_MASTER_PLAN.md](../../veltylabs/mjosefa-cms/docs/DATA_IMPORT_MASTER_PLAN.md) | IN PROGRESS · 2026-11-04 — app con 8 módulos; espera P36 (la base no sigue a los módulos) | Migrar Pa100T por etapas desde la UI Base de datos (`erd`) o consola; motor genérico `dataimport` sobre `ddl.Snapshot`; extiende DB_DIAGRAM |
 | [IAM_APPKIT_MASTER_PLAN.md](IAM_APPKIT_MASTER_PLAN.md) | PENDING · 2026-11-03 — esperando P1–P3 (Worker, login por correo, UI fuera del Worker) | `iam` sobre `appkit`: la pieza «aplicación» para un Worker con login por correo; viene de APP_COMPOSITION |
