@@ -5,7 +5,14 @@
 dato (P47 de DATA_IMPORT). Nadie lo supo: `ddl.Sync` lo anota en un log que no se ve y sigue (`ddl/sync.go:208-211`).
 
 ## Preguntas abiertas
-Ninguna.
+**P14 — ¿Así se ve la pestaña DATABASE?** Hoy un fallo o una columna sobrante solo es una línea en BUILD
+([hoy](../app/docs/img/tui-database-0-hoy.png)). Propuesta con lo que la TUI ya sabe dibujar (log arriba, un campo
+por decisión abajo, «1/3» recorre los campos; la pestaña se marca `DATABASE •` y no salta sola, D2):
+![sobrantes](../app/docs/img/tui-database-1-sobrantes.png)
+![fallo](../app/docs/img/tui-database-2-fallo.png)
+Columna sobrante: filas, 3 ejemplos y la nota (D3); si en ese guardado salió un campo y entró otro del mismo tipo, el
+campo ofrece `[Se fue a name] [Borrar] [Conservar]` (D7). Fallo: el error, qué pasa y qué hacer, con
+`[Actualizar librerías]` (P13) y `[Reintentar]`. A) así; B) con cambios (dime cuáles). **Recomiendo A.** Respuesta:
 
 ## Decisiones por implementar
 | # | Decisión | Dónde se implementa |
