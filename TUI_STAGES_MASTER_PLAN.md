@@ -1,5 +1,5 @@
 # Pestañas de `webtyp dev` por etapa, con migración propia — master plan
-> **Status:** PENDING · 2026-11-05 · fases 1 y 1b cerradas (`ddl` v0.0.45, `postgres` v0.4.36, `sqlt` v0.0.14); fases 2 y 5 listas para plan; `app` espera a DEV_INSTANCES
+> **Status:** PENDING · 2026-11-05 · fases 1 y 1b cerradas (`ddl` v0.0.45, `postgres` v0.4.36, `sqlt` v0.0.14); fases 2 y 5 listas para plan; DEV_INSTANCES cerrada
 
 **Qué duele hoy.** Al quitar `timezone` del modelo de `business_calendar`, la columna siguió en la base porque tenía un
 dato (P47 de DATA_IMPORT). Nadie lo supo: `ddl.Sync` lo anota en un log que no se ve y sigue (`ddl/sync.go:208-211`).
@@ -27,13 +27,13 @@ Ninguna.
 | 1 | `ddl` | `Removed`, `Leftovers`, `DropColumn`, `CopyColumn`, `OpCopyColumn` + conformance (D7, D9, D10) | cerrada v0.0.45 (ejecutada en local) |
 | 1b | `postgres`, `sqlt` | escriben `OpCopyColumn`; corren los dos casos nuevos de `ddl/conformance` (D10); `sqlt` además sube `storage` a v0.1.18 (NULL → cero en su conexión de prueba) | cerrada (`postgres` v0.4.36, `sqlt` v0.0.14; conformance real en Postgres local) |
 | 2 | `migrate` | `-plan` y `-drop` (D6); `migrate.App` recibe `[]ddl.Removed` (D8); D64: una sola migración al arrancar | lista para plan (usa `ddl` v0.0.45) |
-| 3 | `app` | pestaña DATABASE (D3); la migración sale de BUILD (`app_migrate.go`, `section-build.go:338`); genera `config/removed.go` (D7, D8); MCP de D6 | tras fase 2 y el plan de DEV_INSTANCES en `app` |
-| 4 | `app` | `h.stages` y «primera pendiente» (D1, D2) | tras el plan de DEV_INSTANCES en `app` |
+| 3 | `app` | pestaña DATABASE (D3); la migración sale de BUILD (`app_migrate.go`, `section-build.go:338`); genera `config/removed.go` (D7, D8); MCP de D6 | tras fase 2 |
+| 4 | `app` | `h.stages` y «primera pendiente» (D1, D2) | tras fase 3 |
 | 5 | `appkit`/`ddl` | aviso de columnas sobrantes al arrancar en producción (D5) | lista para plan (usa `ddl` v0.0.45) |
 | 6 | `mjosefa-cms` | `timezone` en `config/removed.go` (D8), aparece en DATABASE, se borra con «Sí», capturas y test de la app | última |
 
 ## Bloqueos
-- 2026-11-05 · `app/docs/PLAN.md` ocupado por DEV_INSTANCES: fases 3–4 esperan que cierre.
+Ninguno.
 
 ## Relación con otras olas
 - Sale de DATA_IMPORT: absorbe P47 (columna `timezone`), D53 y D64. DATA_IMPORT sigue sin esperarla.
