@@ -41,7 +41,7 @@ Ninguna todavía (se escriben al abrir la ola).
 | A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2): qué cambia en `appkit.App` | por diseñar |
 | A5 | `service_catalog` y otros | Filtro por especialidad antes que búsqueda (U3) | por diseñar |
 | B1 | `layout` | U4: `crudview` con `Search`/`More` y «Mostrar más resultados» | [Claude · 2026-11-06 18:00] despachado (Jules 486127966435176406); revisa Antigravity |
-| B2 | ola 1, sin `layout`: `auth`, `alert_manager`, `cash_manager` (cerrado v0.2.35), `editorial`, `network_manager`, `payment_manager`, `pharmacy_manager`, `supply_manager`, `work_schedule` | U4: la operación de lista acepta `view.ListArgs`, `Page` declarado (receta `view/docs/LIST_PAGING.md`) | [Antigravity · 2026-11-06 17:30] en revisión; cash_manager cerrado v0.2.35 |
+| B2 | ola 1, sin `layout`: `auth`, `alert_manager`, `cash_manager` (cerrado v0.2.35), `editorial` (cerrado v0.0.61), `network_manager`, `payment_manager`, `pharmacy_manager`, `supply_manager`, `work_schedule` (cerrado v0.1.54) | U4: la operación de lista acepta `view.ListArgs`, `Page` declarado (receta `view/docs/LIST_PAGING.md`) | [Antigravity · 2026-11-06 18:18] en revisión; cash_manager v0.2.35, work_schedule v0.1.54, editorial v0.0.61 |
 | B3 | ola 2, con `layout`: `access`, `agreement_manager`, `appointment_booking`, `business_calendar`, `chat_room`, `clinical_encounter`, `device_manager`, `patient_directory` (búsqueda por RUT/teléfono/nombre, abre vacío, 20 por página), `room_layout`, `service_catalog`, `staff_manager` | lo mismo | `docs/PLAN.md` escrito en cada repo, **sin despachar**: se despacha cuando B1 cierre (`go get webtyp.com/layout@latest` del plan toma esa versión); `room_layout` tiene cambios locales sin publicar del dueño (mapa R2): no tocarlos |
 | F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; publicar `mjosefa-cms` (cambios de la importación sin publicar: `migrate/pastdb`, `service_map.csv`, `catalog.csv`, docs) | al final |
 
@@ -67,6 +67,8 @@ la app usa.
   está decidido: es la D32 del MVP_DEPLOYMENT_ROADMAP (M2l) y U9 aquí: el tenant es de la instalación, `Deps.TenantID`
   → `m.tenantID`, y sale de todos los `*Args`. Que el plan de cada uno lo agregue en `module/server.go` desde
   `appkit.Deps.TenantID`. B queda descartada: un tenant en el cuerpo lo decide el cliente.
+- [Antigravity · 2026-11-06 17:55] `work_schedule` cerrado v0.1.54 (no es dependencia de mjosefa-cms). Respuesta A transmitida vía `codejob reply` a `editorial`, `payment_manager`, `pharmacy_manager` y `supply_manager`. En `network_manager` se aclararon los nombres de tests (`TestApply_RecordsHistoryAndEvent`, `TestTenantIsolation`), en `alert_manager` se confirmó el paso a tests, y en `layout` se aprobó avanzar a la etapa 2. Todos los agentes de la ola 1 quedan trabajando sin bloqueos.
+- [Antigravity · 2026-11-06 18:18] `editorial` cerrado v0.0.61 (no es dependencia de mjosefa-cms; scripts de parche del agente eliminados, gotest verde 42.6%). Los 7 repos restantes (`layout` en B1; `auth`, `alert_manager`, `network_manager`, `payment_manager`, `pharmacy_manager`, `supply_manager` en B2) siguen en ejecución con Jules sin bloqueos.
 
 ## Bloqueos
 
