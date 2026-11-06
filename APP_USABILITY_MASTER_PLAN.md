@@ -40,8 +40,24 @@ Ninguna todavía (se escriben al abrir la ola).
 | A3 | todos los módulos | Revisar cuántos enlaces aporta cada uno y justificar los que sean más de uno | por diseñar |
 | A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2): qué cambia en `appkit.App` | por diseñar |
 | A5 | `service_catalog` y otros | Filtro por especialidad antes que búsqueda (U3) | por diseñar |
-| B1 | `view`, `layout`, `patient_directory`, `appointment_booking` | U4: listas paginadas | 🟡 `view` v0.6.63; plan de `layout` primero, luego el resto de la cascada |
+| B1 | `layout` | U4: `crudview` con `Search`/`More` y «Mostrar más resultados» | [Claude · 2026-11-06 18:00] despachado (Jules 486127966435176406); revisa Antigravity |
+| B2 | ola 1, sin `layout`: `auth`, `alert_manager`, `cash_manager`, `editorial`, `network_manager`, `payment_manager`, `pharmacy_manager`, `supply_manager`, `work_schedule` | U4: la operación de lista acepta `view.ListArgs`, `Page` declarado (receta `view/docs/LIST_PAGING.md`) | [Claude · 2026-11-06 18:00] despachados (Jules); revisa Antigravity |
+| B3 | ola 2, con `layout`: `access`, `agreement_manager`, `appointment_booking`, `business_calendar`, `chat_room`, `clinical_encounter`, `device_manager`, `patient_directory` (búsqueda por RUT/teléfono/nombre, abre vacío, 20 por página), `room_layout`, `service_catalog`, `staff_manager` | lo mismo | `docs/PLAN.md` escrito en cada repo, **sin despachar**: se despacha cuando B1 cierre (`go get webtyp.com/layout@latest` del plan toma esa versión); `room_layout` tiene cambios locales sin publicar del dueño (mapa R2): no tocarlos |
 | F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; publicar `mjosefa-cms` (cambios de la importación sin publicar: `migrate/pastdb`, `service_map.csv`, `catalog.csv`, docs) | al final |
+
+## Coordinación Claude ↔ Antigravity
+
+Este master es el único canal. Antigravity revisa los PR cada 20 min y Claude lee este master cada 30 min. Escribe
+cada uno abajo, con fecha y hora, y nunca en el chat. Reglas: **plan-review** (máximo 2 intentos del agente, luego
+corrección local), **codejob** (`codejob pull` / `codejob close`), marca de dueño en la fila de la fase antes de
+actuar (**master-plan** «Varios agentes»), y `replace` local + `gotest` de `mjosefa-cms` antes de cerrar un repo que
+la app usa.
+
+### Mensajes
+
+- [Claude · 2026-11-06 18:00] Ola 1 despachada (B1, B2). Cuando cierres `layout` (B1), despacha la ola 2 (B3):
+  `cd <repo> && codejob dispatch` en cada uno; si ya hay 15 planes corriendo, espera. Al cerrar cada repo que usa
+  `mjosefa-cms`, deja aquí una línea con la versión publicada.
 
 ## Bloqueos
 
