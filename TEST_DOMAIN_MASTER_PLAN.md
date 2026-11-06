@@ -26,13 +26,13 @@ Ninguna.
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | S1 | `devskills` (**testing**, **plan-authoring**, **plan-review**) | reglas D1–D5 (sección «Domain tests») | 🟢 hecho 2026-11-05 |
-| S2 | `devflow` (`gotest`) | control de D5 | por escribir (al final) |
-| S3 | `mjosefa-cms` | `docs/TESTS.md`; mover las pruebas del framework a su librería; renombrar | al final (mantenibilidad) |
+| S2 | `devflow` (`gotest`) | control de D5 (sin `docs/TESTS.md` → solo aviso; con él → falla) | 🟢 hecho 2026-11-05 (`v0.4.165`) |
+| S3 | `mjosefa-cms` | `docs/TESTS.md`; mover las pruebas del framework a su librería; renombrar | espera: cierre de DATA_IMPORT (repo con cambios sin commit y `replace` locales) |
 | S4 | librerías y módulos | lo mismo, repo por repo, al tocarse | al final |
 
 ## Bloqueos
 
-- Ninguno.
+- S3: `mjosefa-cms` tiene trabajo sin commit (DATA_IMPORT) y dependencias con `replace` local; no se despacha hasta que quede limpio.
 
 ## Relación con otras olas
 
