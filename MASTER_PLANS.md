@@ -10,7 +10,7 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 | Master plan | Estado | Relación con otras olas |
 |---|---|---|
 | [DEV_INSTANCES_MASTER_PLAN.md](DEV_INSTANCES_MASTER_PLAN.md) | CLOSED · 2026-11-05 — fases 0–6 cerradas (app v0.7.62, devskills v0.0.38) | Lo que el dev hace en la TUI, el agente lo hace por MCP; sale de DATA_IMPORT (M6) |
-| [TUI_STAGES_MASTER_PLAN.md](TUI_STAGES_MASTER_PLAN.md) | PENDING · 2026-11-05 — fases 1 y 1b cerradas (`ddl`, `postgres`, `sqlt`); fases 1, 1b y 2 cerradas; fase 5 lista para plan; `app` (fases 3–4) lista para plan | Se lleva P47, D53 y D64 de DATA_IMPORT; comparte la pestaña MCP con DEV_INSTANCES |
+| [TUI_STAGES_MASTER_PLAN.md](TUI_STAGES_MASTER_PLAN.md) | PENDING · 2026-11-05 — fases 1 y 1b cerradas (`ddl`, `postgres`, `sqlt`); fases 1, 1b, 2 y 5 cerradas; fase 3 (`app`) espera la maqueta de DATABASE | Se lleva P47, D53 y D64 de DATA_IMPORT; comparte la pestaña MCP con DEV_INSTANCES |
 | [CODE_GUARD_MASTER_PLAN.md](CODE_GUARD_MASTER_PLAN.md) | IN PROGRESS · 2026-11-05 — sigue fase 0 y fase 1 (`gocheck`); espera P13 (gotest en rojo mientras no se migre) | Herramienta que hace cumplir las skills por línea; la consumen `gotest` y `app` |
 | [STDLIB_MIGRATION_MASTER_PLAN.md](STDLIB_MIGRATION_MASTER_PLAN.md) | PENDING · 2026-11-05 — sin preguntas; S1 (`fmt`) listo para otro agente, en local | Sale de CODE_GUARD: `fmt` sin copias de `strings`, errores con tipo, migración de todos los repos |
 | [TEST_DOMAIN_MASTER_PLAN.md](TEST_DOMAIN_MASTER_PLAN.md) | PENDING · 2026-11-05 — reglas en la skill **testing**; `gotest` y limpieza de repos al final | Documento de pruebas por repo, nombres por área, cada prueba en la librería dueña |
