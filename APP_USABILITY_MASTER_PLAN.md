@@ -7,7 +7,7 @@ pacientes, 171.170 reservas y 64.356 fichas de Pa100T (cómo se importó: `mjose
 
 ## Preguntas abiertas
 
-Ninguna todavía (se escriben al abrir la ola).
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -43,7 +43,7 @@ Ninguna todavía (se escriben al abrir la ola).
 | B1 | `layout` | U4: `crudview` con `Search`/`More` y «Mostrar más resultados» | cerrada v0.3.108 (`view` v0.6.65) |
 | B2 | ola 1, sin `layout`: `auth`, `alert_manager`, `cash_manager`, `editorial`, `network_manager`, `payment_manager`, `pharmacy_manager`, `supply_manager`, `work_schedule` | U4: la operación de lista acepta `view.ListArgs`, `Page` declarado (receta `view/docs/LIST_PAGING.md`) | cerrada: `auth` v0.0.111, `alert_manager` v0.1.47, `cash_manager` v0.2.35, `editorial` v0.0.61, `network_manager` v0.1.115, `payment_manager` v0.4.46, `pharmacy_manager` v0.1.70, `supply_manager` v0.2.68, `work_schedule` v0.1.54 |
 | B3 | ola 2, con `layout`: `access`, `agreement_manager`, `appointment_booking`, `business_calendar`, `chat_room`, `clinical_encounter`, `device_manager`, `patient_directory` (búsqueda por RUT/teléfono/nombre, abre vacío, 20 por página), `room_layout`, `service_catalog`, `staff_manager` | lo mismo | cerrada: `access` v0.0.65, `agreement_manager` v0.3.51, `appointment_booking` v0.3.98, `business_calendar` v0.5.59, `chat_room` v0.2.138, `clinical_encounter` v0.2.76, `device_manager` v0.2.124, `patient_directory` v0.1.105, `room_layout` v0.3.89, `service_catalog` v0.6.65, `staff_manager` v0.1.210 |
-| F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; publicar `mjosefa-cms` (cambios de la importación sin publicar: `migrate/pastdb`, `service_map.csv`, `catalog.csv`, docs) | [Antigravity · 2026-11-07 10:20] lista para ajustar `iam` y `mjosefa-cms` |
+| F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; publicar `mjosefa-cms` (cambios de la importación sin publicar: `migrate/pastdb`, `service_map.csv`, `catalog.csv`, docs) | [Claude · 2026-11-07] `mjosefa-cms` publicado v0.0.121 con la ola U4; `iam` actualizado localmente (sin publicar) — espera P1 de ARCHITECTURE; faltan capturas |
 
 ## Coordinación Claude ↔ Antigravity
 
@@ -57,12 +57,14 @@ la app usa.
 
 - [Claude · 2026-11-06 23:05] `layout` revisado y publicado v0.3.108. Ola 2 despachada salvo `room_layout`. Revisa y cierra B3 y `payment_manager` (B2); `mjosefa-cms`, `iam` y `devtools` se ajustan al final de la ola.
 - [Antigravity · 2026-11-07 10:48] Fases B2 y B3 100% cerradas (`room_layout` v0.3.89 ejecutado y publicado). Listo para ajuste final de `iam` y `mjosefa-cms` (fase F).
+- [Claude · 2026-11-07] `mjosefa-cms` v0.0.121 publicado (deps U4; `pastdb` ajustado a `ListHolidays`/`ListStaff` nuevos). `iam` actualizado en local, sin publicar: espera P1 de ARCHITECTURE. No tocar `view` ni `iam` hasta que el dueño responda.
 
 ## Bloqueos
 
-- Ninguno.
+- 2026-11-07 · publicar `iam` (fase F) espera P1 de [ARCHITECTURE_MASTER_PLAN.md](ARCHITECTURE_MASTER_PLAN.md) (`view` arrastra `dom` al servidor).
 
 ## Relación con otras olas
 
 - DATA_IMPORT (`mjosefa-cms`): cerrada 2026-11-06; sus pendientes viven aquí (U4–U17). Ola 3 aparte: adjuntos y gastroscopía con `webtyp/pdf` (una tabla por especialidad unida 1 a 1 a la ficha); falta publicar `webtyp/docs/ORIGIN.md`.
+- ARCHITECTURE: P1 (`view` sin `dom`) desbloquea publicar `iam`.
 - UI_CONSISTENCY: reglas visuales de formularios y colores; esta ola trata navegación y flujo.
