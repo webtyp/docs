@@ -1,5 +1,5 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-08 · D1–D18 cerradas; L4b (`webtyp/app`) cerrada y publicada (`v0.8.3`); 15 sesiones concurrentes en Jules (13 módulos, `layout`, `auth`); `room_layout` despachado; `access` espera `auth` · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md)
+> **Status:** IN PROGRESS · 2026-11-08 · D1–D18 cerradas; `work_schedule` (`v0.1.58`) y `editorial` (`v0.0.65`) cerradas y publicadas; 15 sesiones en Jules (`appointment_booking` y `room_layout` despachados); `access` espera `auth` · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md)
 
 Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
 Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
@@ -40,19 +40,20 @@ Ninguna.
   1. `webtyp/auth` (sesión 8600479642742704008)
   2. `webtyp/layout` (sesión 6353811879617294185)
   3. `veltylabs/modules/patient_directory` (sesión 14656212430721096454)
-  4. `veltylabs/modules/staff_manager` (sesión 15975789775639801906, reply con ormc v0.1.37 y loopback)
-  5. `veltylabs/modules/service_catalog` (sesión 3199782381933916853)
+  4. `veltylabs/modules/staff_manager` (sesión 15975789775639801906, reply enviado)
+  5. `veltylabs/modules/service_catalog` (sesión 3199782381933916853, reply: gotest pasa, abriendo PR)
   6. `veltylabs/modules/device_manager` (sesión 4954513444987103874)
   7. `veltylabs/modules/business_calendar` (sesión 14857109302422191573)
-  8. `veltylabs/modules/supply_manager` (sesión 15140373304869652996)
-  9. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039, reply con view.Option y view.Demo)
-  10. `veltylabs/modules/work_schedule` (sesión 1578283662808291679)
-  11. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356, reply con ormc v0.1.37)
-  12. `veltylabs/modules/alert_manager` (sesión 14672456625882336877)
-  13. `veltylabs/modules/editorial` (sesión 7528414469419124488)
-  14. `veltylabs/modules/cash_manager` (sesión 14578098458978629659)
-  15. `veltylabs/modules/room_layout` (sesión 15931334370260317991, despachado al cerrarse `app`)
-  - A medida que se liberen cupos al completar PRs, se despachan los restantes (`appointment_booking`, `clinical_encounter`, `chat_room`, `payment_manager`, `network_manager`, `site_content`, `site_manager` y `access`).
+  8. `veltylabs/modules/supply_manager` (sesión 15140373304869652996, reply D18 enviado)
+  9. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039, reply enviado)
+  10. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356, reply enviado)
+  11. `veltylabs/modules/alert_manager` (sesión 14672456625882336877, reply Caller struct enviado)
+  12. `veltylabs/modules/cash_manager` (sesión 14578098458978629659, reply D1 crud.Op enviado)
+  13. `veltylabs/modules/room_layout` (sesión 15931334370260317991)
+  14. `veltylabs/modules/appointment_booking` (sesión 5077271452224787563, despachado al cerrarse `work_schedule`)
+  15. `webtyp/core` (`app`, sesión 5351990320140399274, cerrada localmente como `v0.8.3`; cuenta en Jules hasta que termine ciclo)
+  - **Módulos cerrados y publicados**: `work_schedule` (`v0.1.58`), `editorial` (`v0.0.65`).
+  - A medida que se liberen cupos al completar PRs, se despachan los restantes (`clinical_encounter` [plan listo], `chat_room`, `payment_manager`, `network_manager`, `site_content`, `site_manager` y `access`).
 - **Oleada 3:** L6 tras P12; A5 al final.
 
 | Fase | Repo | Qué | Estado |
