@@ -1,5 +1,5 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-07 · D1–D17 cerradas; planes escritos; Antigravity ejecuta local y publica L1→L2 (L4a tras L3), sin `replace`, y despacha en oleadas (layout, app, access, patient_directory; luego 19 módulos) · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md)
+> **Status:** IN PROGRESS · 2026-11-08 · D1–D18 cerradas; L4b (`webtyp/app`) cerrada y publicada (`v0.8.3`); 15 sesiones concurrentes en Jules (13 módulos, `layout`, `auth`); `room_layout` despachado; `access` espera `auth` · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md)
 
 Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
 Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
@@ -30,6 +30,7 @@ Ninguna.
 | D15 (P8) | **La demo de un módulo no escribe chasis:** el módulo declara `seed.Demo() (view.Demo, error)` (`storage/mem` + seed + `Screens`, solo contratos); el demonio `webtyp/app` detecta `seed.Demo` sin `web/browser/main.go` y genera en memoria `func main() { layoutapp.Demo(seed.Demo) }` en un `go.mod` temporal fuera del repo (`replace <módulo> => <ruta>` + la versión de `layout` que fija el demonio); `layoutapp.Demo` monta `crud.LoopbackActingAs` + `BuildMenu` + `platformd`; se borran los `web/browser/main.go` (15 demos, 938 líneas) y las demos rotas de `patient_directory`/`staff_manager` vuelven a mostrar el menú; un `web/browser/main.go` escrito a mano sigue como salida de emergencia | L4, L5 |
 | D16 (P9) | **`view` es el único repo de contratos entre módulo y chasis; `layout` solo lo elige la app:** a `view` pasan `Notifier`/`UsesNotifier`/`Auto`/`Persistent`/`For`/`Duration` (de `layout/capabilities.go`; `Badged`, `Described`, `UIModule`… quedan en `layout`: ningún módulo los implementa salvo `chat_room`, ver L6), `BrowserDeps` (sin `Brand`, ver D17), `ModuleBrowser`, `EntryScreens`, `Demo`; la fuente de chat plana (reemplazo de `chatview.Source`) va en L6; `view` conserva `NewCallerLister`; `appkit.Browser` (`appkit/browser.go`) → `layout/app`, y `appkit` deja de requerir `layout`; el `ui/` de un módulo declara datos y el chasis elige `crudview`/`chatview`/`rightpanel` (se borra la excepción de **app-modules**); una pantalla a medida puede usar `components` | L1–L3, L5, L6 |
 | D17 (P10) | **La pantalla de ingreso la dibuja el chasis:** `access` entrega `view.EntryScreens{Login, Setup view.Entry; IdleSeconds int}` con `view.Entry{Subtitle lang.Text; Form *dom.Element; Message *dom.SignalString}` (solo formulario y mensaje); `layout/app.Browser` los envuelve con `layout/login` + `App.Brand`; `access` deja de importar `layout/login` (`access/module/browser.go:15`) y de leer `d.Brand` | L1, L3, A3b |
+| D18 (P11) | **Un permiso distinto = un modelo propio, nunca una operación con nombre:** si una acción hoy exige un recurso distinto al de su entidad, pasa a ser una operación CRUD sobre un modelo cuyo `ModelName` es ese recurso. Transición de revisor → **crear** un registro (`editorial`: enviar/retirar = `post_u` sobre `state`; aprobar/pedir cambios = `post_transition_c` con `to_state`, `reason`; `actor_id`, `from_state`, `at` `ServerOnly`; el módulo valida la transición y cambia `Post.state` en la misma `db.Tx`; `ResourcePostReview` se borra). Reporte o lectura derivada → `Read` de un modelo de cable con su propio nombre (`alert_manager` `Health`/`Summary`, `cash_manager` funciones). RBAC concede cada recurso por separado | A4.2 (respondido a las sesiones en curso), plantilla de los módulos siguientes |
 
 ## Fases
 
@@ -37,38 +38,39 @@ Ninguna.
 - **Oleada 0 (local, publicando):** L1 → L2 (L4a va después de que se publique L3).
 - **Oleada 1 y 2 (15 cupos concurrentes en Jules llenos al máximo):**
   1. `webtyp/auth` (sesión 8600479642742704008)
-  2. `webtyp/core` (`app`, sesión 5351990320140399274)
-  3. `webtyp/layout` (sesión 6353811879617294185)
-  4. `veltylabs/modules/patient_directory` (sesión 14656212430721096454)
-  5. `veltylabs/modules/staff_manager` (sesión 15975789775639801906)
-  6. `veltylabs/modules/service_catalog` (sesión 3199782381933916853)
-  7. `veltylabs/modules/device_manager` (sesión 4954513444987103874)
-  8. `veltylabs/modules/business_calendar` (sesión 14857109302422191573)
-  9. `veltylabs/modules/supply_manager` (sesión 15140373304869652996)
-  10. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039)
-  11. `veltylabs/modules/work_schedule` (sesión 1578283662808291679)
-  12. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356)
-  13. `veltylabs/modules/alert_manager` (sesión 14672456625882336877)
-  14. `veltylabs/modules/editorial` (sesión 7528414469419124488)
-  15. `veltylabs/modules/cash_manager` (sesión 14578098458978629659)
-  - A medida que se liberen cupos al completar PRs, se despachan los restantes (`room_layout`, `appointment_booking`, `clinical_encounter`, `chat_room`, `payment_manager`, `network_manager`, `site_content`, `site_manager` y `access`).
-- **Oleada 3:** L6 tras P11; A5 al final.
+  2. `webtyp/layout` (sesión 6353811879617294185)
+  3. `veltylabs/modules/patient_directory` (sesión 14656212430721096454)
+  4. `veltylabs/modules/staff_manager` (sesión 15975789775639801906, reply con ormc v0.1.37 y loopback)
+  5. `veltylabs/modules/service_catalog` (sesión 3199782381933916853)
+  6. `veltylabs/modules/device_manager` (sesión 4954513444987103874)
+  7. `veltylabs/modules/business_calendar` (sesión 14857109302422191573)
+  8. `veltylabs/modules/supply_manager` (sesión 15140373304869652996)
+  9. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039, reply con view.Option y view.Demo)
+  10. `veltylabs/modules/work_schedule` (sesión 1578283662808291679)
+  11. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356, reply con ormc v0.1.37)
+  12. `veltylabs/modules/alert_manager` (sesión 14672456625882336877)
+  13. `veltylabs/modules/editorial` (sesión 7528414469419124488)
+  14. `veltylabs/modules/cash_manager` (sesión 14578098458978629659)
+  15. `veltylabs/modules/room_layout` (sesión 15931334370260317991, despachado al cerrarse `app`)
+  - A medida que se liberen cupos al completar PRs, se despachan los restantes (`appointment_booking`, `clinical_encounter`, `chat_room`, `payment_manager`, `network_manager`, `site_content`, `site_manager` y `access`).
+- **Oleada 3:** L6 tras P12; A5 al final.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | A0 | `webtyp/model` | marca `ServerOnly` (D11) | cerrada `v0.2.14` |
 | A1 | `webtyp/router`, `crud`, `rpc`, `mcp`, `ormc`, `dbsync`, `appkit` | D5–D14 | cerrada: `router` `v0.4.19`, `crud` `v0.0.3`, `rpc` `v0.2.17`, `mcp` `v0.3.23`, `ormc` `v0.1.36`, `dbsync` `v0.3.47`, `appkit` `v0.2.27` |
 | A2 | `webtyp/view` | contrato de cable desde `crud`, `view.Ops` con `model.Action` | cerrada `v0.6.66` |
+| A1b | `webtyp/ormc` | bug: `crud_gen.go` omitía `Mount*` en entidades con campos `input.*` (casi todas); fixture real en `tests/testdata/fixturecrud` | cerrada `v0.1.37` |
 | A3 | `webtyp/auth` | `auth/authority` en `crud`, `OpMe` → `Infra`; D15–D17 no lo tocan | en Jules (sesión 8600479642742704008, trabajando `IN_PROGRESS`) |
 | L1 | `webtyp/view` | contratos módulo↔chasis (D16, D17): `Notifier`…, `BrowserDeps`, `ModuleBrowser`, `EntryScreens`, `Entry`, `Demo` | cerrada `v0.6.67` |
 | L2 | `webtyp/appkit` | borra `browser.go` y los tipos movidos; `Screens`/`Entry` sobre `view`; `go.mod` sin `layout` | cerrada `v0.2.28` |
 | L3 | `webtyp/layout` | dobles de test en `crud.ReadArgs` (ex A3), contratos desde `view`, `LocalTools` sobre `crud.Module`, `layout/app.Browser` (de `appkit`) y `layout/app.Demo`, pantallas de ingreso con `App.Brand` | despachado · Jules (sesión 6353811879617294185, oleada 1) |
 | A3b | `webtyp/access` | `crud` (D7–D14) + pantallas de ingreso como datos (D17) + `seed.Demo` (D15) | plan listo · despacho · oleada 1, tras `auth` publicado |
 | L4a | `webtyp/server` | main de navegador generado con `layoutapp.Browser` + `layout` en `generatedLibraries` | plan listo · local · tras L3 publicado |
-| L4b | `webtyp/app` | el demonio genera la demo desde `seed.Demo` en un módulo temporal fuera del repo | despachado · Jules (sesión 5351990320140399274, oleada 1) |
+| L4b | `webtyp/app` | el demonio genera la demo desde `seed.Demo` en un módulo temporal fuera del repo | cerrada `v0.8.3` |
 | A4.1 | `veltylabs/modules/patient_directory` (plantilla) | contrato `crud` + `seed.Demo` + `module/*` sobre `view` | despachado · Jules (sesión 14656212430721096454, oleada 1); el dueño revisa la PR como plantilla |
 | A4.2+L5 | 17 módulos `veltylabs/modules/*` + `veltylabs/site_manager`, `site_content` | un plan por repo copiado de la plantilla A4.1 aprobada (su diff como referencia en `_temp/`); `appointment_booking` sin `CreatorUserId` (D9); `room_layout` con `PublicReads` (D10) y `view.Notifier`; su demo pasa a `seed.Demo` | oleada 2: 19 planes copiados de la plantilla aprobada; despacho vía `codejob` |
-| L6 | `webtyp/view`, `webtyp/layout`, `chat_room`, `clinical_encounter`, `appointment_booking` | el `ui/` de estos 3 aún arma `crudview`/`chatview`/`rightpanel` y `chat_room` implementa `Badged` con `countbadge`: diseño pendiente (fuente de chat plana, contador, lista a medida de `clinical_encounter/ui/browser.go:100`); abrir P11 con código antes de su plan; en A4.2 esos 3 conservan esas importaciones | pendiente |
+| L6 | `webtyp/view`, `webtyp/layout`, `chat_room`, `clinical_encounter`, `appointment_booking` | el `ui/` de estos 3 aún arma `crudview`/`chatview`/`rightpanel` y `chat_room` implementa `Badged` con `countbadge`: diseño pendiente (fuente de chat plana, contador, lista a medida de `clinical_encounter/ui/browser.go:100`); abrir P12 con código antes de su plan; en A4.2 esos 3 conservan esas importaciones | pendiente |
 | A5 | `mjosefa-cms` (app de referencia) | corre con el contrato cerrado; capturas de cada pantalla revisadas; test: admin y usuario sin permisos recorren el menú, ningún enlace abre pantalla vacía; `web/browser/main.go` regenerado con `layoutapp.Browser` | espera A4.2, L4 |
 
 ## Bloqueos
