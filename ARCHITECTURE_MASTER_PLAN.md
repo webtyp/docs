@@ -1,52 +1,80 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-07 · espera respuesta a P1 (contrato de interfaz `crud.Module` / `crud.Registry`) · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md)
+> **Status:** IN PROGRESS · 2026-11-07 · D1–D17 cerradas; planes escritos; Antigravity ejecuta local y publica L1→L2 (L4a tras L3), sin `replace`, y despacha en oleadas (layout, app, access, patient_directory; luego 19 módulos) · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md)
 
-Defectos de diseño entre librerías que aparecen al usarlas (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
-Reglas: **api-design** (puerta 4), **api-harness**, **core-principles** y **module-layout**.
-Diagrama de arquitectura de transporte, validación y RBAC: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md).
+Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
+Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
+La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obligaría a migrar los 18 módulos dos veces.
 
 ## Preguntas abiertas
 
-**P1 — Hacer obligatorio `webtyp/crud` por contrato de interfaz en compilación (sin depender de `gocheck`).** Hoy `appkit`, `rpc`, `mcp` y `loopback` aceptan `router.OperationModule` (`MountOperations(reg router.OperationRegistry)`), lo que entrega a los módulos `reg.Operation(name, h) router.Route` y les permitió crear operaciones ad-hoc con IDOR (`patient_directory/ops.go:83,97,111`) o rutas `.Public()` (`room_layout/ops.go:529`).
-- **A) (Recomendado) `crud.Registry` + `crud.Module` + `crud.Route` (eliminando `router.OperationModule`):** `appkit`, `rpc.Mount`, `mcp.HarvestOps` y `loopback` exigen `crud.Module` (`MountOperations(reg crud.Registry)`). `crud.Registry` solo tiene `Create`, `Read`, `Update`, `Delete` (convirtiendo `crud.Mount*` en métodos de `reg`) y devuelve `crud.Route` (solo `RequiresMFA()` y `Describe(string)`, sin `.Public()`, `.Authenticated()` ni `.Requires()`). Un módulo con una o varias tablas registra sus entidades sin poder tocar `Operation(name, h)`, `router.Context` ni `router.Route`:
-  ```go
-  func (m *Module) MountOperations(reg crud.Registry) {
-      reg.Create(func() model.ModelSlice { return &PatientList{} }, func(list model.ModelSlice) error {
-          return m.CreatePatients(*list.(*PatientList))
-      })
-      reg.Read(&PatientModel, func(args crud.ReadArgs) (model.ModelSlice, error) {
-          return m.ReadPatients(args.ID, args.Search, args.After, crud.Cap(args.Limit))
-      })
-      reg.Update(func() model.Model { return &Patient{} }, func(ids, fields []string, rec model.Model) error {
-          return m.UpdatePatients(ids, fields, *rec.(*Patient))
-      })
-  }
-  ```
-- **B) Interfaces de capacidad por entidad (`crud.Creator`, `crud.Reader`, `crud.Updater`, `crud.Deleter`) sin `MountOperations`:** Cada entidad implementa directamente `Create`/`Read`/`Update`/`Delete`; en módulos multi-tabla (`room_layout`, `service_catalog`, `supply_manager`) obliga a crear un struct wrapper por tabla devuelto en `Parts()`.
-**Recomiendo A**: cierra al 100% en tiempo de compilación `reg.Operation`, `router.Context` y `.Public()`/`.Authenticated()`, y soporta módulos de 1 o N tablas sin structs intermedios (análisis detallado de pros, contras y mitigaciones en [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md#3-análisis-de-pros-contras-y-mitigaciones-de-la-propuesta-para-el-framework)). Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
 | ID | Decisión | Fase |
 |---|---|---|
-| D1 | **Contrato de cable en `webtyp.com/crud` (0 UI, 0 genéricos, 0 `op string`, lote transaccional, layout por dominio y validaciones en `validate.go`):** `crud` extrae de `view` el contrato de las 4 operaciones estándar, sus mensajes (`ReadArgs`, `CreateArgs`, `UpdateArgs`, `DeleteArgs`, `Cap`, `MaxPage`), `crud.Op(m, action)` → `"<ModelName>_<action>"`, `.Requires(Resource(ModelName()), action)` automático, validaciones en `validate.go` y lote `model.ModelSlice` para `db.Tx` | A1 (v0.0.2; se amplía con P1) |
-| D2 | **Separación semántica estricta entre `List` (Frontend UI) y `Read` (`crud` + Backend):** `List` (`view.Lister`, `List(args crud.ReadArgs, done)`) permanece solo en `webtyp/view`. En `crud` y en el backend de módulos (`ops.go`, `crud.go`, `queries.go`), toda lectura y paginación se unifica bajo **`Read`** (`read.go`, `crud.ReadArgs` con `ID`, `Read<Entity>`), renombrando `List*`/`Get*` → `Read*`, `Save*`/`Upsert*` → `Create*`, `Patch*`/`Deactivate*` → `Update*`, `Remove*` → `Delete*` | A1–A4 |
-| D3 | **`view.Ops` sin strings de operación y `view.go` con `//go:build browser`:** `view` elimina `mount.go`, `payload.go` y `ListArgs`/`Cap`/`MaxPage` de `page.go`; `view.Ops` usa `Allow model.Action` y `crud.Op`. `auth/view.go` y `access/view.go` llevan `//go:build browser` | A2, A3 |
-| D4 | **`webtyp/crud` obligatorio por contrato de interfaz en compilación, fin de doble validación declarativa y cierre de IDOR/Public:** Los módulos no reciben `router.OperationRegistry`, `router.Context` ni `router.Route`, impidiendo en tiempo de compilación `reg.Operation` crudo, `.Public()` (detectado en `room_layout/ops.go:529`) y `args.TenantId` (IDOR en `patient_directory/ops.go`). `crud/validate.go` es el único punto del servidor que ejecuta `model.ValidateFields`; los módulos solo validan invariantes de dominio | A1–A4 |
+| D1 | **Contrato de cable en `webtyp.com/crud` (0 UI, 0 genéricos, 0 `op string`, lote transaccional):** `crud` extrae de `view` las 4 operaciones estándar y sus mensajes (`ReadArgs`, `CreateArgs`, `UpdateArgs`, `DeleteArgs`, `Cap`, `MaxPage`), `crud.Op(m, action)` → `"<ModelName>_c|_r|_u|_d"` (`crud/op.go:24`), `.Requires(Resource(ModelName()), action)` automático, validaciones en `validate.go` y lote `model.ModelSlice` para `db.Tx` | A1 (v0.0.2 publicada; se amplía con D7–D12) |
+| D2 | **`List` solo en la UI, `Read` en `crud` y backend:** `view.Lister.List(args crud.ReadArgs, done)` queda en `webtyp/view`; en módulos (`ops.go`, `crud.go`, `queries.go`) se renombra `List*`/`Get*` → `Read*`, `Save*`/`Upsert*` → `Create*`, `Patch*`/`Deactivate*` → `Update*`, `Remove*` → `Delete*` | A1–A4 |
+| D3 | **`view.Ops` sin strings de operación y `view.go` con `//go:build browser`:** `view` elimina `mount.go`, `payload.go` y `ListArgs`/`Cap`/`MaxPage` de `page.go`; `view.Ops` usa `Allow model.Action` y `crud.Op`; `auth/view.go` y `access/view.go` llevan `//go:build browser` | A2, A3 |
+| D4 | **Una sola validación de esquema en el servidor:** `crud/validate.go` es el único punto que ejecuta `model.ValidateFields`; los módulos borran los `if` que repiten el `Schema` (`patient_directory/module.go:119-135,168-191`) y solo validan reglas de negocio (`ValidateRUT`, unicidad por tenant, transiciones de estado). El cierre de `reg.Operation`/`.Public()` está en D7 + D8 | A1–A4 |
+| D5 | **`crud` deja de depender de `rpc`:** `rpc.WriteError` (`rpc/errors.go:52-71`) pasa a `router.WriteError`, junto a `router.Problem`/`StatusOf`; así `rpc` y `mcp` pueden importar `crud` sin ciclo (`model` → `router` → `crud` → `rpc`/`mcp`/`view`/`appkit`) | A1 |
+| D6 | **Rechazar en vez de recortar:** `MountRead` (`crud/read.go:86-94`) recorta en silencio `Search`, `After` e `ID` demasiado largos; pasa a responder `400` (`ErrInvalidID` para `ID`; error nuevo `ErrArgTooLong` para `Search`/`After`) como `validateIDs` (**zero-debt**: sin fallbacks silenciosos). El comentario de `Cap` deja de mostrar al módulo llamándolo | A1 |
+| D7 (P1) | **Contrato cerrado `crud.Module` / `crud.Registry` / `crud.Route`:** `appkit`, `rpc.Mount`, `mcp.HarvestOps` y `crud.Loopback` exigen `crud.Module` (`MountOperations(reg crud.Registry)`); `Registry` solo tiene `Create`, `Read`, `Update`, `Delete` (los `crud.Mount*` pasan a métodos); `Route` solo `RequiresMFA`/`Describe`; se elimina `router.OperationModule` y el módulo deja de ver `router.Context`/`router.Route` | A1, A3, A4 |
+| D8 (P2) | **`MountAPI` solo por declaración de la app:** `appkit.App` separa `Modules` (su `Build` devuelve `crud.Module`, ya no `model.ModuleNaming` asertado en `appkit/serve.go:58-62`) e `Infra []appkit.Infra` (único lugar con `router.Router`: auth, archivos), escrito en `config/`; un módulo de dominio con `MountAPI` no se monta | A1, A3 |
+| D9 (P3) | **`crud.Caller{UserID string}` como primer argumento de las 4 funciones**, rellenado por `crud` desde la sesión ya verificada; reemplaza `ctx.UserID()` en `chat_room/ops.go:96-238` y `payment_manager/ops.go:126`, y elimina `CreatorUserId` del JSON en `appointment_booking` (`model_orm.go:836`) | A1, A4 |
+| D10 (P5) | **Lecturas públicas solo por `App.PublicReads []model.ModuleNaming` en `config/`:** `crud` monta esas lecturas como públicas (solo `Read`, misma validación y `Cap`); `room_layout` deja de llamar `.Public()` (`ops.go:529`) y la app de referencia declara `PublicSlotModel` | A1, A4 |
+| D11 (P6) | **`model.Field.ServerOnly`:** `crud` rechaza en `Create` y `Update` cualquier campo marcado con `ErrInvalidField` (`balance`, `created_by`, `updated_at`); en `Create` el `tenant_id` también es `ServerOnly`; la UI (`form`) oculta esos campos con la misma marca | A0, A1, A4 |
+| D12 (P7) | **`ormc` genera `model_crud.go` (`//go:build !browser`) por entidad:** `Mount<Entity>Create/Read/Update/Delete(reg, fn)` con firmas tipadas (`func(c crud.Caller, list PatientList) error`); el módulo nunca escribe `list.(*PatientList)` | A1, A4 |
+| D13 (P4) | **Filtro tipado opcional en `Read`, nunca `storage.Query` por el cable:** `Registry.Read(m, newFilter func() model.Fielder, read func(c Caller, args ReadArgs, f model.Fielder) (model.ModelSlice, error))` (`newFilter` nil = sin filtro); `crud` decodifica el filtro en `ReadArgs` (clave `filter`), lo valida con `model.ValidateFields` y lo entrega; el módulo lo traduce en `queries.go` a `storage.Condition` y agrega siempre `tenant_id`; una sola operación `_r` por entidad; `ormc` genera `Mount<Entity>Read(reg, newFilter, fn)` tipado | A1, A2, A4 |
+| D14 (D7) | **Cómo se monta por dentro:** `router.OperationRegistry` sigue existiendo solo como primitiva de transporte (nunca llega a un módulo); `crud.Mount(reg router.OperationRegistry, public []model.ModuleNaming, m crud.Module) error` arma un `crud.Registry` sobre ella y llama `m.MountOperations`; todo el que hoy llama `MountOperations` pasa por `crud.Mount`: `rpc.Routes`/`rpc.Mount`, `mcp.HarvestOps`, `dbsync.harvest` (`dbsync/client.go:359`, `Client.Modules` devuelve `[]crud.Module`) y `crud.Loopback(mods...)`/`crud.LoopbackActingAs(userID, mods...)` (reemplaza `router/loopback.New/WithTenant/ActingAs`, que se borra; sin inyección de tenant: el tenant es configuración del módulo). `auth/authority`: `OpMe` → `Infra` (`MountAPI`); usuarios y LAN → `crud` sobre `auth.User` y la entidad LAN (recurso = `ModelName`, adiós `Requires("users", …)`). `appkit` monta como operaciones solo los valores construidos (y sus `Parts`) que son `crud.Module`, y falla al arrancar (`ErrNotCrudModule`) si un módulo no es `crud.Module` ni `Parts`; `access.Infra` monta las rutas de sesión (logout, `/me`). Recursos que cambian de nombre: `users` → `user`, lista de personas `access_assignment` → `access_person` | A1, A3 |
+| D15 (P8) | **La demo de un módulo no escribe chasis:** el módulo declara `seed.Demo() (view.Demo, error)` (`storage/mem` + seed + `Screens`, solo contratos); el demonio `webtyp/app` detecta `seed.Demo` sin `web/browser/main.go` y genera en memoria `func main() { layoutapp.Demo(seed.Demo) }` en un `go.mod` temporal fuera del repo (`replace <módulo> => <ruta>` + la versión de `layout` que fija el demonio); `layoutapp.Demo` monta `crud.LoopbackActingAs` + `BuildMenu` + `platformd`; se borran los `web/browser/main.go` (15 demos, 938 líneas) y las demos rotas de `patient_directory`/`staff_manager` vuelven a mostrar el menú; un `web/browser/main.go` escrito a mano sigue como salida de emergencia | L4, L5 |
+| D16 (P9) | **`view` es el único repo de contratos entre módulo y chasis; `layout` solo lo elige la app:** a `view` pasan `Notifier`/`UsesNotifier`/`Auto`/`Persistent`/`For`/`Duration` (de `layout/capabilities.go`; `Badged`, `Described`, `UIModule`… quedan en `layout`: ningún módulo los implementa salvo `chat_room`, ver L6), `BrowserDeps` (sin `Brand`, ver D17), `ModuleBrowser`, `EntryScreens`, `Demo`; la fuente de chat plana (reemplazo de `chatview.Source`) va en L6; `view` conserva `NewCallerLister`; `appkit.Browser` (`appkit/browser.go`) → `layout/app`, y `appkit` deja de requerir `layout`; el `ui/` de un módulo declara datos y el chasis elige `crudview`/`chatview`/`rightpanel` (se borra la excepción de **app-modules**); una pantalla a medida puede usar `components` | L1–L3, L5, L6 |
+| D17 (P10) | **La pantalla de ingreso la dibuja el chasis:** `access` entrega `view.EntryScreens{Login, Setup view.Entry; IdleSeconds int}` con `view.Entry{Subtitle lang.Text; Form *dom.Element; Message *dom.SignalString}` (solo formulario y mensaje); `layout/app.Browser` los envuelve con `layout/login` + `App.Brand`; `access` deja de importar `layout/login` (`access/module/browser.go:15`) y de leer `d.Brand` | L1, L3, A3b |
 
 ## Fases
 
+**Mensaje a Antigravity — reparto:** ejecuta **local** solo lo pequeño de `webtyp` (L1 `view`, L2 `appkit`, L4a `server`) y **publica cada uno apenas pasa `gotest`** (`gopush`, de abajo hacia arriba); **nunca `replace`**. **Despacha** (`codejob dispatch`, `EXECUTOR: jules`) todo módulo y todo repo de trabajo grande, en oleadas para llenar los **15 cupos simultáneos** (límite **100 trabajos/día**): un plan despachado no ve carpetas hermanas, por eso cada oleada sale solo cuando lo que necesita está publicado. Al despachar, pregunta al dueño por el temporizador de revisión (**codejob**) y revisa cada PR con **plan-review**.
+- **Oleada 0 (local, publicando):** L1 → L2 (L4a va después de que se publique L3).
+- **Oleada 1 y 2 (15 cupos concurrentes en Jules llenos al máximo):**
+  1. `webtyp/auth` (sesión 8600479642742704008)
+  2. `webtyp/core` (`app`, sesión 5351990320140399274)
+  3. `webtyp/layout` (sesión 6353811879617294185)
+  4. `veltylabs/modules/patient_directory` (sesión 14656212430721096454)
+  5. `veltylabs/modules/staff_manager` (sesión 15975789775639801906)
+  6. `veltylabs/modules/service_catalog` (sesión 3199782381933916853)
+  7. `veltylabs/modules/device_manager` (sesión 4954513444987103874)
+  8. `veltylabs/modules/business_calendar` (sesión 14857109302422191573)
+  9. `veltylabs/modules/supply_manager` (sesión 15140373304869652996)
+  10. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039)
+  11. `veltylabs/modules/work_schedule` (sesión 1578283662808291679)
+  12. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356)
+  13. `veltylabs/modules/alert_manager` (sesión 14672456625882336877)
+  14. `veltylabs/modules/editorial` (sesión 7528414469419124488)
+  15. `veltylabs/modules/cash_manager` (sesión 14578098458978629659)
+  - A medida que se liberen cupos al completar PRs, se despachan los restantes (`room_layout`, `appointment_booking`, `clinical_encounter`, `chat_room`, `payment_manager`, `network_manager`, `site_content`, `site_manager` y `access`).
+- **Oleada 3:** L6 tras P11; A5 al final.
+
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| A1 | `webtyp/crud`, `webtyp/router`, `webtyp/rpc`, `webtyp/mcp`, `webtyp/appkit` | `crud` v0.0.2 publicado; tras responder P1, incorporar `crud.Registry`, `crud.Module` y `crud.Route` y eliminar `router.OperationModule` para que solo compile el montaje vía `crud` | espera P1 |
-| A2 | `webtyp/view` | borra `mount.go`, `payload.go`, `tests/mount_test.go` y `ListArgs`/`Cap`/`MaxPage` de `page.go`; `Lister.List` usa `crud.ReadArgs`; `view.Ops` usa `Allow model.Action` y `crud.Op` + `crud.*Args` | `docs/PLAN.md` escrito; espera P1 |
-| A3 | `webtyp/access`, `webtyp/auth`, `webtyp/layout` | `access` y `auth` migran `ops.go` y `view.go` (`//go:build browser`) a `crud` y renombran métodos backend a `Read*`/`Create*`/`Update*`/`Delete*`; `layout` actualiza `crudview/*_test.go` a `crud.ReadArgs` | esperan A1–A2 |
-| A4.1 | `veltylabs/modules/patient_directory` (plantilla) | migra `ops.go`, `crud.go`, `queries.go`, `view.go` al contrato cerrado de `crud`, lote transaccional `db.Tx`, cierra IDOR de `args.TenantId` y elimina doble validación manual de esquema | `docs/PLAN.md` escrito; **se ejecuta en local tras A2** y, una vez aprobado, sirve de plantilla |
-| A4.2 | 17 módulos restantes `veltylabs/modules/*` (`room_layout`, `pharmacy_manager`, `service_catalog`, `device_manager`, `staff_manager`, `supply_manager`, `work_schedule`, `business_calendar`, `alert_manager`, `appointment_booking`, `clinical_encounter`, `payment_manager`, `agreement_manager`, `cash_manager`, `chat_room`, `editorial`, `network_manager`) | aplican la plantilla aprobada de `patient_directory` (`crud`, `db.Tx`, renombrado `Create*`/`Read*`/`Update*`/`Delete*`, `//go:build browser` en `view.go`) | se despachan vía `codejob` una vez aprobado A4.1 (`patient_directory`) |
+| A0 | `webtyp/model` | marca `ServerOnly` (D11) | cerrada `v0.2.14` |
+| A1 | `webtyp/router`, `crud`, `rpc`, `mcp`, `ormc`, `dbsync`, `appkit` | D5–D14 | cerrada: `router` `v0.4.19`, `crud` `v0.0.3`, `rpc` `v0.2.17`, `mcp` `v0.3.23`, `ormc` `v0.1.36`, `dbsync` `v0.3.47`, `appkit` `v0.2.27` |
+| A2 | `webtyp/view` | contrato de cable desde `crud`, `view.Ops` con `model.Action` | cerrada `v0.6.66` |
+| A3 | `webtyp/auth` | `auth/authority` en `crud`, `OpMe` → `Infra`; D15–D17 no lo tocan | en Jules (sesión 8600479642742704008, trabajando `IN_PROGRESS`) |
+| L1 | `webtyp/view` | contratos módulo↔chasis (D16, D17): `Notifier`…, `BrowserDeps`, `ModuleBrowser`, `EntryScreens`, `Entry`, `Demo` | cerrada `v0.6.67` |
+| L2 | `webtyp/appkit` | borra `browser.go` y los tipos movidos; `Screens`/`Entry` sobre `view`; `go.mod` sin `layout` | cerrada `v0.2.28` |
+| L3 | `webtyp/layout` | dobles de test en `crud.ReadArgs` (ex A3), contratos desde `view`, `LocalTools` sobre `crud.Module`, `layout/app.Browser` (de `appkit`) y `layout/app.Demo`, pantallas de ingreso con `App.Brand` | despachado · Jules (sesión 6353811879617294185, oleada 1) |
+| A3b | `webtyp/access` | `crud` (D7–D14) + pantallas de ingreso como datos (D17) + `seed.Demo` (D15) | plan listo · despacho · oleada 1, tras `auth` publicado |
+| L4a | `webtyp/server` | main de navegador generado con `layoutapp.Browser` + `layout` en `generatedLibraries` | plan listo · local · tras L3 publicado |
+| L4b | `webtyp/app` | el demonio genera la demo desde `seed.Demo` en un módulo temporal fuera del repo | despachado · Jules (sesión 5351990320140399274, oleada 1) |
+| A4.1 | `veltylabs/modules/patient_directory` (plantilla) | contrato `crud` + `seed.Demo` + `module/*` sobre `view` | despachado · Jules (sesión 14656212430721096454, oleada 1); el dueño revisa la PR como plantilla |
+| A4.2+L5 | 17 módulos `veltylabs/modules/*` + `veltylabs/site_manager`, `site_content` | un plan por repo copiado de la plantilla A4.1 aprobada (su diff como referencia en `_temp/`); `appointment_booking` sin `CreatorUserId` (D9); `room_layout` con `PublicReads` (D10) y `view.Notifier`; su demo pasa a `seed.Demo` | oleada 2: 19 planes copiados de la plantilla aprobada; despacho vía `codejob` |
+| L6 | `webtyp/view`, `webtyp/layout`, `chat_room`, `clinical_encounter`, `appointment_booking` | el `ui/` de estos 3 aún arma `crudview`/`chatview`/`rightpanel` y `chat_room` implementa `Badged` con `countbadge`: diseño pendiente (fuente de chat plana, contador, lista a medida de `clinical_encounter/ui/browser.go:100`); abrir P11 con código antes de su plan; en A4.2 esos 3 conservan esas importaciones | pendiente |
+| A5 | `mjosefa-cms` (app de referencia) | corre con el contrato cerrado; capturas de cada pantalla revisadas; test: admin y usuario sin permisos recorren el menú, ningún enlace abre pantalla vacía; `web/browser/main.go` regenerado con `layoutapp.Browser` | espera A4.2, L4 |
 
 ## Bloqueos
 
-- 2026-11-07 · P1 espera al usuario.
+- 2026-11-07 · A3b (`access`) espera `auth` publicado (Jules).
+- 2026-11-07 · Oleada 2 espera la aprobación del dueño de la PR de A4.1.
 
 ## Relación con otras olas
 
