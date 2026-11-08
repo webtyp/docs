@@ -37,20 +37,20 @@ Ninguna.
 **Mensaje a Antigravity — reparto:** ejecuta **local** solo lo pequeño de `webtyp` (L1 `view`, L2 `appkit`, L4a `server`) y **publica cada uno apenas pasa `gotest`** (`gopush`, de abajo hacia arriba); **nunca `replace`**. **Despacha** (`codejob dispatch`, `EXECUTOR: jules`) todo módulo y todo repo de trabajo grande, en oleadas para llenar los **15 cupos simultáneos** (límite **100 trabajos/día**): un plan despachado no ve carpetas hermanas, por eso cada oleada sale solo cuando lo que necesita está publicado. Al despachar, pregunta al dueño por el temporizador de revisión (**codejob**) y revisa cada PR con **plan-review**.
 - **Oleada 0 (local, publicando):** L1 → L2 (L4a va después de que se publique L3).
 - **Oleada 1 y 2 (15 cupos concurrentes en Jules llenos al máximo con repos activos):**
-  1. `webtyp/auth` (sesión 8600479642742704008, reply sobre mockCrudRegistry entregado)
+  1. `webtyp/auth` (sesión 8600479642742704008, reply sobre mockCrudRegistry y crud.Caller struct entregado)
   2. `webtyp/layout` (sesión 6353811879617294185, reply sobre Stage 4 entregado)
-  3. `veltylabs/modules/patient_directory` (sesión 14656212430721096454)
+  3. `veltylabs/modules/patient_directory` (sesión 14656212430721096454, reply: purgar auth usando input.NormalizeRUT entregado)
   4. `veltylabs/modules/staff_manager` (sesión 15975789775639801906, reply entregado)
   5. `veltylabs/modules/service_catalog` (sesión 3199782381933916853)
-  6. `veltylabs/modules/device_manager` (sesión 4954513444987103874)
+  6. `veltylabs/modules/device_manager` (sesión 4954513444987103874, reply: view.go sin browser tag y go mod tidy entregado)
   7. `veltylabs/modules/business_calendar` (sesión 14857109302422191573, reply D18 DayDetailModel entregado)
   8. `veltylabs/modules/supply_manager` (sesión 15140373304869652996, reply D18 entregado)
-  9. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039, reply entregado)
+  9. `veltylabs/modules/pharmacy_manager` (sesión 8674256041346153039, reply wasmbrowsertest/PATH entregado)
   10. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356, reply entregado)
   11. `veltylabs/modules/alert_manager` (sesión 14672456625882336877, trabajando)
   12. `veltylabs/modules/cash_manager` (sesión 14578098458978629659, trabajando)
   13. `veltylabs/modules/appointment_booking` (sesión 5077271452224787563, trabajando)
-  14. `veltylabs/modules/clinical_encounter` (sesión 4384197113549986892, trabajando)
+  14. `veltylabs/modules/clinical_encounter` (sesión 4384197113549986892, reply: proceder con tests y abrir PR entregado)
   15. `veltylabs/modules/chat_room` (sesión 3537549759903273845, despachado)
   - **Módulos cerrados y publicados**: `app` (`v0.8.3`), `work_schedule` (`v0.1.58`), `editorial` (`v0.0.65`).
   - A medida que se liberen cupos al completar PRs, se despachan los siguientes (`payment_manager`, `network_manager`, `site_content`, `site_manager` y `access`).
