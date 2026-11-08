@@ -49,7 +49,7 @@ Ninguna.
   10. `veltylabs/modules/agreement_manager` (sesión 18370178096779508356, reply entregado)
   11. `veltylabs/modules/alert_manager` (sesión 14672456625882336877, trabajando)
   12. `veltylabs/modules/cash_manager` (sesión 14578098458978629659, trabajando)
-  13. `veltylabs/modules/appointment_booking` (sesión 5077271452224787563, trabajando)
+  13. `veltylabs/modules/appointment_booking` (sesión 5077271452224787563, reply entregado: tests y apertura de PR)
   14. `veltylabs/modules/clinical_encounter` (sesión 4384197113549986892, reply: proceder con tests y abrir PR entregado)
   15. `veltylabs/modules/chat_room` (sesión 3537549759903273845, despachado)
   - **Módulos cerrados y publicados**: `app` (`v0.8.3`), `work_schedule` (`v0.1.58`), `editorial` (`v0.0.65`).
