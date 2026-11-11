@@ -1,5 +1,5 @@
 # Usabilidad de las apps — master plan
-> **Status:** IN PROGRESS · 2026-11-11 · la ola de listas grandes (U4) está cerrada y publicada; quedan el menú, las búsquedas y la limpieza de contratos; 4 preguntas abiertas para el dueño (P1–P4)
+> **Status:** IN PROGRESS · 2026-11-11 · la ola de listas grandes (U4) está cerrada y publicada; decididos el menú, la búsqueda y el filtro; faltan sus planes y la limpieza de contratos
 
 Ajustar las vistas y el uso de las apps a los datos reales: la base local de `mjosefa-cms` tiene 45.973 pacientes, 171.170 reservas y 64.356
 fichas de Pa100T (`mjosefa-cms/docs/PASTDB_MAPPING.md`; `go run ./migrate/pastdb` vuelve a importar sin duplicar).
@@ -8,25 +8,7 @@ módulos de las olas 1 y 2.
 
 ## Preguntas abiertas
 
-**P1 — ¿Cómo agrupa la app los enlaces del menú? (U2, A4).** Hoy cada módulo pone sus enlaces sueltos y el menú crece sin orden. A) la **app** declara los
-grupos: `appkit.App{Menu: []appkit.MenuGroup{{Label: "Clínica", Screens: []string{"patient", "clinical_encounter"}}, {Label: "Agenda", Screens: []string{…}}}}`;
-un módulo no sabe en qué grupo cae. B) cada **módulo** declara su grupo en su `view.Screen{Group: "Clínica"}` y la app solo los ordena. **Recomiendo A**: el
-dueño del negocio decide cómo se organiza su menú (U2) y el mismo módulo sirve en apps con menús distintos. Respuesta:
-
-**P2 — Los dos «Personal» del menú (A2).** `staff_manager` (fichas del personal) y `appointment_booking` (horario y servicios por profesional) se llaman igual.
-A) renombrar el de `appointment_booking` a «Horario del personal» (dos enlaces, dos nombres, cada módulo conserva el suyo). B) mover horario y servicios al
-módulo del personal (un solo enlace, pero `staff_manager` dependería de agenda, y los módulos no se importan entre sí). **Recomiendo A**: cumple U1
-(un enlace por módulo) sin acoplar. Respuesta:
-
-**P3 — Búsqueda sin distinguir mayúsculas (U6).** `storage` solo tiene `Like` (sensible a mayúsculas en Postgres): «ana» no encuentra «Ana». A) agregar
-`storage.ILike` (Postgres `ILIKE`, SQLite `LIKE`, que ya no distingue) y que `crud`/`crudview` lo usen en la búsqueda de texto. B) dejar `Like` y que cada módulo
-guarde una columna en minúsculas para buscar. **Recomiendo A**: una sola implementación en la librería dueña del problema y ningún módulo guarda datos duplicados.
-Respuesta:
-
-**P4 — Filtro antes que búsqueda en listas largas (U3, A5).** Ejemplo: servicios por especialidad. A) el módulo marca el campo en su definición,
-`model.Field{Name: "specialty", Filter: true}`, y `crudview` dibuja un selector sobre la lista (usa `components/selectsearch`) y lo envía en `ReadArgs.Filter`.
-B) el módulo arma el selector en su pantalla. **Recomiendo A**: es una línea en `definition.go`, igual para todas las listas, y la regla `Search` ya recibe el
-filtro (la entidad es su propio filtro, D52). Respuesta:
+Ninguna. (2026-11-11: P1–P4 respondidas A; sus decisiones están abajo.)
 
 ## Decisiones por implementar
 
@@ -45,19 +27,20 @@ filtro (la entidad es su propio filtro, D52). Respuesta:
 | U15 (D49) | Faltan traducciones (es) en `appointment_booking` y `clinical_encounter` (`langc sync .`) | esos 2 |
 | U16 (H1) | `model.FieldError` sin `Unwrap`; `NotNull` en bool rechaza `false` | `model` |
 | U17 (D48) | `agedate.AgeDate` marca sola `birthdate_estimated` (necesita que `form` deje a un control escribir otro campo); la importación ya marca estimada toda fecha «AAAA-01-01» | `form`, `components`, `patient_directory` |
-| U2 | La app agrupa los enlaces de sus módulos en el menú según su preferencia; los demos de cada módulo prueban con sus propios menús (forma: P1) | `appkit.App`, `layout` |
-| U3 | En listas largas el filtro va primero y la búsqueda después (`components/selectsearch`; forma: P4) | `model`, `crudview`, módulos |
-| U6 | Búsqueda sin distinguir mayúsculas (forma: P3): los nombres de Pa100T están en minúsculas, los nuevos como se escriben | `storage`, `postgres`, `orm`, `crud` |
+| U2 | **La app agrupa** los enlaces del menú: `appkit.App{Menu: []appkit.MenuGroup{{Label: "Clínica", Screens: []string{"patient", "clinical_encounter"}}}}`; un módulo no sabe en qué grupo cae; los demos de cada módulo prueban con sus propios menús | `appkit.App`, `layout` |
+| U3 | En listas largas el **filtro va primero**: el módulo marca el campo, `model.Field{Name: "specialty", Filter: true}`; `crudview` dibuja un selector (`components/selectsearch`) sobre la lista y lo envía en `ReadArgs.Filter` | `model`, `crudview`, módulos |
+| U6 | **`storage.ILike`** (Postgres `ILIKE`, SQLite `LIKE`): la búsqueda de texto de `crud`/`crudview` no distingue mayúsculas; los nombres de Pa100T están en minúsculas, los nuevos como se escriben | `storage`, `postgres`, `sqlite`, `mem`, `crud` |
 
 ## Fases
 
 | Fase | Repo | Qué | Estado | Plan |
 |---|---|---|---|---|
 | A1 | `layout` | (Bloquea uso diario) El menú lateral se corta en escritorio y en móvil: no tiene desplazamiento | por escribir | — |
-| A2 | `appointment_booking` | Dos «Personal» en el menú (P2) | espera P2 | — |
+| A2 | `appointment_booking` | Dos «Personal»: el de agenda pasa a «Horario del personal» (dos enlaces, dos nombres) | decidido; espera que `appointment_booking` publique su migración | — |
 | A3 | todos los módulos | Cuántos enlaces aporta cada uno; justificar los que sean más de uno (U1) | por escribir | — |
-| A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (P1) | espera P1 | — |
-| A5 | `model`, `crudview`, `service_catalog` | Filtro antes que búsqueda (P4) | espera P4 | — |
+| A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2) | por escribir | — |
+| A5 | `model`, `crudview`, `service_catalog` | Filtro antes que búsqueda (U3) | por escribir | — |
+| S1 | `storage`, `postgres`, `sqlt`, `indexdb`, `orm`, `crud` | `storage.ILike` (U6), en orden: `storage` + `mem` + conformidad (🟡 Jules `4940575217866102135`, `storage/docs/PLAN.md`); luego `sqlt` (SQLite: `ILIKE`→`LIKE`), `postgres` (`ILIKE` directo), `indexdb`, `orm` (`QB.ILike`), `crud` (usa `ILike` sin bajar a minúsculas el término) | por escribir cada uno al publicar `storage` | — |
 | C1 | `model` | U16: `Unwrap` en `FieldError` y `NotNull` en bool | 🟡 Jules, sesión `11594222981559106768` | `model/docs/PLAN.md` |
 | C2 | `patient_directory`, `staff_manager` | U11: `Deps.ValidateRUT` fuera; las pruebas usan RUT válidos (`11111111-1`, `12345678-5`, `7654321-6`) en vez del doble que acepta cualquiera | por escribir; `patient_directory` tiene cambios sin guardar del dueño | — |
 | F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; vive en la fase A5 de ARCHITECTURE (local, en etapas) | espera ARCHITECTURE A5 | `mjosefa-cms/docs/PLAN_STAGE_*.md` |
