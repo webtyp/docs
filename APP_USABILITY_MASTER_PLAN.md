@@ -35,12 +35,12 @@ Ninguna. (2026-11-11: P1–P4 respondidas A; sus decisiones están abajo.)
 
 | Fase | Repo | Qué | Estado | Plan |
 |---|---|---|---|---|
-| A1 | `layout` | (Bloquea uso diario) El menú lateral se corta en escritorio y en móvil: no tiene desplazamiento | 🟡 Jules `17455336479303599613` | `layout/docs/PLAN.md` |
+| A1 | `layout` | (Bloquea uso diario) El menú lateral se corta en escritorio y en móvil: no tiene desplazamiento | 🟢 `layout` v0.3.122 (falta verlo en pantalla: el menú flotante podría recortarse dentro del scroll) | `layout/docs/PLAN.md` |
 | A2 | `appointment_booking` | Dos «Personal»: el de agenda pasa a «Horario del personal» (dos enlaces, dos nombres) | decidido; espera que `appointment_booking` publique su migración | — |
 | A3 | todos los módulos | Cuántos enlaces aporta cada uno; justificar los que sean más de uno (U1) | por escribir | — |
 | A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2) | por escribir | — |
 | A5 | `model`, `crudview`, `service_catalog` | Filtro antes que búsqueda (U3) | por escribir | — |
-| S1 | `storage`, `postgres`, `sqlt`, `indexdb`, `orm`, `crud` | `storage.ILike` (U6): 🟢 `storage` v0.2.3 (con cláusula de conformidad); 🟡 `sqlt` `13490748600497650720`, `indexdb` `9294822643733930796`, `orm` `5304311211291987633`; `postgres` pasa `ILIKE` directo (verificar con su conformidad al publicar); por escribir: la cláusula `ilike_ignores_case` en `crud/conformance` y que `crud` use `ILike` sin bajar a minúsculas el término (tras el plan de archivos de `crud`) | en curso | — |
+| S1 | `storage`, `postgres`, `sqlt`, `indexdb`, `orm`, `crud` | `storage.ILike` (U6): 🟢 `storage` v0.2.3 (con cláusula de conformidad); 🟢 `sqlt` v0.0.21, `orm` v0.12.37; 🟡 `indexdb` `9294822643733930796`; `postgres` pasa `ILIKE` directo (verificar con su conformidad al publicar); por escribir: la cláusula `ilike_ignores_case` en `crud/conformance` y que `crud` use `ILike` sin bajar a minúsculas el término (tras el plan de archivos de `crud`) | en curso | — |
 | C1 | `model` | U16 cerrada: `Unwrap` y `NotNull` en bool | 🟢 v0.2.21 | — |
 | C2 | `patient_directory`, `staff_manager` | U11: `Deps.ValidateRUT` fuera; las pruebas usan RUT válidos (`11111111-1`, `12345678-5`, `7654321-6`) en vez del doble que acepta cualquiera | por escribir; `patient_directory` tiene cambios sin guardar del dueño | — |
 | F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; vive en la fase A5 de ARCHITECTURE (local, en etapas) | espera ARCHITECTURE A5 | `mjosefa-cms/docs/PLAN_STAGE_*.md` |
