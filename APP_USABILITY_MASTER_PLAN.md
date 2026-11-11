@@ -41,7 +41,7 @@ Ninguna. (2026-11-11: P1–P4 respondidas A; sus decisiones están abajo.)
 | A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2) | por escribir | — |
 | A5 | `model`, `crudview`, `service_catalog` | Filtro antes que búsqueda (U3) | por escribir | — |
 | S1 | `storage`, `postgres`, `sqlt`, `indexdb`, `orm`, `crud` | `storage.ILike` (U6), en orden: `storage` + `mem` + conformidad (🟡 Jules `4940575217866102135`, `storage/docs/PLAN.md`); **la búsqueda va dentro de la conformidad**: cláusula `ilike_ignores_case` en `storage/conformance` (la corre cada backend: `mem`, `sqlt`, `postgres`, `indexdb`, en rojo hasta implementarla) y la misma cláusula en `crud/conformance` (cada `crud.Store` debe cumplir `ILike`); luego `sqlt` (SQLite: `ILIKE`→`LIKE`), `postgres` (`ILIKE` directo), `indexdb`, `orm` (`QB.ILike`), `crud` (usa `ILike` sin bajar a minúsculas el término) | por escribir cada uno al publicar `storage` | — |
-| C1 | `model` | U16: `Unwrap` en `FieldError` y `NotNull` en bool | 🟡 Jules, sesión `11594222981559106768` | `model/docs/PLAN.md` |
+| C1 | `model` | U16 cerrada: `Unwrap` y `NotNull` en bool | 🟢 v0.2.21 | — |
 | C2 | `patient_directory`, `staff_manager` | U11: `Deps.ValidateRUT` fuera; las pruebas usan RUT válidos (`11111111-1`, `12345678-5`, `7654321-6`) en vez del doble que acepta cualquiera | por escribir; `patient_directory` tiene cambios sin guardar del dueño | — |
 | F | `mjosefa-cms` | Capturas de cada pantalla con datos reales y el menú nuevo; vive en la fase A5 de ARCHITECTURE (local, en etapas) | espera ARCHITECTURE A5 | `mjosefa-cms/docs/PLAN_STAGE_*.md` |
 
