@@ -76,7 +76,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 
 | Capa | Librería | Todo lo que trae su único plan | Estado |
 |---|---|---|---|
-| 8 | `access`, `auth` (A6.6), `mjosefa-cms` (A5) | D20–D50 en un solo plan por repo | `auth` 🟡 migración hecha en local y en `main` (sin etiqueta; `gotest` verde): modelos en `authority`, `user` y `lan_identity` por `crud`, `/me` como ruta, la raíz es el contrato; plan mínimo de traducciones y docs en Jules `15329636798705440632` · `access` 🔴 su sesión murió; plan (8 etapas) por partir y relanzar cuando `auth` tenga etiqueta · `mjosefa-cms` 🔴 A5 en local, 5 etapas en `mjosefa-cms/docs/PLAN_STAGE_*.md`; espera `auth`, `access`, `appointment_booking` |
+| 8 | `access`, `auth` (A6.6), `mjosefa-cms` (A5) | D20–D50 en un solo plan por repo | `auth` 🟢 migrado y publicado (modelos en `authority`, `user` y `lan_identity` por `crud`, `/me` como ruta, la raíz es el contrato); deuda: 39 claves sin traducir en 7 idiomas · `access` 🟡 Jules, parte 1 (etapas 1–6), sesión `5660495010476842570`, con `auth` v0.0.112; parte 2 (pruebas y docs) en `docs/PLAN_PART2.md` · `mjosefa-cms` 🔴 A5 en local, 5 etapas en `mjosefa-cms/docs/PLAN_STAGE_*.md`; espera `access` y `appointment_booking` (`auth` ya publicado) |
 | 8 | `pharmacy_manager` | ola 1: crud por declaración (D53) | 🟢 v0.1.75 publicado (partes 1 y 2); falta `TestTenant_EmptyTenantRefused` |
 | 8 | `supply_manager` | ola 1: crud por declaración (D53) | 🟡 Jules, parte 1 (etapas 1–5), sesión `7382656436682655122` (4.ª vez); parte 2 en `docs/PLAN_PART2.md` |
 | 8 | `alert_manager` | ola 2: `ExternalCalls` (D53) | 🟡 Jules, parte 1 (etapas 1–5), sesión `7818987065128360131`; parte 2 en `docs/PLAN_PART2.md` |
