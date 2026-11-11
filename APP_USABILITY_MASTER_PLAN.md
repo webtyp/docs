@@ -35,7 +35,7 @@ Ninguna. (2026-11-11: P1–P4 respondidas A; sus decisiones están abajo.)
 
 | Fase | Repo | Qué | Estado | Plan |
 |---|---|---|---|---|
-| A1 | `layout` | (Bloquea uso diario) El menú lateral se corta en escritorio y en móvil: no tiene desplazamiento | por escribir | — |
+| A1 | `layout` | (Bloquea uso diario) El menú lateral se corta en escritorio y en móvil: no tiene desplazamiento | 🟡 Jules `17455336479303599613` | `layout/docs/PLAN.md` |
 | A2 | `appointment_booking` | Dos «Personal»: el de agenda pasa a «Horario del personal» (dos enlaces, dos nombres) | decidido; espera que `appointment_booking` publique su migración | — |
 | A3 | todos los módulos | Cuántos enlaces aporta cada uno; justificar los que sean más de uno (U1) | por escribir | — |
 | A4 | `appkit`, `layout` | Agrupación del menú declarada en la app (U2) | por escribir | — |
