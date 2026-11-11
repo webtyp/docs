@@ -32,7 +32,7 @@ func (p *Patient) Create(a crud.CurrentUser, tx crud.Tx, m *Module) (crud.RuleAn
 	return crud.ApplyAndPublish, nil // guarda y avisa; crud.ApplyWithoutPublishing guarda sin avisar
 }
 ```
-Las reglas de actualizar, borrar, buscar y leer tienen la misma forma (`Update(a, tx, old, fields, m)`, `Delete(a, tx, m)`, `Search(a, text, m)`, `Read(a, args, m)`). La regla consulta con `tx`, nunca con `m.db`: dentro de la transacción, dos creaciones simultáneas con el mismo documento no pasan ambas la unicidad.
+Las reglas de actualizar, borrar, buscar y leer tienen la misma forma (`Update(a, tx, old, fields, m)`, `Delete(a, tx, m)`, `Search(a, filter, text, m)`, `Read(a, filter, args, m)`; `filter` es un registro de la entidad con solo los campos que envió quien llama: la entidad es su propio filtro). La regla consulta con `tx`, nunca con `m.db`: dentro de la transacción, dos creaciones simultáneas con el mismo documento no pasan ambas la unicidad.
 
 **El esqueleto no compila hasta completarlo.** Lo creado trae el comentario «COMPLETA TU REGLA DE NEGOCIO AQUÍ» y las variables de salida declaradas sin usar (`declared and not used`, `missing return`), así que un agente que lo olvidó ve el error en ese archivo. Devolver las variables vacías tampoco pasa: `crud.RuleAnswer` no tiene valor cero válido y `crud` lo rechaza (`ErrNoAnswer`). Las acciones `HaveNoBusinessRule` no generan archivo.
 
@@ -70,11 +70,11 @@ Verde = framework, no se puede omitir · azul = lo único que escribes. La regla
 | Cable | REST estándar: la acción sale del método HTTP, `POST\|GET\|PATCH\|DELETE /api/<módulo>/<entidad>`; MCP usa `<módulo>.<entidad>.create\|read\|update\|delete`; dentro del proceso viaja `router.Operation{Module, Entity, Action}` |
 | Librerías isomórficas | Ninguna librería importa `httpd`; el consumidor lo inyecta. `appkit` separa lo compartido, lo `!browser` y lo `browser` |
 
-## 5. Efectos externos (decidido el modelo; falta el detalle de implementación)
+## 5. Llamadas externas (decidido el modelo; falta el detalle de implementación)
 
-Cobrar, enviar un recibo o esperar a un proveedor no deben reescribirse en cada módulo. Lo decidido: **el manejador solo decide qué efecto quiere; `crud` guarda la intención en la misma transacción que el registro** y se ocupa de cuándo, cuántas veces y con qué clave (el id del registro, como clave de idempotencia).
-- Los efectos se declaran dentro de la entidad que los tiene, con modo y límites escritos (sin valores escondidos): `WaitForReply` (espera con tiempo máximo), `RetryInBackground` (responde ya y se reintenta) y `WaitForConfirmation` (queda `pending` hasta que el proveedor confirma).
-- El archivo `effect_<entidad>_<efecto>.go` lo crea `definitionc` una vez, con el mismo esqueleto que no compila hasta completarlo.
+Cobrar, enviar un recibo o esperar a un proveedor no deben reescribirse en cada módulo. Lo decidido: **el manejador solo decide qué llamada externa quiere; `crud` guarda la intención en la misma transacción que el registro** y se ocupa de cuándo, cuántas veces y con qué clave (el id del registro, como clave de idempotencia).
+- Las llamadas externas se declaran dentro de la entidad (`Definition.ExternalCalls`) que los tiene, con modo y límites escritos (sin valores escondidos): `WaitForReply` (espera con tiempo máximo), `RetryInBackground` (responde ya y se reintenta) y `WaitForConfirmation` (queda `pending` hasta que el proveedor confirma).
+- El archivo `call_<entidad>_<llamada>.go` lo crea `definitionc` una vez, con el mismo esqueleto que no compila hasta completarlo.
 - Un webhook o el retorno del cliente **nunca es una ruta pública de `crud`**: el adaptador del proveedor, montado por la app, autentica al proveedor y llama a `crud.Confirm`; la regla `Confirm` del manejador vuelve a preguntar al proveedor y nunca confía en lo que trae la petición.
-- Un registro cuyo efecto agota los reintentos pasa a `failed` con su error y no se borra.
-- La orquestación vive en una librería de efectos aparte; `outbox` no sirve tal cual porque escribe fuera de la transacción de `crud`. Quedan por fijar la forma exacta de `ApplyAndPublish(efectos...)`, el modelo de intención y los nombres de los tipos.
+- Un registro cuya llamada agota los reintentos pasa a `failed` con su error y no se borra.
+- La orquestación vive en una librería aparte, `externalcalls`; `outbox` no sirve tal cual porque escribe fuera de la transacción de `crud`. Quedan por fijar la forma exacta de `ApplyAndPublish(llamadas...)`, el modelo de intención y los nombres de los tipos.
