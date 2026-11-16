@@ -1,5 +1,5 @@
 # Búsqueda de registros (dato exacto y búsqueda) — master plan
-> **Status:** IN PROGRESS · 2026-11-16 · D1–D9 cerradas; fase 1 ✅ local; plan de la fase 2 escrito ([record_search_phase2/PLAN.md](record_search_phase2/PLAN.md)), **espera revisión del dueño** (EXECUTION_ORDER paso 10); la ejecución la ordena EXECUTION_ORDER (bloque B)
+> **Status:** IN PROGRESS · 2026-11-16 · fases 1–4 publicadas (puerta B); pendiente: 4 módulos con regla `Search` (`chat_room`, `editorial`, `room_layout`, `service_catalog`) en el bloque E de EXECUTION_ORDER; falta confirmar el relleno real de `text_search` en la base de pacientes
 
 Dominio: cómo **guarda** el framework un dato para que sea exacto y cómo lo **encuentra** cualquier módulo (`model`, `crud`, `orm`, `ddl`, `definitionc`, `indexdb`, `sqlite`, `postgres`). Nació de PATIENT_DIRECTORY_USABILITY (P16–P17: «lucia» no encuentra «Lucía»). La búsqueda **por significado** (embeddings) sigue en [retrieval/docs/SEMANTIC_SEARCH_MASTER_PLAN.md](https://github.com/webtyp/retrieval/blob/main/docs/SEMANTIC_SEARCH_MASTER_PLAN.md) y AGENT_ECOSYSTEM; aquí solo se le reserva un enchufe.
 
@@ -27,10 +27,10 @@ Ninguna.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| 1 | `fmt` | El algoritmo de D2 (plegar texto y juntar números), una sola función para guardar y buscar | ✅ local (paso 8; sin publicar hasta la puerta B) |
-| 2 | `model`, `input`, `storage`, `orm`, `indexdb`, `ddl`, `definitioncheck`, `definitionc`, `crud`, `view`, `layout`, 4 módulos | Plan [record_search_phase2/PLAN.md](record_search_phase2/PLAN.md): todas las escrituras pasan por `orm.DB` (ahí se calcula); reconstrucción en Go dentro de `ddl.Sync`; búsqueda por defecto y D6–D8; defectos de `storage/mem` e `indexdb` (leen por esquema) | 🔴 plan escrito, espera revisión del dueño (EXECUTION_ORDER 10) |
-| 3 | `indexdb`, `sqlite`, `postgres` | Prueba de conformidad: misma búsqueda, mismo resultado | 🔴 espera fase 2 |
-| 4 | `patient_directory` | Adoptar `ListsOnlyAfterSearch` (D8) y **borrar** `rule_patient_search.go` (D6, D8: no le queda nada) (fase 14 de PATIENT_DIRECTORY_USABILITY) | 🔴 espera fase 3 |
+| 1 | `fmt` | El algoritmo de D2 (plegar texto y juntar números), una sola función para guardar y buscar | ✅ publicado `fmt` v1.0.3 |
+| 2 | `model` v0.2.24 · `input` v0.2.5 · `storage` v0.2.8 · `orm` v0.12.42 · `indexdb` v0.7.20 · `ddl` v0.0.57 · `definitioncheck` v0.0.10 · `definitionc` v0.1.49 · `crud` v0.0.17 · `view` v0.6.86 · `layout` v0.3.127 | Todo publicado 2026-11-16 salvo los 4 módulos con regla `Search` | ✅ publicado · 4 módulos: bloque E de EXECUTION_ORDER |
+| 3 | `indexdb`, `sqlite` v0.3.43, `postgres` v0.4.46 | Prueba de conformidad: misma búsqueda, mismo resultado (verificada contra Postgres real) | ✅ publicado |
+| 4 | `patient_directory` v0.1.115 | Adopta `ListsOnlyAfterSearch` y borra `rule_patient_search.go` | ✅ publicado · falta ver «Escribe para buscar» en pantalla y el relleno real de las 45 973 filas |
 
 ## Bloqueos
 
