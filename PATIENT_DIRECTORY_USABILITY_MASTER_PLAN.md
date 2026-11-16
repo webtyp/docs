@@ -21,7 +21,7 @@ Ninguna. P16–P17 (nombres sin tildes) pasaron a [RECORD_SEARCH_MASTER_PLAN.md]
 | D18 | Las opciones de **sexo** (`Male`/`Female`, `input/gender.go`) no tienen traducción: agregarla en `input/lang.json` | `input` |
 | D19 | `form` no deja avisos de HTML en Chrome. Auditoría (972 px): 4 `input` sin etiqueta (la fecha de `agedate` y 3 de `searchbar`: `aria-label`), 1 `label for` que apunta a un `div` (el control de `agedate`: usar `aria-labelledby` con `role=group`), 22 controles sin `autocomplete` (valor por tipo/nombre, `off` si no aplica). El panel Issues debe quedar vacío | `form`, `components` (`agedate`, `searchbar`) |
 | D20 | Zona táctil del (i) de campo (14 px; mínimo 24 px, WCAG 2.5.8) sin cambiar lo que se ve | `components/tapinfotip` |
-| D22 (P18) | Orden: **número → nombre → tipo (RUT marcado) → país emisor**; Tab va de número a nombre | `patient_directory` |
+| D22 (P18, corregida 2026-11-16) | Orden: **número → tipo (RUT marcado) → país emisor → nombre**: el tipo va pegado al número porque lo valida; la etiqueta es **«Nombre completo»** con ayuda «nombres seguidos de apellidos» (un solo campo, nombre del paciente; neutro para el futuro `client_directory`). Tab va de número a tipo | `patient_directory` |
 | D23 (P18) | **Elegir una opción de radio con el puntero lleva el foco al siguiente campo visible**, por defecto, sin configurar (lo dueño es `form`: dibuja el grupo en `render_input.go` y ya maneja el foco en `form.go:140`). Solo con clic/toque (`pointerType` mouse/touch/pen): las flechas del teclado siguen moviéndose **dentro** del grupo (patrón radio de WAI-ARIA) y no saltan. Si la opción revela campos (`ShownWhen`), el siguiente es el primero revelado; en el último campo no se mueve. Riesgo aceptado: WCAG 3.2.2 cuenta un cambio de foco como cambio de contexto; queda acotado al puntero | `form` |
 | D24 (P19) | `Deps.DefaultDocument` obligatorio (como `Deps.Countries`); el formulario nuevo parte con ese tipo; `view.New` expone el registro inicial (`crudview.CrudView.NewRecord`, `crudview.go:134`) | `patient_directory`, `view`, `appkit` |
 | D21 | `appkit`: `App.Countries` → `Deps.Countries`/`BrowserDeps.Countries` (editado en local, sin publicar; EXECUTION_ORDER paso 14) | `appkit` |
@@ -30,13 +30,13 @@ Ninguna. P16–P17 (nombres sin tildes) pasaron a [RECORD_SEARCH_MASTER_PLAN.md]
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| 9 | `components/searchbar`, `layout/crudview` | D15 | 🔴 |
-| 10 | `form`, `crudview` | D16 foco del «+» y D23 avance al elegir radio (misma lógica: «siguiente control enfocable»); prueba con grupo de radios primero | 🔴 |
-| 11 | `input` | D18: traducciones de sexo | 🔴 |
-| 12 | `form`, `components` | D19: avisos de HTML; verificar con el script de auditoría y el panel Issues | 🔴 |
-| 13 | `patient_directory`, `view`, `appkit` | D17 verificar; D22 orden; D24 tipo por defecto (`appkit` tras EXECUTION_ORDER paso 14) | 🔴 |
-| 14 | `patient_directory` | Adoptar la búsqueda de RECORD_SEARCH: `rule_patient_search.go` queda solo con lo que no es búsqueda (sin texto no muestra pacientes; ver RECORD_SEARCH P8) | 🔴 espera RECORD_SEARCH fase 3 |
-| 15 | `components/tapinfotip` | D20 | 🔴 |
+| 9 | `components/searchbar`, `layout/crudview` | D15 | ✅ publicado `components` v0.8.75, `layout` v0.3.126 |
+| 10 | `form`, `crudview` | D16 foco del «+» y D23 avance al elegir radio (misma lógica: «siguiente control enfocable»); prueba con grupo de radios primero | ✅ publicado `form` v0.4.68, `layout` v0.3.126 |
+| 11 | `input` | D18: traducciones de sexo | ✅ publicado `input` v0.2.4 |
+| 12 | `form`, `components` | D19: avisos de HTML; verificar con el script de auditoría y el panel Issues | ✅ publicado `form` v0.4.68, `components` v0.8.75 |
+| 13 | `patient_directory`, `view`, `appkit` | D17 verificar; D22 orden; D24 tipo por defecto (`appkit` tras EXECUTION_ORDER paso 14) | D17 y D22 ✅ publicado `patient_directory` v0.1.114; D24 🔴 (paso 15) |
+| 14 | `patient_directory` | Adoptar la búsqueda de RECORD_SEARCH: `ListsOnlyAfterSearch: true` y **borrar** `rule_patient_search.go` (RECORD_SEARCH D6, D8: no le queda nada); EXECUTION_ORDER paso 12 | 🔴 espera RECORD_SEARCH fase 3 |
+| 15 | `components/tapinfotip` | D20 | ✅ publicado `widget` v0.6.49, `components` v0.8.75 |
 | 16 | `appkit` | D21 | 🔴 EXECUTION_ORDER paso 14 |
 
 ## Bloqueos
