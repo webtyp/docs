@@ -1,5 +1,5 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`, plan escrito, espera 🔵)
+> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; espera respuestas P49–P52 antes del plan)
 
 Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
 Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
@@ -7,7 +7,49 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 ## Preguntas abiertas
 
-Ninguna.
+Contexto común (D62): solo la app (`mjosefa-cms`) importa `appkit`; nadie más, tampoco `access`. `model` no puede nombrar `*orm.DB`, `events.Publisher`, `crud.CallQueue` ni `view.Screen`: todos importan `model` (ciclo). Hoy cada módulo tiene una carpeta `module/` que solo existe para escribir tipos de `appkit` (`patient_directory/module/server.go:15`).
+
+**P49 — Dónde vive lo que la app necesita para armar un módulo.** Lo que ve el dueño: el `go.mod` de cada módulo arrastra `sqlite`, `server`, `mcp`, `rpc` por culpa de `module/`. A) Ningún contrato nuevo: la firma del módulo en `model` es `model.ModuleDefinition` (ya existe); el módulo exporta lo que ya tiene (`New`, `Deps`, `ui.Screens`) y se borra `module/`; la app escribe el armado en su `config/`. B) `model` declara un contrato de armado con interfaces propias (`model.Database` copiando los métodos de `*orm.DB` que usan los almacenes) y cada `New` de módulo cambia de firma. **Recomiendo A**: ningún tipo nuevo, borra `module/` en 9 repos, la app es la única raíz de composición (api-harness regla 9); costo: una segunda app repite el armado de los módulos que liste. Respuesta:
+```go
+// hoy — patient_directory/module/server.go (el módulo importa appkit)
+var server = appkit.ModuleServer{Build: build}
+// A — mjosefa-cms/config/modules_server.go (solo la app importa appkit)
+var patients = appkit.ModuleServer{Build: func(d appkit.Deps) (model.ModuleNaming, error) {
+	return patientdirectory.New(d.DB, patientdirectory.Deps{Publisher: d.Events, TenantID: d.TenantID, IDs: d.IDs,
+		ValidateRUT: input.NormalizeRUT, Countries: d.Countries, DefaultDocument: d.DefaultDocument})
+}}
+// A — mjosefa-cms/config/app.go
+Modules: []appkit.Module{{Name: patientdirectory.Definition.Name, Server: patients, Browser: patientsScreens}, …}
+// B — model (nuevo) y cada módulo cambia New(db *orm.DB, …) por New(db model.Database, …)
+type Database interface { /* los métodos de *orm.DB que usan los almacenes */ }
+```
+
+**P50 — Quién adapta un contrato entre dos módulos.** Lo que ve el dueño: el login por IP necesita que `staff_manager` pregunte a `device_manager` «¿qué equipo tiene esta IP?» y «registra este computador». Hoy lo arma `device_manager/module/server.go:35` con un tipo escondido (`served`). A) El módulo que provee exporta el adaptador y la app solo lo pasa: `devicemanager.IPLocator` (ya existe, solo busca) pasa a `devicemanager.TenantDevices` con `FindByIP` y `RegisterComputer`. B) La app escribe el adaptador en su `config/`. **Recomiendo A**: la regla de dominio queda en el módulo; la app solo conecta. Respuesta:
+```go
+// A — mjosefa-cms/config/modules_server.go
+dm, err := appkit.Find[*devicemanager.Module](d)
+devices := devicemanager.TenantDevices{Devices: dm, TenantID: d.TenantID}
+return staffmanager.New(d.DB, staffmanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID,
+	ValidateRUT: input.NormalizeRUT, Devices: devices, Registrar: devices})
+// B — la app declara type tenantDevices struct{…} con FindByIP y RegisterComputer copiados de device_manager
+```
+
+**P51 — Dónde va el armado de `access` (pantalla de ingreso, primer administrador, login por IP).** Lo que ve el dueño: `access/module/` (358 líneas) importa `appkit`, y su navegador no compila hoy (`appkit.Brand`, `d.Brand` ya no existen). A) `access` conserva un subpaquete sin `appkit`, `access/entry`, con funciones tipadas que la app llama; el personal que se construye después se pide al ingresar, con una función. B) La app escribe ese armado en su `config/`. **Recomiendo A**: es idéntico en toda app que tenga ingreso (api-harness: «glue every app writes identically» va en la librería). Va junto con el plan pendiente «access 1b». Respuesta:
+```go
+// A — mjosefa-cms/config/modules_server.go
+entryServer := appkit.ModuleServer{Build: func(d appkit.Deps) (model.ModuleNaming, error) {
+	return entry.New(d.DB, entry.Deps{IDs: d.IDs, Events: d.Events, TenantID: d.TenantID, Log: d.Log,
+		StaffDevices: func() (entry.StaffDevices, error) { return appkit.Find[entry.StaffDevices](d) }})
+}}
+// A — mjosefa-cms/config/modules_browser.go
+entryScreens := view.ModuleBrowser{Screens: entry.Screens, Entry: entry.LoginScreens}
+```
+
+**P52 — Dónde va la compuerta «solo una app importa `appkit`».** Lo que ve el dueño: sin compuerta, un módulo puede volver a importar `appkit` y nadie se entera. `gocheck` hoy es un esqueleto vacío (`gocheck/gocheck.go`, 7 líneas; CODE_GUARD fase 1 sin empezar). A) En `gotest` ya (`devflow`, junto al chequeo de `docs/TESTS.md`): falla si el `go.mod` exige `webtyp.com/appkit` y `config/` no declara `var App` (`server.HasApp`, `server/maingen.go:262`); se muda a `gocheck` con CODE_GUARD D10. B) Esperar a `gocheck`. **Recomiendo A**: B deja la regla sin vigilar por tiempo indefinido. Respuesta:
+```text
+// A — salida de gotest en veltylabs/modules/service_catalog antes de migrarlo
+✗ appkit only in apps — go.mod requires webtyp.com/appkit but config/ declares no `var App`: only the app imports appkit; the app wires the module in config/ (skill app-modules)
+```
 
 ## Decisiones por implementar
 
@@ -86,7 +128,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 | 8 | `network_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.1.122 (partes 1 y 2 completas: reglas, llamadas, lectores, pantalla, demo, pruebas, docs); deuda: 17 claves sin traducir en 7 idiomas |
 | 8 | `payment_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.4.49 (etapas 1–5 + pruebas 2a + 2b traducciones y docs) y arreglo de `CompleteOnlinePayment` en `main` sin etiqueta (era un cuerpo vacío; ahora pregunta a la pasarela con `Gateway.Confirm`); avisos de reutilización de `langc` pendientes (6; plan chico por escribir); los avisos de reutilización de langc los corrijo yo); adaptadores: `transbank` 🟢 v0.2.41 (Confirm, el retorno solo identifica, `RawQuery`) y `tuu` 🟢 v0.2.42 (`WaitSeconds`); falta que apunten a `payment_manager` v0.4.48 (hoy versión provisional) |
 | 9 | subida de archivos (A6.12, D46), `misitio` sobre `crud` | diseño en [FILE_UPLOAD_DESIGN.md](FILE_UPLOAD_DESIGN.md), P1–P5 decididas | 🟢 `router` v0.5.0 (`RawQuery`, `Path()` solo ruta, `conformance.RunContext`), `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78 (`r2.Files`), `mcp` v0.3.28, `filetype` v0.1.1 (video, audio, `Documents` = PDF/Word/Excel/PowerPoint, `Scans`), `input` v0.2.0 (`ImageFile`…) · 🔴 `crud` camino de archivo en local (`crud/docs/PLAN.md`; Jules murió sin PR; independiente de RECORD_SEARCH 10h, mismo repo, uno tras otro); 🔴 por escribir (esperan a `crud`): `appkit` (entrega `files.Store`), `view` (widget), `misitio`; conformancia de `ILike` en [APP_USABILITY](APP_USABILITY_MASTER_PLAN.md) S1 |
-| 10 | `appmodule` (nuevo), `appkit`, `devflow` (compuerta), 8 módulos; `access` y `mjosefa-cms` con sus propios planes | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 plan escrito: [modules_without_appkit/PLAN.md](modules_without_appkit/PLAN.md) · espera 🔵 del dueño (ejecución: EXECUTION_ORDER 17–18) |
+| 10 | `appmodule` (nuevo), `appkit`, `devflow` (compuerta), 8 módulos; `access` y `mjosefa-cms` con sus propios planes | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 espera respuestas P49–P52; luego el plan (ejecución: EXECUTION_ORDER 17–18) |
 
 ## Bloqueos
 
