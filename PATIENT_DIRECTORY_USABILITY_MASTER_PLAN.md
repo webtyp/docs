@@ -37,7 +37,7 @@ Ninguna. P16–P17 (nombres sin tildes) pasaron a [RECORD_SEARCH_MASTER_PLAN.md]
 | 13 | `patient_directory`, `view`, `appkit` | D17 verificar; D22 orden; D24 tipo por defecto (`appkit` tras EXECUTION_ORDER paso 14) | D17 y D22 ✅ publicado `patient_directory` v0.1.114; D24 🔴 (paso 15) |
 | 14 | `patient_directory` | Adoptar la búsqueda de RECORD_SEARCH: `ListsOnlyAfterSearch: true` y **borrar** `rule_patient_search.go` (RECORD_SEARCH D6, D8: no le queda nada); EXECUTION_ORDER paso 12 | ✅ publicado `patient_directory` v0.1.115 (falta ver «Escribe para buscar» en pantalla) |
 | 15 | `components/tapinfotip` | D20 | ✅ publicado `widget` v0.6.49, `components` v0.8.75 |
-| 16 | `appkit` | D21 | 🔴 EXECUTION_ORDER paso 14 |
+| 16 | `appkit` | D21 | ✅ local (EXECUTION_ORDER paso 14; `replace` a `country` y `view` hasta puerta C) |
 
 ## Bloqueos
 
