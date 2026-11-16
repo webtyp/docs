@@ -1,10 +1,10 @@
 # Módulos sin `appkit` y `appkit` sin concretos — plan
 
-> Implementa D62, D63, D65–D73 de [ARCHITECTURE_MASTER_PLAN.md](../ARCHITECTURE_MASTER_PLAN.md). Se ejecuta **en local**
+> Implementa D62, D63, D65–D74 de [ARCHITECTURE_MASTER_PLAN.md](../ARCHITECTURE_MASTER_PLAN.md). Se ejecuta **en local**
 > por [EXECUTION_ORDER paso 17](../EXECUTION_ORDER_MASTER_PLAN.md) (su protocolo: marca, `replace`, `gotest`, cerrar la
 > fila). Nada se publica antes de la puerta 🔵 18. Esta carpeta se borra en esa puerta.
 
-**Estado: 🔵 aprobado por el dueño (2026-11-16).** P57 → D73 y P58 → D72 ya están aplicadas abajo; antes de escribir las etapas con código se responde P59 del master
+**Estado: 🔵 aprobado por el dueño (2026-11-16).** D72, D73 y D74 ya están aplicadas abajo; no quedan preguntas: siguen los archivos de etapa con código compilado
 (tocan §3). Revisión de coherencia hecha el mismo día: lo corregido está en «Correcciones de la revisión», al final.
 
 ## Qué cambia, en una frase
@@ -42,7 +42,7 @@ skill **api-harness**).
 | Nombre | Se lee como | Reemplaza |
 |---|---|---|
 | `config/app.go` · `config/backend.go` · `config/server.go` · `config/browser.go` | qué app es · lo igual en servidor y Worker · lo propio del servidor nativo (D73) · lo que corre en el navegador | `config/server.go`, `config/browser.go` (vacío) de hoy |
-| `appkit.App{Name, TenantID, Timezone, Countries, SignIn, Modules, Log}` (`DefaultDocument`: P59) | la app, igual en los dos lados | `App.Brand`, `App.Server`, `[]appkit.Module` |
+| `appkit.App{Name, TenantID, Timezone, Countries, SignIn, Modules, Log}` (sin `DefaultDocument`, D74) | la app, igual en los dos lados | `App.Brand`, `App.Server`, `[]appkit.Module` |
 | `appkit.Backend{Events, API, Agents, Public, Routes, Modules}` · `appkit.Server{Database, NewIDs}` | lo igual en servidor y Worker · lo propio del servidor nativo (D73) | `appkit.AppServer`, `ModuleServer` |
 | `appkit.BackendModule{Name, Build, DefaultGrants}` · `appkit.BrowserModule{Name, Screens}` | la parte de backend · la parte de navegador de un módulo | `appkit.Module{Server, Browser}` |
 | `appkit.Browser{Caller, NewIDs, Modules}` · `appkit.RunBrowser` | lo que usa el navegador · arrancar el navegador | `appkit.Browser(app, layout)` |
@@ -181,13 +181,13 @@ Maneras de hacer lo mismo                    −2 (buscar un módulo: solo FindB
 
 | # | Repo | Qué | Depende de |
 |---|---|---|---|
-| 1 | `view`, `layout`, `appkit` | D66: sin `Brand`; `App.Name`; el logo desde `docs/logo/logo.png`; `view.BrowserDeps` suma `IDs` | — |
+| 1 | `view`, `layout`, `appkit` | D66: sin `Brand`; `App.Name`; el logo desde `docs/logo/logo.png`; `view.BrowserDeps` suma `IDs` y pierde `DefaultDocument` (D74) | — |
 | 2a | `events` y consumidores | D72: `events/mock` → `events/inprocess` | — |
 | 2 | `rpc`, `mcp` | D70: `rpc.JSON{}` y `mcp.Tools{Allowed}`, cada uno cumple la interfaz chica de `appkit` | — |
 | 3 | `appkit` | D67, D69, D71, D73: `App`/`Backend`/`Browser`, `BackendModule`/`BrowserModule`, `FindBuiltModule`, `Build` + `Mount`, `RunBrowser`; fuera `httpd`, `rpc`, `mcp`, `unixid`, `env` | 1, 2 |
 | 4 | `server`, `migrate` | `maingen.go`: el `main` generado del paso 4 **y** el `migrate/main.go` generado (hoy lee `config.App.Server.Database`, `maingen.go:158,163`; pasa a `config.Backend.Database`); ejemplos de `migrate/migrate.go:60,93` | 3 |
 | 5 | `appkit`, `access` | D68: el ingreso entra a `appkit` (`SignIn`); `access/module/` se borra — junto con «access 1b» | 3 |
-| 6 | 8 módulos, uno por vez | D65, D63, D71: borrar `module/`, quitar `appkit`, `ui.Screens(d view.BrowserDeps)`; `device_manager` exporta `TenantDevices` (en `queries.go`, skill **module-layout**). `appointment_booking` no tiene `var Definition`: va después de su migración a `crud` (ARCHITECTURE capa 8), que la crea | 1 (`BrowserDeps.IDs`) |
+| 6 | 8 módulos, uno por vez | D65, D63, D71: borrar `module/`, quitar `appkit`, `ui.Screens(d view.BrowserDeps)`; `device_manager` exporta `TenantDevices` (en `queries.go`, skill **module-layout**). `patient_directory`: `initialDocumentType` y fuera `Deps.DefaultDocument` (D74). `appointment_booking` no tiene `var Definition`: va después de su migración a `crud` (ARCHITECTURE capa 8), que la crea | 1 (`BrowserDeps.IDs`) |
 | 7 | `mjosefa-cms` | pasos 1–4 de §3 (junto con A5); `migrate/pastdb/plan.go:18` pasa a `appkit.BuildModules(config.App, config.Backend, tx)` | 4, 5, 6 |
 | 8 | docs y skills | **app-modules**, **module-layout**, **app-server-main**, **isomorphic-libraries**, **project-layout**; quitar las líneas STATUS | 7 |
 
@@ -200,11 +200,11 @@ Verificación al cerrar (D64, sin compuerta): `grep -l webtyp.com/appkit veltyla
 ## Correcciones de la revisión (2026-11-16)
 
 1. «Nuevo: nada» contradecía D70: `rpc.JSON` y `mcp.Tools` son tipos nuevos.
-2. `App` no traía `Countries` (paso 14); `DefaultDocument` (paso 15) es un dato de un solo módulo: P59.
+2. `App` no traía `Countries` (paso 14); `DefaultDocument` (paso 15) sale del framework: el módulo lo deduce (D74).
 3. `Backend` perdía en silencio `Public` y `Routes` de `AppServer`; se mantienen. `Infra` y `Grants` se borran a
    propósito (solo servían al ingreso, que ahora arma `appkit`). `BackendModule` conserva `DefaultGrants`.
 4. `appointment_booking/ui.Screens` necesita ids: `view.BrowserDeps` suma `IDs`, y la etapa 6 depende de la 1.
-5. `appointment_booking` no tiene `var Definition`: no puede ir en `App.Modules` hasta su migración a `crud`.
+5. `patient_directory`: `initialDocumentType` y fuera `Deps.DefaultDocument` (D74). `appointment_booking` no tiene `var Definition`: no puede ir en `App.Modules` hasta su migración a `crud`.
 6. El `migrate/main.go` generado y la importación de `mjosefa-cms` leen `config.App.Server.Database` y
    `appkit.BuildModules(app, tx)`: entran a las etapas 4 y 7.
 7. El navegador recibía su transporte como argumento suelto y el backend como campo: ahora los dos son campos
