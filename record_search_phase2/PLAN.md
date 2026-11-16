@@ -72,7 +72,7 @@ Prior art: `tenant_id` (a reserved column the framework stamps: `orm/store.go:12
 | 10e | `indexdb` | [STAGE_10E_INDEXDB.md](STAGE_10E_INDEXDB.md) | 10c |
 | 10f | `ddl` | [STAGE_10F_DDL.md](STAGE_10F_DDL.md) | 10c |
 | 10g | `definitioncheck`, `definitionc` | [STAGE_10G_GENERATOR.md](STAGE_10G_GENERATOR.md) | 10a |
-| 10h | `crud` | [STAGE_10H_CRUD.md](STAGE_10H_CRUD.md) | 10a, 10c; **and `crud/docs/PLAN.md` closed** (a Jules plan runs there) |
+| 10h | `crud` | [STAGE_10H_CRUD.md](STAGE_10H_CRUD.md) | 10a, 10c |
 | 10i | `view`, `layout/crudview` | [STAGE_10I_SCREEN.md](STAGE_10I_SCREEN.md) | 10a |
 | 10j | `chat_room`, `editorial`, `room_layout`, `service_catalog` | [STAGE_10J_MODULES.md](STAGE_10J_MODULES.md) | 10g, 10h |
 

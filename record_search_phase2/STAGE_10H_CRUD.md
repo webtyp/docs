@@ -5,8 +5,8 @@
 Repo `webtyp/crud`. Decisions: RECORD_SEARCH D1 (default search), D2 (same function at search time), D6, D8.
 Compiled and tested green on 2026-11-16 (all existing `crud` tests still pass).
 
-**Precondition:** `crud/docs/PLAN.md` (file upload, a Jules session) is closed — the file is gone and its PR merged.
-While it exists, this step stays ⬜ and Sonnet stops (protocol rule 2). Then `git pull` in `crud` first.
+`crud/docs/PLAN.md` (file upload) is another local plan of the same repo, not running anywhere: ignore it here and
+do not touch its files; it runs in its own turn (**agents-workflow** «No remote executor»).
 
 ## Setup
 

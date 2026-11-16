@@ -5,7 +5,7 @@ Orquesta, en orden, la ejecución **local** de cuatro masters: [PATIENT_DIRECTOR
 
 **Protocolo del ejecutor (Sonnet) — leer completo antes de cada paso:**
 1. Leer las skills **master-plan** («Local execution across repos»), **testing**, **zero-debt**, **bug-fix-flow** y las que nombre el paso. Las skills son la única fuente de cómo trabajar (`webtyp/devskills/skills`).
-2. Tomar el **primer** paso de «Fases» cuyo estado sea ⬜ y cuyas dependencias estén ✅. Si el paso es de **Opus** o del **Dueño**, o es una puerta 🔵, **detenerse** y avisar en una línea; no saltarlo.
+2. Tomar el **primer** paso de «Fases» cuyo estado sea ⬜ y cuyas dependencias estén ✅. Si el paso es de **Opus** o del **Dueño**, o es una puerta 🔵, **detenerse** y avisar en una línea; no saltarlo. Ningún paso espera a un agente externo (no hay: Jules cerró; todo es local); otro plan del mismo repo no bloquea, se hace uno tras otro.
 3. Antes de tocar código: escribir al inicio de su `Estado` `[Sonnet · AAAA-MM-DD HH:MM] 🟡` y guardar (`gopush --no-cascade` en `webtyp/docs`). Marca de otro agente con menos de 90 min → no tocar.
 4. Leer la decisión citada en el master de dominio y el código que nombra (`archivo:línea`). Trabajar **solo** en los repos del paso. Un consumidor que necesita el cambio usa `replace` a la copia local; **no publicar** (`gopush`, tags) hasta la puerta 🔵.
 5. Verificar: `gotest` en cada repo tocado. Si el paso dice «pantalla»: MCP `webtyp` → `restart_development` del módulo, `browser_save_screenshot` a 972 px y en `iPhone SE` (320 px), y mirar la captura.
@@ -46,7 +46,7 @@ Marcas: ⬜ por hacer · 🟡 en curso · ✅ hecho en local · 🔵 puerta del 
 | 10e | `indexdb` | [STAGE_10E_INDEXDB](record_search_phase2/STAGE_10E_INDEXDB.md): leer columnas pedidas; editar no borra `text_search` (D7) | ⬜ depende de 10c |
 | 10f | `ddl` | [STAGE_10F_DDL](record_search_phase2/STAGE_10F_DDL.md): columna en `Sync`, reconstrucción en Go cuando cambia la lista de campos (D1, D2) | ⬜ depende de 10c |
 | 10g | `definitioncheck`, `definitionc` | [STAGE_10G_GENERATOR](record_search_phase2/STAGE_10G_GENERATOR.md): nombre reservado (D3), genera `ListsOnlyAfterSearch()` (D8), `Search` sin `text` (D6) | ⬜ depende de 10a |
-| 10h | `crud` | [STAGE_10H_CRUD](record_search_phase2/STAGE_10H_CRUD.md): búsqueda por defecto en `text_search`, la regla solo agrega (D6), lista vacía sin texto (D8) | ⬜ depende de 10a, 10c **y de que se cierre `crud/docs/PLAN.md`** (Jules, subida de archivos) |
+| 10h | `crud` | [STAGE_10H_CRUD](record_search_phase2/STAGE_10H_CRUD.md): búsqueda por defecto en `text_search`, la regla solo agrega (D6), lista vacía sin texto (D8) | ⬜ depende de 10a, 10c |
 | 10i | `view`, `layout/crudview` | [STAGE_10I_SCREEN](record_search_phase2/STAGE_10I_SCREEN.md): «Escribe para buscar» (D8) | ⬜ depende de 10a |
 | 10j | `chat_room`, `editorial`, `room_layout`, `service_catalog` | [STAGE_10J_MODULES](record_search_phase2/STAGE_10J_MODULES.md): sus reglas `Search` pierden `text` (D6) | ⬜ depende de 10g, 10h |
 | 11 | `indexdb`, `sqlite`, `postgres` | RECORD_SEARCH fase 3: prueba de conformidad, misma búsqueda y mismo resultado en los tres (incluye la cláusula nueva de 10c en `sqlite` y `postgres`) | ⬜ depende de 10a–10j |
