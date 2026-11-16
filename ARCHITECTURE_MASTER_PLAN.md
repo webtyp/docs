@@ -9,22 +9,26 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 Contexto: el dueño encontró la forma de §3 del [plan](modules_without_appkit/PLAN.md) difícil para quien no sabe montar una app. Meta: que montar una app se lea paso a paso, sin funciones ni variables cuyo motivo no se vea.
 
-**P55 — Cómo escribe la app sus módulos, respetando las tres partes de un módulo.** Un módulo tiene tres partes (skill **project-layout**, etiquetas): **compartida** (sin etiqueta: sus modelos, su `Definition`), **backend** (`!browser`: servidor nativo `!wasm` y Worker `wasm && !browser`; su `New` sobre la base) y **navegador** (`browser`, solo WASM; sus pantallas). La app debe escribir cada parte donde corre, sin variables vacías de relleno («every tagless symbol exists under every tag», lo que hoy obliga a `var server appkit.ModuleServer` en `browser.go`). A) **`appkit.Module` cambia según la etiqueta** y la app escribe **dos listas**, una por archivo, cada una completa: `config/modules_backend.go` (`!browser`: nombre + cómo se construye) y `config/modules_browser.go` (`browser`: nombre + sus pantallas); `config/app.go` (compartido) dice `Modules: modules`. B) Un valor por módulo en `config/app.go` con campos `Backend` y `Browser` que apuntan a variables de los archivos con etiqueta (cada variable existe vacía en la otra etiqueta). En los dos, toda `ui.Screens` recibe `view.BrowserDeps` (hoy 4 firmas distintas), así la app escribe `Screens: devicesui.Screens`. **¿Cuál evita el acoplamiento y es más mantenible?** Igual acoplamiento; A no tiene variables de relleno y cada archivo se lee solo, de arriba abajo. **Recomiendo A.** Respuesta:
+**P55 — Cómo declara la app sus módulos una sola vez, respetando sus tres partes.** Un módulo tiene tres partes (skill **project-layout**): **compartida** (sin etiqueta: modelos, `Definition`), **backend** (`!browser`: servidor nativo y Worker; su `New` sobre la base) y **navegador** (`browser`, solo WASM; sus pantallas). Go no deja escribir en un mismo valor código que solo compila en el backend: si el valor vive en un archivo sin etiqueta, todo lo que nombra entra también al WASM.
+**Nombres de archivo (pregunta del dueño):** `config/backend.go` **sí**: dice exactamente lo que cubre `!browser` (servidor y Worker), mejor que «server». `config/frontend.go` **no**: la etiqueta se llama `browser` y la carpeta `web/browser`; «frontend» sería una tercera palabra para lo mismo → `config/browser.go`. El `config/server.go` de hoy (`AppServer`) se junta en `backend.go`.
+A) **Una declaración por módulo, en `config/app.go`**, con su construcción y sus pantallas juntas: es la única forma de escribir cada módulo **una vez**; costo: su código de backend (`New`, almacenes, `orm`) entra al WASM del navegador. B) **La lista se escribe una vez** en `config/app.go` (orden y nombres), y cada archivo con etiqueta pone solo su parte de cada módulo, buscándolo por su nombre: el módulo aparece una vez por parte, nunca vacío. En los dos, toda `ui.Screens` recibe `view.BrowserDeps` (hoy 4 firmas distintas) para escribir `Screens: devicesui.Screens` sin envolver.
+**¿Cuál evita el acoplamiento y es más mantenible?** Igual acoplamiento; A es más simple de leer, B mantiene el navegador liviano. Decide el peso: **recomiendo medir una vez** el WASM de un módulo con y sin su `New` enlazado (un `go build` con `tinygo`, minutos): si crece menos de un 10 %, A; si no, B. Respuesta:
 ```go
-// A — config/modules_backend.go (//go:build !browser): cómo se construye cada módulo, en orden
-var modules = []appkit.Module{
-	{Name: devicemanager.Definition.Name, Build: func(d appkit.Deps) (model.ModuleNaming, error) {
-		return devicemanager.New(d.DB, devicemanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID})
-	}},
-	// … un elemento por módulo
-}
-// A — config/modules_browser.go (//go:build browser): las pantallas de cada módulo, en el orden del menú
-var modules = []appkit.Module{
-	{Name: devicemanager.Definition.Name, Screens: devicesui.Screens},
+// A — config/app.go: cada módulo una vez
+var App = appkit.App{Name: "Mjosefa", SignIn: appkit.SignInByTrustedIP, Modules: []appkit.Module{
+	{Name: devicemanager.Definition.Name,
+		Build: func(d appkit.Deps) (model.ModuleNaming, error) {
+			return devicemanager.New(d.DB, devicemanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID})
+		},
+		Screens: devicesui.Screens},
 	// …
-}
-// A — config/app.go (compartido)
-var App = appkit.App{Name: "Mjosefa", TenantID: "mjosefa-cms", Timezone: "America/Santiago", SignIn: appkit.SignInByTrustedIP, Modules: modules, Server: server}
+}}
+// B — config/app.go: la lista, una vez
+Modules: []model.ModuleDefinition{servicecatalog.Definition, devicemanager.Definition, staffmanager.Definition /* … */},
+// B — config/backend.go (//go:build !browser): solo cómo se construye cada uno
+var builds = []appkit.Build{{Module: devicemanager.Definition.Name, Run: func(d appkit.Deps) (model.ModuleNaming, error) { … }}}
+// B — config/browser.go (//go:build browser): solo sus pantallas
+var screens = []appkit.Screens{{Module: devicemanager.Definition.Name, Show: devicesui.Screens}}
 ```
 
 ## Decisiones por implementar
