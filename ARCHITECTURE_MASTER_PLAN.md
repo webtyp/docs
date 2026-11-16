@@ -1,5 +1,5 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; plan en revisión: P55)
+> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; plan en revisión, espera 🔵)
 
 Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
 Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
@@ -7,29 +7,7 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 ## Preguntas abiertas
 
-Contexto: el dueño encontró la forma de §3 del [plan](modules_without_appkit/PLAN.md) difícil para quien no sabe montar una app. Meta: que montar una app se lea paso a paso, sin funciones ni variables cuyo motivo no se vea.
-
-**P55 — Cómo declara la app sus módulos una sola vez, respetando sus tres partes.** Un módulo tiene tres partes (skill **project-layout**): **compartida** (sin etiqueta: modelos, `Definition`), **backend** (`!browser`: servidor nativo y Worker; su `New` sobre la base) y **navegador** (`browser`, solo WASM; sus pantallas). Go no deja escribir en un mismo valor código que solo compila en el backend: si el valor vive en un archivo sin etiqueta, todo lo que nombra entra también al WASM.
-**Nombres de archivo (pregunta del dueño):** `config/backend.go` **sí**: dice exactamente lo que cubre `!browser` (servidor y Worker), mejor que «server». `config/frontend.go` **no**: la etiqueta se llama `browser` y la carpeta `web/browser`; «frontend» sería una tercera palabra para lo mismo → `config/browser.go`. El `config/server.go` de hoy (`AppServer`) se junta en `backend.go`.
-A) **Una declaración por módulo, en `config/app.go`**, con su construcción y sus pantallas juntas: es la única forma de escribir cada módulo **una vez**; costo: su código de backend (`New`, almacenes, `orm`) entra al WASM del navegador. B) **La lista se escribe una vez** en `config/app.go` (orden y nombres), y cada archivo con etiqueta pone solo su parte de cada módulo, buscándolo por su nombre: el módulo aparece una vez por parte, nunca vacío. En los dos, toda `ui.Screens` recibe `view.BrowserDeps` (hoy 4 firmas distintas) para escribir `Screens: devicesui.Screens` sin envolver.
-**¿Cuál evita el acoplamiento y es más mantenible?** Igual acoplamiento; A es más simple de leer, B mantiene el navegador liviano. Decide el peso: **recomiendo medir una vez** el WASM de un módulo con y sin su `New` enlazado (un `go build` con `tinygo`, minutos): si crece menos de un 10 %, A; si no, B. Respuesta:
-```go
-// A — config/app.go: cada módulo una vez
-var App = appkit.App{Name: "Mjosefa", SignIn: appkit.SignInByTrustedIP, Modules: []appkit.Module{
-	{Name: devicemanager.Definition.Name,
-		Build: func(d appkit.Deps) (model.ModuleNaming, error) {
-			return devicemanager.New(d.DB, devicemanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID})
-		},
-		Screens: devicesui.Screens},
-	// …
-}}
-// B — config/app.go: la lista, una vez
-Modules: []model.ModuleDefinition{servicecatalog.Definition, devicemanager.Definition, staffmanager.Definition /* … */},
-// B — config/backend.go (//go:build !browser): solo cómo se construye cada uno
-var builds = []appkit.Build{{Module: devicemanager.Definition.Name, Run: func(d appkit.Deps) (model.ModuleNaming, error) { … }}}
-// B — config/browser.go (//go:build browser): solo sus pantallas
-var screens = []appkit.Screens{{Module: devicemanager.Definition.Name, Show: devicesui.Screens}}
-```
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -97,6 +75,7 @@ var screens = []appkit.Screens{{Module: devicemanager.Definition.Name, Show: dev
 | D68 (P51) | **El ingreso a la app lo arma `appkit`**, no un módulo: `access/module/` (login por IP de confianza, primer administrador, registro de eventos de seguridad, pantalla de ingreso, `Authn`/`Authorize`/`Policy`) pasa a `appkit`, que lo construye con `auth`, `rbac` y `access` usando solo lo que la app le pasó (D67); la app elige el método con una línea tipada (`appkit.App{SignIn: appkit.SignInByTrustedIP}`, forma exacta en el Design gate del plan); lo opcional (equipos del personal, registro del primer administrador) lo busca entre los módulos construidos. `access` queda solo como puente usuarios ↔ roles, sin `appkit`; `access.Module` desaparece de `App.Modules`. Va junto con el plan pendiente «access 1b» | `appkit`, `access`, `mjosefa-cms` |
 | D69 (P54) | `appkit.Find[T]` se reemplaza por **`appkit.FindBuiltModule`, sin genéricos**: busca por el nombre del módulo (`Module.Name`, que es `Definition.Name`) entre los ya construidos y devuelve `(model.ModuleNaming, error)`; quien llama hace la aserción de tipo en una línea escrita. Si no está construido: error que dice cuál falta y que debe ir antes en `App.Modules`. `appkit` busca lo opcional del ingreso (D68) con una aserción de interfaz dentro de su propio código, sin exportarla. Se borran `Find`, `ErrManyProviders` y la excepción de genéricos de la skill **api-harness** | `appkit`, `mjosefa-cms` |
 | D70 (P56) | `rpc` y `mcp` exportan **un valor cada uno** que cumple una interfaz chica declarada en `appkit` (ni `rpc` conoce `appkit` ni `appkit` conoce `rpc`); la app los nombra en `config/server.go`: `API: rpc.JSON{}` (las operaciones como JSON por HTTP) y `Agents: mcp.Tools{Allowed: MCPTools()}` (las que un agente puede llamar). Reemplaza `rpc.Mount`/`mcp.NewServer` dentro de `appkit/server.go:38-58` y el campo `AppServer.MCPTools` | `rpc`, `mcp`, `appkit`, `mjosefa-cms` |
+| D71 (P55) | **Cada parte de la app en el archivo de su etiqueta, la lista de módulos una sola vez, sin variables de relleno.** `config/app.go` (sin etiqueta): qué app es (`Name`, `TenantID`, `Timezone`, `SignIn`) y la lista de módulos en orden, una vez (`[]model.ModuleDefinition`). `config/backend.go` (`!browser`: servidor y Worker): lo que elige el backend (base, eventos, `API`, `Agents`) y cómo se construye cada módulo, buscado por su nombre. `config/browser.go` (`browser`): las pantallas de cada módulo. Cada `main` recibe la parte de su etiqueta (`web/server` y `web/edge` la de backend, `web/browser` la de navegador), así ningún valor necesita existir vacío en la otra etiqueta; `appkit` falla con un error claro si un módulo de la lista no tiene su parte. Toda `ui.Screens` recibe `view.BrowserDeps`. El peso del WASM no decide (skill **wasm**) | `appkit`, `server` (maingen), 8 módulos (`ui.Screens`), `mjosefa-cms` |
 
 ## Fases
 
@@ -116,7 +95,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 | 8 | `network_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.1.122 (partes 1 y 2 completas: reglas, llamadas, lectores, pantalla, demo, pruebas, docs); deuda: 17 claves sin traducir en 7 idiomas |
 | 8 | `payment_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.4.49 (etapas 1–5 + pruebas 2a + 2b traducciones y docs) y arreglo de `CompleteOnlinePayment` en `main` sin etiqueta (era un cuerpo vacío; ahora pregunta a la pasarela con `Gateway.Confirm`); avisos de reutilización de `langc` pendientes (6; plan chico por escribir); los avisos de reutilización de langc los corrijo yo); adaptadores: `transbank` 🟢 v0.2.41 (Confirm, el retorno solo identifica, `RawQuery`) y `tuu` 🟢 v0.2.42 (`WaitSeconds`); falta que apunten a `payment_manager` v0.4.48 (hoy versión provisional) |
 | 9 | subida de archivos (A6.12, D46), `misitio` sobre `crud` | diseño en [FILE_UPLOAD_DESIGN.md](FILE_UPLOAD_DESIGN.md), P1–P5 decididas | 🟢 `router` v0.5.0 (`RawQuery`, `Path()` solo ruta, `conformance.RunContext`), `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78 (`r2.Files`), `mcp` v0.3.28, `filetype` v0.1.1 (video, audio, `Documents` = PDF/Word/Excel/PowerPoint, `Scans`), `input` v0.2.0 (`ImageFile`…) · 🔴 `crud` camino de archivo en local (`crud/docs/PLAN.md`; Jules murió sin PR; independiente de RECORD_SEARCH 10h, mismo repo, uno tras otro); 🔴 por escribir (esperan a `crud`): `appkit` (entrega `files.Store`), `view` (widget), `misitio`; conformancia de `ILike` en [APP_USABILITY](APP_USABILITY_MASTER_PLAN.md) S1 |
-| 10 | `appkit`, 8 módulos, `access`, `mjosefa-cms` (repos según P51) | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 [plan](modules_without_appkit/PLAN.md): §3 se simplifica según P55 (ejecución: EXECUTION_ORDER 17–18) |
+| 10 | `appkit`, 8 módulos, `access`, `mjosefa-cms` (repos según P51) | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 [plan](modules_without_appkit/PLAN.md): §3 paso a paso según D65–D71, espera 🔵 (ejecución: EXECUTION_ORDER 17–18) |
 
 ## Bloqueos
 

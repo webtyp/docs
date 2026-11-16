@@ -1,10 +1,10 @@
 # Módulos sin `appkit` y `appkit` sin concretos — plan
 
-> Implementa D62, D63, D65–D69 de [ARCHITECTURE_MASTER_PLAN.md](../ARCHITECTURE_MASTER_PLAN.md). Se ejecuta **en local**
+> Implementa D62, D63, D65–D71 de [ARCHITECTURE_MASTER_PLAN.md](../ARCHITECTURE_MASTER_PLAN.md). Se ejecuta **en local**
 > por [EXECUTION_ORDER paso 17](../EXECUTION_ORDER_MASTER_PLAN.md) (su protocolo: marca, `replace`, `gotest`, cerrar la
 > fila). Nada se publica antes de la puerta 🔵 18. Esta carpeta se borra en esa puerta.
 
-**Estado: §3 se reescribe paso a paso cuando el dueño responda P55 del master (P56 → D70).** Los archivos de etapa (código exacto, compilado) se escriben
+**Estado: espera 🔵 del dueño sobre §3 (montar una app, paso a paso).** Los archivos de etapa (código exacto, compilado) se escriben
 después del 🔵: si una forma cambia, no se reescriben etapas.
 
 ## Qué cambia, en una frase
@@ -38,100 +38,107 @@ skill **api-harness**).
 
 ### 2. Nombres (prueba del novato)
 
-| Nombre nuevo | Se lee como | Reemplaza |
+| Nombre | Se lee como | Reemplaza |
 |---|---|---|
+| `config/app.go` · `config/backend.go` · `config/browser.go` | qué app es · lo que corre en el servidor y el Worker · lo que corre en el navegador (la etiqueta se llama `browser`) | `config/server.go`, `config/browser.go` (vacío) de hoy |
+| `appkit.App{Name, TenantID, Timezone, SignIn, Modules}` | la app, igual en los dos lados | `App.Brand`, `App.Server`, `[]appkit.Module` |
+| `appkit.Backend{Database, NewIDs, Events, API, Agents, Modules}` | lo que elige el backend y cómo se construye cada módulo | `appkit.AppServer`, `ModuleServer` |
+| `appkit.BackendModule{Name, Build}` · `appkit.BrowserModule{Name, Screens}` | la parte de backend · la parte de navegador de un módulo | `appkit.Module{Server, Browser}` |
+| `appkit.Browser{NewIDs, Modules}` · `appkit.RunBrowser` | lo que usa el navegador · arrancar el navegador | `appkit.Browser(app, layout)` |
+| `appkit.SignInByTrustedIP` | «la gente entra por IP de confianza» | `access.Module` en la lista (D68) |
 | `appkit.FindBuiltModule(d, name)` | «busca el módulo ya construido con ese nombre» | `appkit.Find[T]` (D69) |
-| `appkit.App.Name` | el nombre de la app | `appkit.App.Brand` / `view.Brand` (D66) |
-| `appkit.App.SignIn` + `appkit.SignInByTrustedIP` | «cómo entra la gente: por IP de confianza» | `access.Module` en `App.Modules` (D68) |
-| `appkit.AppServer.NewIDs`, `.Events`, `.Transports` | lo que la app elige para su servidor | `unixid`, `eventsmock`, `rpc`, `mcp` dentro de `appkit` (D67) |
+| `rpc.JSON{}` · `mcp.Tools{Allowed}` | las operaciones como JSON por HTTP · las que un agente puede llamar | `rpc.Mount`/`mcp.NewServer` dentro de `appkit` (D70) |
 | `devicemanager.TenantDevices` | «los equipos de un tenant» | `IPLocator` + el tipo escondido `served` (D63) |
 
-### 3. Forma propuesta — lo que el dueño revisa
+### 3. Montar una app, paso a paso — lo que el dueño revisa
 
-**Lo que escribe la app** (`mjosefa-cms`), todo junto, para ver que se lee de corrido:
+Cada parte va en el archivo de su etiqueta; la lista de módulos se escribe **una vez**; ningún valor existe vacío en la
+otra etiqueta (D71). Ejemplo: `mjosefa-cms`.
+
+**Paso 1 — Qué app es** · `config/app.go` (sin etiqueta: lo leen el servidor, el Worker y el navegador)
 
 ```go
-// config/app.go — lo mismo para servidor y navegador
 var App = appkit.App{
+	Name:     "Mjosefa",                // el logo es docs/logo/logo.png (PNG), no un campo (D66)
 	TenantID: "mjosefa-cms",
-	Name:     "Mjosefa",                // D66: el logo sale de docs/logo/logo.png (PNG)
 	Timezone: "America/Santiago",
-	SignIn:   appkit.SignInByTrustedIP, // D68: cero = nadie entra, toda operación se niega (cerrado por defecto)
-	Modules: []appkit.Module{           // D65: el orden importa: quien provee va antes
-		{Name: servicecatalog.Definition.Name, Server: catalogServer, Browser: catalogScreens},
-		{Name: devicemanager.Definition.Name, Server: devicesServer, Browser: devicesScreens},
-		{Name: staffmanager.Definition.Name, Server: staffServer, Browser: staffScreens},
-		// … calendar, rooms, patients, booking, encounters
+	SignIn:   appkit.SignInByTrustedIP, // cómo entra la gente; sin esto nadie entra y toda operación se niega (D68)
+	Modules: []model.ModuleDefinition{  // los módulos, una vez y en orden: quien provee a otro va antes (D65, D71)
+		servicecatalog.Definition, devicemanager.Definition, staffmanager.Definition, businesscalendar.Definition,
+		roomlayout.Definition, patientdirectory.Definition, appointmentbooking.Definition, clinicalencounter.Definition,
 	},
-	Server: server,
-	Log:    func(a ...any) { fmt.Println(a...) },
+	Log: func(a ...any) { fmt.Println(a...) },
+}
+```
+
+**Paso 2 — Lo que corre en el servidor** · `config/backend.go` (`//go:build !browser`: servidor nativo y Worker)
+
+```go
+var Backend = appkit.Backend{
+	Database: postgres.Open,                                                  // qué base de datos
+	NewIDs:   func() (model.IDGenerator, error) { return unixid.NewUnixID() }, // cómo se crean los ids
+	Events:   &eventsmock.Broker{},                                           // los avisos entre módulos, en el mismo proceso
+	API:      rpc.JSON{},                                                     // las operaciones como JSON por HTTP (D70)
+	Agents:   mcp.Tools{Allowed: MCPTools()},                                 // las que un agente puede llamar (D70)
+	Modules: []appkit.BackendModule{                                          // cómo se construye cada módulo
+		{Name: devicemanager.Definition.Name, Build: func(d appkit.Deps) (model.ModuleNaming, error) {
+			return devicemanager.New(d.DB, devicemanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID})
+		}},
+		{Name: staffmanager.Definition.Name, Build: buildStaff}, // necesita los equipos: abajo
+		// … un elemento por módulo de App.Modules; si falta uno, appkit lo dice al arrancar
+	},
 }
 
-// config/server.go (!browser) — D67: la app elige cada concreto
-var server = appkit.AppServer{
-	Database:   postgres.Open,                                                      // ya existe hoy
-	NewIDs:     func() (model.IDGenerator, error) { return unixid.NewUnixID() },
-	Events:     &eventsmock.Broker{},                                               // el broker en proceso que hoy appkit elige solo
-	Transports: []appkit.Transport{jsonOverHTTP, agentTools},                       // abajo
-	MCPTools:   MCPTools(),
-}
-
-// config/transports.go (!browser) — el JSON por HTTP (rpc) y las herramientas para agentes (mcp)
-func jsonOverHTTP(r router.Router, o appkit.Operations) error {
-	return rpc.Mount(r, rpc.DefaultPrefix, o.Log, o.Public, o.Events, o.Modules...)
-}
-func agentTools(r router.Router, o appkit.Operations) error { /* mcp.HarvestOps + mcp.NewServer + MountAPI, movido de appkit/server.go:47-58 */ }
-
-// config/modules_server.go (!browser) — D65 + D69 + D63
-var devicesServer = appkit.ModuleServer{Build: func(d appkit.Deps) (model.ModuleNaming, error) {
-	return devicemanager.New(d.DB, devicemanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID})
-}}
-var staffServer = appkit.ModuleServer{Build: func(d appkit.Deps) (model.ModuleNaming, error) {
+// buildStaff le pasa a staff_manager los equipos de device_manager, sin que uno importe al otro (D63, D69).
+func buildStaff(d appkit.Deps) (model.ModuleNaming, error) {
 	m, err := appkit.FindBuiltModule(d, devicemanager.Definition.Name)
 	if err != nil {
 		return nil, err
 	}
 	dm, ok := m.(*devicemanager.Module)
 	if !ok {
-		return nil, errDevicesType // error escrito en config: «device_manager no construyó *devicemanager.Module»
+		return nil, errDevicesType // config/errors.go: «device_manager no construyó un *devicemanager.Module»
 	}
 	devices := devicemanager.TenantDevices{Devices: dm, TenantID: d.TenantID}
 	return staffmanager.New(d.DB, staffmanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID,
 		ValidateRUT: input.NormalizeRUT, Devices: devices, Registrar: devices})
-}}
-
-// config/modules_browser.go (browser)
-var devicesScreens = view.ModuleBrowser{Screens: func(d view.BrowserDeps) []view.Screen { return devicesui.Screens(d.Caller) }}
+}
 ```
 
-**Lo que escribe el `main` generado** (`server/maingen.go`; la app no lo toca). El `main` crea el servidor HTTP y lee
-`DATABASE_URL` y los argumentos; `appkit` solo construye y monta:
+**Paso 3 — Lo que corre en el navegador** · `config/browser.go` (`//go:build browser`)
 
 ```go
-// web/server/main.go (generado)
-built, err := appkit.Build(config.App, os.Getenv("DATABASE_URL"), config.Schema) // módulos, ingreso, colas
-srv := httpd.New(httpd.Config{Port: port, PublicDir: publicDir, Gzip: true, Health: true, Logger: config.App.Log,
-	Authn: built.Authn, Authorize: built.Authorize, Policy: built.Policy})
-err = built.Mount(srv.Router(), devtools.Server(config.Schema)...) // Transports + Infra + rutas de la app
-log.Fatal(srv.ListenAndServe())
-
-// web/browser/main.go (una línea, la escribe la app)
-func main() { appkit.Browser(config.App, rpc.NewCaller(""), layoutapp.New(devtools.Menu())) }
+var Browser = appkit.Browser{
+	NewIDs: func() (model.IDGenerator, error) { return unixid.NewUnixID() },
+	Modules: []appkit.BrowserModule{ // las pantallas de cada módulo; toda ui.Screens recibe view.BrowserDeps (D71)
+		{Name: devicemanager.Definition.Name, Screens: devicesui.Screens},
+		{Name: staffmanager.Definition.Name, Screens: staffui.Screens},
+		// …
+	},
+}
 ```
 
-**Puntos a confirmar** (cada uno cambia lo que se escribe arriba):
-1. **`externalcalls` y `backoff` no son concretos**: son lógica sobre la base que pasó la app, como `auth` y `rbac`; se
-   quedan dentro de `appkit`. (D67 los listó; si el dueño los quiere elegibles, se agrega `AppServer.NewCallQueue`.)
-2. **El servidor HTTP lo crea el `main` generado**, en dos pasos (`appkit.Build` → `httpd.New` → `built.Mount`), porque
-   `httpd.Config` necesita `Authn`/`Authorize`/`Policy`, que salen del ingreso que arma `appkit`.
-3. **Los transportes los escribe la app** (`jsonOverHTTP`, `agentTools`: unas 15 líneas por app), porque `appkit` no
-   puede nombrar `rpc` ni `mcp`, y `rpc`/`mcp` no pueden nombrar `appkit.Operations` (las importa la app, no al revés).
-   Alternativa: que el `main` generado los escriba (la app no los ve, pero el generador elige `rpc`/`mcp` por ella).
-4. **`appkit.SignInByTrustedIP` es un valor de un conjunto cerrado** (`type SignIn int`, un valor por método de
-   ingreso); el cero niega todo. El ingreso pide los equipos del personal y el registro del primer administrador buscando
-   **por interfaz** entre los módulos construidos, dentro de `appkit` (no exportado).
-5. **La pantalla de ingreso del navegador** (`access/module/browser.go:86-151`) pasa a un archivo `browser` de `appkit`;
-   deja de crear su propio generador de ids (`browser.go:91`, `unixid` + `panic`): usa el que trae la sesión.
+**Paso 4 — Arrancar** · cada `main` recibe la parte de su etiqueta
+
+```go
+// web/browser/main.go — una línea, la escribe la app
+func main() { appkit.RunBrowser(config.App, config.Browser, rpc.NewCaller(""), layoutapp.New(devtools.Menu())) }
+
+// web/server/main.go — generado por server/maingen.go, la app no lo toca: crea el servidor HTTP y lee DATABASE_URL
+built, err := appkit.Build(config.App, config.Backend, os.Getenv("DATABASE_URL"), config.Schema)
+srv := httpd.New(httpd.Config{Port: port, PublicDir: publicDir, Gzip: true, Health: true, Logger: config.App.Log,
+	Authn: built.Authn, Authorize: built.Authorize, Policy: built.Policy})
+err = built.Mount(srv.Router(), devtools.Server(config.Schema)...)
+log.Fatal(srv.ListenAndServe())
+```
+
+**Puntos a confirmar:**
+1. `externalcalls` y `backoff` **no** son concretos (lógica sobre la base, como `auth`/`rbac`): se quedan en `appkit`.
+2. El servidor HTTP lo crea el `main` generado en dos pasos (`Build` → `httpd.New` → `Mount`), porque `httpd.Config`
+   necesita `Authn`/`Authorize`/`Policy`, que salen del ingreso que arma `appkit`.
+3. `NewIDs` aparece en backend y en navegador: cada lado crea sus ids (hoy la pantalla de ingreso crea los suyos con
+   `unixid` y `panic`, `access/module/browser.go:91`).
+4. `web/edge/main.go` (Worker) recibe `config.Backend` igual que el servidor; su forma de servir (`goflare`) no cambia aquí.
 
 ### 4. ¿Cuál evita el acoplamiento y es más mantenible? ¿Dónde va cada cosa?
 
@@ -140,39 +147,40 @@ func main() { appkit.Browser(config.App, rpc.NewCaller(""), layoutapp.New(devtoo
 - **`appkit`:** el armado común a toda app (orden de módulos, ingreso, montaje, colas de llamadas externas), sin elegir
   concretos: los recibe (D67). Así ninguna librería lo importa y ninguna app repite el ingreso.
 - **App (`config/` + `main` generado):** elige base, ids, eventos, transportes y servidor HTTP; conecta módulos entre sí.
-- Lo que se descartó y por qué está en las decisiones del master (P49 B, P51 A/B, P54 B).
+- **Etiquetas:** lo compartido sin etiqueta, el backend en `!browser`, el navegador en `browser`; el código de backend nunca alcanza el WASM (D71, skill **wasm**).
+- Lo que se descartó y por qué está en las decisiones del master (P49 B, P51 A/B, P54 B, P55 A, P56 B/C).
 
 ### 5. Qué se borra
 
-`module/` en 8 módulos y en `access` · `webtyp.com/appkit` de 9 `go.mod` · `appkit.Find`, `ErrManyProviders` ·
-`appkit` deja de importar `unixid`, `events/mock`, `server/httpd`, `rpc`, `mcp`, `env` · `appkit.Server`, `BuildServer`,
-`MountServer`, `ServerConfig`, `ServerEnv`, `processEnv` (los reemplazan `Build` + `Mount`) · `view.Brand` y
-`App.Brand` · `devicemanager.IPLocator` y el tipo `served` · el helper `optional` de `clinical_encounter` · los nombres
-viejos `appkit.ModuleBrowser|BrowserDeps|EntryScreens|Brand` que hoy rompen el navegador de 3 repos.
+`module/` en 8 módulos y en `access` · `webtyp.com/appkit` de 9 `go.mod` · `appkit.Find`, `ErrManyProviders`,
+`appkit.Module`, `ModuleServer`, `AppServer`, `Server`, `BuildServer`, `MountServer`, `ServerConfig`, `ServerEnv`,
+`processEnv` · `appkit` deja de importar `unixid`, `events/mock`, `server/httpd`, `rpc`, `mcp`, `env` · `view.Brand` y
+`App.Brand` · `config/server.go` y el `config/browser.go` vacío de las apps · `devicemanager.IPLocator` y `served` · el
+helper `optional` de `clinical_encounter` · los nombres viejos `appkit.ModuleBrowser|BrowserDeps|EntryScreens|Brand`.
 
 ### Cuentas
 
 ```
-Conceptos que aprende el desarrollador   −3 (module/, Brand, Find[T]) / +3 (FindBuiltModule, SignIn, Transport)
-Archivos que toca para sumar un módulo   −3 en el módulo (module/*.go) / +2 líneas en la app (Server y Browser)
-Maneras de hacer lo mismo                −2 (buscar un módulo: Find[T] en módulo y en app → FindBuiltModule solo en app;
-                                             logo: Brand.LogoMark y docs/logo/logo.png → solo el archivo)
+Conceptos que aprende quien monta una app   −4 (module/, Brand, Find[T], AppServer) / +3 (Backend, Browser, SignIn)
+Archivos de config/                          3, uno por etiqueta: app.go, backend.go, browser.go
+Maneras de hacer lo mismo                    −2 (buscar un módulo: solo FindBuiltModule en la app; logo: solo el archivo)
 ```
 
-## Etapas (índice; los archivos se escriben tras el 🔵)
+## Etapas (índice; los archivos con código se escriben tras el 🔵)
 
 | # | Repo | Qué | Depende de |
 |---|---|---|---|
-| 1 | `view`, `layout`, `appkit` | D66: `Brand` → `App.Name`; el logo desde `docs/logo/logo.png` | — |
-| 2 | `appkit` | D69 (`FindBuiltModule`) y D67 (`AppServer.NewIDs`, `Events`, `Transports`; `Build` + `Mount`; fuera `httpd`, `rpc`, `mcp`, `unixid`, `env`) | 1 |
-| 3 | `server` | `maingen.go`: el `main` generado crea `httpd`, lee `DATABASE_URL`, llama `Build` y `Mount` | 2 |
-| 4 | `appkit`, `access` | D68: el ingreso entra a `appkit` (`SignIn`); `access/module/` se borra — junto con «access 1b» | 2 |
-| 5 | 8 módulos, uno por vez | D65 + D63: borrar `module/`, quitar `appkit`; `device_manager` exporta `TenantDevices` | — (no depende de `appkit`) |
-| 6 | `mjosefa-cms` | escribe lo de §3 (junto con A5) | 3, 4, 5 |
-| 7 | docs y skills | **app-modules**, **module-layout**, **app-server-main**, **isomorphic-libraries**, **project-layout**; quitar las líneas STATUS | 6 |
+| 1 | `view`, `layout`, `appkit` | D66: sin `Brand`; `App.Name`; el logo desde `docs/logo/logo.png` | — |
+| 2 | `rpc`, `mcp` | D70: `rpc.JSON{}` y `mcp.Tools{Allowed}`, cada uno cumple la interfaz chica de `appkit` | — |
+| 3 | `appkit` | D67, D69, D71: `App`/`Backend`/`Browser`, `BackendModule`/`BrowserModule`, `FindBuiltModule`, `Build` + `Mount`, `RunBrowser`; fuera `httpd`, `rpc`, `mcp`, `unixid`, `env` | 1, 2 |
+| 4 | `server` | `maingen.go`: el `main` generado del paso 4 | 3 |
+| 5 | `appkit`, `access` | D68: el ingreso entra a `appkit` (`SignIn`); `access/module/` se borra — junto con «access 1b» | 3 |
+| 6 | 8 módulos, uno por vez | D65, D63, D71: borrar `module/`, quitar `appkit`, `ui.Screens(d view.BrowserDeps)`; `device_manager` exporta `TenantDevices` | — |
+| 7 | `mjosefa-cms` | pasos 1–4 de §3 (junto con A5) | 4, 5, 6 |
+| 8 | docs y skills | **app-modules**, **module-layout**, **app-server-main**, **isomorphic-libraries**, **project-layout**; quitar las líneas STATUS | 7 |
 
 Verificación al cerrar (D64, sin compuerta): `grep -l webtyp.com/appkit veltylabs/modules/*/go.mod webtyp/access/go.mod`
 → vacío; `grep -n "unixid\|httpd\|webtyp.com/rpc\|webtyp.com/mcp\|events/mock" webtyp/appkit/*.go` → vacío.
 
-**Puerta 18 — orden de publicación** (de abajo hacia arriba): `country` → `view` → `layout` → `appkit` → `server` →
-8 módulos → `access` → `mjosefa-cms`.
+**Puerta 18 — orden de publicación** (de abajo hacia arriba): `country` → `view` → `layout` → `rpc` · `mcp` → `appkit` →
+`server` → 8 módulos → `access` → `mjosefa-cms`.
