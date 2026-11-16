@@ -12,7 +12,7 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 // A — patient_directory/document.go (compartido): una regla, la usan New, el guardado y ui.Screens
 // initialDocumentType es el tipo de documento con que parte una ficha: el documento nacional del país de la instalación.
 func initialDocumentType(countries country.Catalog) string {
-	if countries.Default == country.Chile {
+	if countries.Default == kinds.RUTCountry { // kinds.RUTCountry = "CL": el RUT es de Chile, un dato del módulo
 		return kinds.DocumentRUT
 	}
 	return kinds.DocumentPassport
