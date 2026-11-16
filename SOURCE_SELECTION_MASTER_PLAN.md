@@ -103,7 +103,7 @@
 | E · E2 | consumers, tool dictionaries | ✅ | fetch, ddlc, dom, json, goflare-demo, binary, chat_room, ormc, image, view, devtui, input, pdf, server, date, business_calendar; crudp and appointment_booking committed but unpublished → roadmap |
 | D | app | ✅ v0.6.114 | run locally (private repo; Jules blocked); e2e on mjosefa-cms found the root-class style gap, fixed with a red test |
 | G | modfind | ✅ v0.0.11 | `Seed`, `Dirs`, `Refresh` deleted |
-| F | fmt v1.1.0 | ✅ run locally, tag pending | Jules session vanished; commit on `main` untagged until H1 |
+| F | fmt v1.1.0 | ✅ run locally; **published early as v1.0.1/v1.0.2** | Jules session vanished; on 2026-11-15 a `gopush` for another change tagged `main` (v1.0.1, v1.0.2) before H1 — what to do: [ECOSYSTEM_STABILITY_MASTER_PLAN.md](ECOSYSTEM_STABILITY_MASTER_PLAN.md) P1 |
 | H | mjosefa-cms + veltylabs modules | ⏳ local | roadmap H1–H3 |
 
 ## 6. Lessons for the next wave
