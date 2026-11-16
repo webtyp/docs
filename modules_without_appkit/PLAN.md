@@ -204,7 +204,7 @@ Verificación al cerrar (D64, sin compuerta): `grep -l webtyp.com/appkit veltyla
 3. `Backend` perdía en silencio `Public` y `Routes` de `AppServer`; se mantienen. `Infra` y `Grants` se borran a
    propósito (solo servían al ingreso, que ahora arma `appkit`). `BackendModule` conserva `DefaultGrants`.
 4. `appointment_booking/ui.Screens` necesita ids: `view.BrowserDeps` suma `IDs`, y la etapa 6 depende de la 1.
-5. `patient_directory`: `initialDocumentType` y fuera `Deps.DefaultDocument` (D74). `appointment_booking` no tiene `var Definition`: no puede ir en `App.Modules` hasta su migración a `crud`.
+5. `appointment_booking` no tiene `var Definition`: no puede ir en `App.Modules` hasta su migración a `crud`.
 6. El `migrate/main.go` generado y la importación de `mjosefa-cms` leen `config.App.Server.Database` y
    `appkit.BuildModules(app, tx)`: entran a las etapas 4 y 7.
 7. El navegador recibía su transporte como argumento suelto y el backend como campo: ahora los dos son campos
