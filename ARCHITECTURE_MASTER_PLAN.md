@@ -1,5 +1,5 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; plan en revisión: P55–P56)
+> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; plan en revisión: P55)
 
 Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
 Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
@@ -9,35 +9,22 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 Contexto: el dueño encontró la forma de §3 del [plan](modules_without_appkit/PLAN.md) difícil para quien no sabe montar una app. Meta: que montar una app se lea paso a paso, sin funciones ni variables cuyo motivo no se vea.
 
-**P55 — Cómo se ve un módulo en la app.** Por qué existían `devicesServer` y `devicesScreens`: un módulo tiene dos mitades, lo que corre en el servidor (construirlo sobre la base) y lo que corre en el navegador (sus pantallas); hoy van en archivos distintos con etiqueta `!browser`/`browser` para que el código del servidor no viaje al navegador (WASM más liviano). A) **Un valor por módulo, en un solo archivo** `config/<módulo>.go`: se lee de una vez; costo: el código de servidor del módulo (su `New`, sus almacenes, `orm`) también entra al WASM del navegador — peso sin medir. B) **Dos archivos por módulo** según dónde corre, con nombres que lo dicen: `config/devices_server.go` y `config/devices_browser.go`. En los dos casos todas las `ui.Screens` pasan a recibir `view.BrowserDeps` (hoy hay 4 firmas distintas: `appointment_booking/ui`, `patient_directory/ui`, `clinical_encounter/ui` y el resto), así la app escribe `Screens: devicesui.Screens` sin envolver nada. **¿Cuál evita el acoplamiento y es más mantenible?** Igual acoplamiento; A es más fácil de leer, B protege el peso del navegador. **Recomiendo A si al medir el WASM de `mjosefa-cms` crece menos de un 10 %; si no, B.** Respuesta:
+**P55 — Cómo escribe la app sus módulos, respetando las tres partes de un módulo.** Un módulo tiene tres partes (skill **project-layout**, etiquetas): **compartida** (sin etiqueta: sus modelos, su `Definition`), **backend** (`!browser`: servidor nativo `!wasm` y Worker `wasm && !browser`; su `New` sobre la base) y **navegador** (`browser`, solo WASM; sus pantallas). La app debe escribir cada parte donde corre, sin variables vacías de relleno («every tagless symbol exists under every tag», lo que hoy obliga a `var server appkit.ModuleServer` en `browser.go`). A) **`appkit.Module` cambia según la etiqueta** y la app escribe **dos listas**, una por archivo, cada una completa: `config/modules_backend.go` (`!browser`: nombre + cómo se construye) y `config/modules_browser.go` (`browser`: nombre + sus pantallas); `config/app.go` (compartido) dice `Modules: modules`. B) Un valor por módulo en `config/app.go` con campos `Backend` y `Browser` que apuntan a variables de los archivos con etiqueta (cada variable existe vacía en la otra etiqueta). En los dos, toda `ui.Screens` recibe `view.BrowserDeps` (hoy 4 firmas distintas), así la app escribe `Screens: devicesui.Screens`. **¿Cuál evita el acoplamiento y es más mantenible?** Igual acoplamiento; A no tiene variables de relleno y cada archivo se lee solo, de arriba abajo. **Recomiendo A.** Respuesta:
 ```go
-// A — config/devices.go: el módulo de equipos, todo junto
-var devices = appkit.Module{
-	Name:    devicemanager.Definition.Name,
-	Build:   func(d appkit.Deps) (model.ModuleNaming, error) {
+// A — config/modules_backend.go (//go:build !browser): cómo se construye cada módulo, en orden
+var modules = []appkit.Module{
+	{Name: devicemanager.Definition.Name, Build: func(d appkit.Deps) (model.ModuleNaming, error) {
 		return devicemanager.New(d.DB, devicemanager.Deps{IDs: d.IDs, Publisher: d.Events, TenantID: d.TenantID})
-	},
-	Screens: devicesui.Screens,
+	}},
+	// … un elemento por módulo
 }
-// B — config/devices_server.go (//go:build !browser)
-var devices = appkit.Module{Name: devicemanager.Definition.Name, Build: func(d appkit.Deps) (model.ModuleNaming, error) { … }}
-// B — config/devices_browser.go (//go:build browser)
-var devices = appkit.Module{Name: devicemanager.Definition.Name, Screens: devicesui.Screens}
-// en los dos: config/app.go
-Modules: []appkit.Module{catalog, devices, staff, calendar, rooms, patients, booking, encounters},
-```
-
-**P56 — Cómo elige la app su API y sus herramientas para agentes.** Por qué existían `jsonOverHTTP` y `agentTools`: por D67 `appkit` no puede elegir `rpc` (las operaciones como JSON por HTTP en `/api`) ni `mcp` (las operaciones como herramientas para un agente), y `rpc`/`mcp` no tenían un valor que la app pudiera pasar, así que la app escribía una función que los llama. A) **`rpc` y `mcp` exportan un valor cada uno** que cumple una interfaz chica que declara `appkit`; la app los nombra en una línea (cuesta un tipo de unas 10 líneas en `rpc` y otro en `mcp`). B) La app escribe las funciones (lo de hoy en el plan, ~15 líneas). C) El `main` generado los pone y la app no los ve (pero el generador elige por la app). **¿Cuál evita el acoplamiento y es más mantenible?** A: nadie importa a quien no debe (`rpc` no conoce `appkit`; `appkit` no conoce `rpc`) y la línea dice lo que elige. **Recomiendo A.** Respuesta:
-```go
-// A — config/server.go: qué usa el servidor de esta app
-var server = appkit.AppServer{
-	Database: postgres.Open,                    // la base de datos
-	Events:   &eventsmock.Broker{},             // los avisos entre módulos, en el mismo proceso
-	API:      rpc.JSON{},                       // las operaciones como JSON por HTTP
-	Agents:   mcp.Tools{Allowed: MCPTools()},   // las operaciones que un agente puede llamar
+// A — config/modules_browser.go (//go:build browser): las pantallas de cada módulo, en el orden del menú
+var modules = []appkit.Module{
+	{Name: devicemanager.Definition.Name, Screens: devicesui.Screens},
+	// …
 }
-// B — config/transports.go
-func jsonOverHTTP(r router.Router, o appkit.Operations) error { return rpc.Mount(r, rpc.DefaultPrefix, o.Log, o.Public, o.Events, o.Modules...) }
+// A — config/app.go (compartido)
+var App = appkit.App{Name: "Mjosefa", TenantID: "mjosefa-cms", Timezone: "America/Santiago", SignIn: appkit.SignInByTrustedIP, Modules: modules, Server: server}
 ```
 
 ## Decisiones por implementar
@@ -105,6 +92,7 @@ func jsonOverHTTP(r router.Router, o appkit.Operations) error { return rpc.Mount
 | D67 | **`appkit` no elige ningún concreto: los pide y la app se los pasa** (la app sabe qué base, transporte, generador de ids, broker y servidor usa). Hoy `appkit` los asume: `unixid.NewUnixID()` (`build_modules.go:30`, `serve.go:118`), `eventsmock.Broker` (`build_modules.go:46`, `serve.go:126`), `httpd.New` (`serve.go:207`), `rpc.Mount`/`rpc.NewCaller` (`server.go:38`, `browser.go:14`), `mcp.NewServer` (`server.go:51`), `externalcalls`+`backoff` (`build_modules.go`), `DATABASE_URL` (`env.go:8`). La base ya se pasa (`AppServer.Database`, `app_server.go:17`). La forma tipada de cada campo se propone en el `## Design gate` del plan de D62 | `appkit`, `mjosefa-cms` |
 | D68 (P51) | **El ingreso a la app lo arma `appkit`**, no un módulo: `access/module/` (login por IP de confianza, primer administrador, registro de eventos de seguridad, pantalla de ingreso, `Authn`/`Authorize`/`Policy`) pasa a `appkit`, que lo construye con `auth`, `rbac` y `access` usando solo lo que la app le pasó (D67); la app elige el método con una línea tipada (`appkit.App{SignIn: appkit.SignInByTrustedIP}`, forma exacta en el Design gate del plan); lo opcional (equipos del personal, registro del primer administrador) lo busca entre los módulos construidos. `access` queda solo como puente usuarios ↔ roles, sin `appkit`; `access.Module` desaparece de `App.Modules`. Va junto con el plan pendiente «access 1b» | `appkit`, `access`, `mjosefa-cms` |
 | D69 (P54) | `appkit.Find[T]` se reemplaza por **`appkit.FindBuiltModule`, sin genéricos**: busca por el nombre del módulo (`Module.Name`, que es `Definition.Name`) entre los ya construidos y devuelve `(model.ModuleNaming, error)`; quien llama hace la aserción de tipo en una línea escrita. Si no está construido: error que dice cuál falta y que debe ir antes en `App.Modules`. `appkit` busca lo opcional del ingreso (D68) con una aserción de interfaz dentro de su propio código, sin exportarla. Se borran `Find`, `ErrManyProviders` y la excepción de genéricos de la skill **api-harness** | `appkit`, `mjosefa-cms` |
+| D70 (P56) | `rpc` y `mcp` exportan **un valor cada uno** que cumple una interfaz chica declarada en `appkit` (ni `rpc` conoce `appkit` ni `appkit` conoce `rpc`); la app los nombra en `config/server.go`: `API: rpc.JSON{}` (las operaciones como JSON por HTTP) y `Agents: mcp.Tools{Allowed: MCPTools()}` (las que un agente puede llamar). Reemplaza `rpc.Mount`/`mcp.NewServer` dentro de `appkit/server.go:38-58` y el campo `AppServer.MCPTools` | `rpc`, `mcp`, `appkit`, `mjosefa-cms` |
 
 ## Fases
 
@@ -124,7 +112,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 | 8 | `network_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.1.122 (partes 1 y 2 completas: reglas, llamadas, lectores, pantalla, demo, pruebas, docs); deuda: 17 claves sin traducir en 7 idiomas |
 | 8 | `payment_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.4.49 (etapas 1–5 + pruebas 2a + 2b traducciones y docs) y arreglo de `CompleteOnlinePayment` en `main` sin etiqueta (era un cuerpo vacío; ahora pregunta a la pasarela con `Gateway.Confirm`); avisos de reutilización de `langc` pendientes (6; plan chico por escribir); los avisos de reutilización de langc los corrijo yo); adaptadores: `transbank` 🟢 v0.2.41 (Confirm, el retorno solo identifica, `RawQuery`) y `tuu` 🟢 v0.2.42 (`WaitSeconds`); falta que apunten a `payment_manager` v0.4.48 (hoy versión provisional) |
 | 9 | subida de archivos (A6.12, D46), `misitio` sobre `crud` | diseño en [FILE_UPLOAD_DESIGN.md](FILE_UPLOAD_DESIGN.md), P1–P5 decididas | 🟢 `router` v0.5.0 (`RawQuery`, `Path()` solo ruta, `conformance.RunContext`), `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78 (`r2.Files`), `mcp` v0.3.28, `filetype` v0.1.1 (video, audio, `Documents` = PDF/Word/Excel/PowerPoint, `Scans`), `input` v0.2.0 (`ImageFile`…) · 🔴 `crud` camino de archivo en local (`crud/docs/PLAN.md`; Jules murió sin PR; independiente de RECORD_SEARCH 10h, mismo repo, uno tras otro); 🔴 por escribir (esperan a `crud`): `appkit` (entrega `files.Store`), `view` (widget), `misitio`; conformancia de `ILike` en [APP_USABILITY](APP_USABILITY_MASTER_PLAN.md) S1 |
-| 10 | `appkit`, 8 módulos, `access`, `mjosefa-cms` (repos según P51) | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 [plan](modules_without_appkit/PLAN.md): §3 se simplifica según P55–P56 (ejecución: EXECUTION_ORDER 17–18) |
+| 10 | `appkit`, 8 módulos, `access`, `mjosefa-cms` (repos según P51) | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 [plan](modules_without_appkit/PLAN.md): §3 se simplifica según P55 (ejecución: EXECUTION_ORDER 17–18) |
 
 ## Bloqueos
 

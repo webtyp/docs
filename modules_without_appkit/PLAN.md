@@ -4,7 +4,7 @@
 > por [EXECUTION_ORDER paso 17](../EXECUTION_ORDER_MASTER_PLAN.md) (su protocolo: marca, `replace`, `gotest`, cerrar la
 > fila). Nada se publica antes de la puerta 🔵 18. Esta carpeta se borra en esa puerta.
 
-**Estado: §3 se reescribe paso a paso cuando el dueño responda P55 y P56 del master.** Los archivos de etapa (código exacto, compilado) se escriben
+**Estado: §3 se reescribe paso a paso cuando el dueño responda P55 del master (P56 → D70).** Los archivos de etapa (código exacto, compilado) se escriben
 después del 🔵: si una forma cambia, no se reescriben etapas.
 
 ## Qué cambia, en una frase
