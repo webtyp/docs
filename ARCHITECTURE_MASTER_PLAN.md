@@ -1,5 +1,5 @@
 # Mejoras de arquitectura — master plan
-> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; plan en revisión, espera 🔵)
+> **Status:** IN PROGRESS · 2026-11-16 · **sin ejecutor remoto (Jules cerró; todo se ejecuta en local)** · capa 8 (módulos a `crud` por declaración): publicados `pharmacy_manager`, `clinical_encounter` (parte 1), `payment_manager`, `network_manager`, `auth`; en local por hacer: `access` 1b, `supply_manager`, `alert_manager` parte 2, `appointment_booking`, `clinical_encounter` 2b (revisar su PR #20); `mjosefa-cms` (A5, local) espera `access` y `appointment_booking` · capa 9 (subida de archivos): `router` v0.5.0, `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78, `mcp` v0.3.28, `filetype` v0.1.1, `input` v0.2.0 publicados · Jules solo hasta las 00:00 de hoy · Diagrama: [diagrams/TRANSPORT_CRUD_ARCHITECTURE.md](diagrams/TRANSPORT_CRUD_ARCHITECTURE.md) · Diseño vigente: [CRUD_BY_DECLARATION_DESIGN.md](CRUD_BY_DECLARATION_DESIGN.md) · P48 cerrada (D62, fase 10: módulos sin `appkit`; plan aprobado 🔵; P57–P59 abiertas)
 
 Defectos de diseño entre librerías (responsabilidades mezcladas, dependencias que sobran, vocabulario inconsistente).
 Reglas: **api-design** (puerta 4), **api-harness**, **core-principles**, **module-layout**, **zero-debt**.
@@ -7,7 +7,37 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 ## Preguntas abiertas
 
-Ninguna.
+Contexto: el dueño aprobó el [plan](modules_without_appkit/PLAN.md) (🔵); la revisión de coherencia encontró tres problemas de arquitectura que cambian su §3.
+
+**P57 — La etiqueta `!browser` junta servidor y Worker, pero sus concretos no son los mismos.** Lo que se rompe: `config/backend.go` (`!browser`) dice `Database: postgres.Open`; si la app suma un Worker (`web/edge/`, `wasm && !browser`), ese archivo entra también al Worker, donde la base es D1 (skill **app-rest-edge**) y no hay `httpd`: no compila o elige mal. Hoy ninguna app con `appkit` tiene Worker, pero el plan lo afirmaba. A) `config/backend.go` (`!browser`) lleva **solo lo que es igual en servidor y Worker**: cómo se construye cada módulo, `API`, `Agents`, `Events`; lo que depende de la plataforma (la base de datos) va en el archivo de esa plataforma: `config/server.go` (`!wasm`) hoy, `config/edge.go` (`wasm && !browser`) el día que haya Worker. B) `config/backend.go` pasa a `!wasm` (solo servidor) y el Worker queda fuera de `appkit`. **¿Cuál evita el acoplamiento y es más mantenible?** A: respeta las tres partes (compartido / backend / navegador) y separa por etiqueta lo único que de verdad cambia por plataforma; B rompe el modelo de tres partes. **Recomiendo A.** Respuesta:
+```go
+// A — config/backend.go (//go:build !browser): igual en servidor y Worker
+var Backend = appkit.Backend{Events: &eventsmock.Broker{}, API: rpc.JSON{}, Agents: mcp.Tools{Allowed: MCPTools()}, Modules: []appkit.BackendModule{ /* … */ }}
+// A — config/server.go (//go:build !wasm): lo propio del servidor nativo
+var Server = appkit.Server{Database: postgres.Open, NewIDs: func() (model.IDGenerator, error) { return unixid.NewUnixID() }}
+// B — config/backend.go (//go:build !wasm): todo junto, sin Worker
+```
+
+**P58 — En producción la app escribe `eventsmock.Broker`.** Lo que ve un novato en `config/backend.go`: «mock», y entiende «de prueba». Pero `webtyp.com/events/mock` es el broker real en el mismo proceso (`events/events.go:62`: «in-process, for module-to-module delivery and tests»). A) Renombrar el paquete a lo que es: `webtyp.com/events/inprocess` (`inprocess.Broker`), y actualizar sus usos en el mismo cambio. B) Dejarlo. **¿Cuál evita el acoplamiento y es más mantenible?** Igual acoplamiento; A se entiende sin leer el código (skill **api-design**: un nombre malo se renombra en el cambio, no después). Costo: los usos en pruebas de varios repos. **Recomiendo A.** Respuesta:
+```go
+// hoy
+Events: &eventsmock.Broker{},
+// A
+Events: &inprocess.Broker{}, // los avisos entre módulos, en el mismo proceso
+```
+
+**P59 — `DefaultDocument` es un dato de un solo módulo y quedó en el framework.** Lo que pasa: el paso 15 agregó `DefaultDocument` (el tipo de documento con que parte una ficha nueva, `kinds.DocumentRUT`) a `appkit.App`, `appkit.Deps` y `view.BrowserDeps`, solo para `patient_directory`; el framework queda atado a un dato de dominio, y es un `string` libre (`"rut"`). `Countries` en cambio es un dato de la instalación (como la zona horaria) y sí puede quedarse en `App`. A) **Sale de `appkit` y `view`**: `patient_directory` exporta sus ajustes (`patientdirectory.Settings{DefaultDocument}`), la app los escribe **una vez** en `config/app.go` (compartido) y los pasa a las dos partes del módulo. B) Dejarlo en el framework. **¿Cuál evita el acoplamiento y es más mantenible?** A: el framework no conoce datos de un módulo; cada módulo que necesite un ajuste hace lo mismo sin tocar `appkit`. **Recomiendo A.** Respuesta:
+```go
+// A — config/app.go (compartido): los ajustes del módulo, una vez
+var patients = patientdirectory.Settings{DefaultDocument: kinds.DocumentRUT}
+// A — config/backend.go
+{Name: patientdirectory.Definition.Name, Build: func(d appkit.Deps) (model.ModuleNaming, error) {
+	return patientdirectory.New(d.DB, patientdirectory.Deps{ /* … */ Countries: d.Countries, Settings: patients})
+}},
+// A — config/browser.go
+{Name: patientdirectory.Definition.Name, Screens: func(d view.BrowserDeps) []view.Screen { return patientsui.Screens(d, patients) }},
+// B — hoy: appkit.App{DefaultDocument: "rut"} → appkit.Deps.DefaultDocument → view.BrowserDeps.DefaultDocument
+```
 
 ## Decisiones por implementar
 
@@ -95,7 +125,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 | 8 | `network_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.1.122 (partes 1 y 2 completas: reglas, llamadas, lectores, pantalla, demo, pruebas, docs); deuda: 17 claves sin traducir en 7 idiomas |
 | 8 | `payment_manager` | ola 2: `ExternalCalls` (D53) | 🟢 v0.4.49 (etapas 1–5 + pruebas 2a + 2b traducciones y docs) y arreglo de `CompleteOnlinePayment` en `main` sin etiqueta (era un cuerpo vacío; ahora pregunta a la pasarela con `Gateway.Confirm`); avisos de reutilización de `langc` pendientes (6; plan chico por escribir); los avisos de reutilización de langc los corrijo yo); adaptadores: `transbank` 🟢 v0.2.41 (Confirm, el retorno solo identifica, `RawQuery`) y `tuu` 🟢 v0.2.42 (`WaitSeconds`); falta que apunten a `payment_manager` v0.4.48 (hoy versión provisional) |
 | 9 | subida de archivos (A6.12, D46), `misitio` sobre `crud` | diseño en [FILE_UPLOAD_DESIGN.md](FILE_UPLOAD_DESIGN.md), P1–P5 decididas | 🟢 `router` v0.5.0 (`RawQuery`, `Path()` solo ruta, `conformance.RunContext`), `crud` v0.0.15, `server` v0.2.122, `cloudflare` v0.0.78 (`r2.Files`), `mcp` v0.3.28, `filetype` v0.1.1 (video, audio, `Documents` = PDF/Word/Excel/PowerPoint, `Scans`), `input` v0.2.0 (`ImageFile`…) · 🔴 `crud` camino de archivo en local (`crud/docs/PLAN.md`; Jules murió sin PR; independiente de RECORD_SEARCH 10h, mismo repo, uno tras otro); 🔴 por escribir (esperan a `crud`): `appkit` (entrega `files.Store`), `view` (widget), `misitio`; conformancia de `ILike` en [APP_USABILITY](APP_USABILITY_MASTER_PLAN.md) S1 |
-| 10 | `appkit`, 8 módulos, `access`, `mjosefa-cms` (repos según P51) | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🧠 [plan](modules_without_appkit/PLAN.md): §3 paso a paso según D65–D71, espera 🔵 (ejecución: EXECUTION_ORDER 17–18) |
+| 10 | `appkit`, 8 módulos, `access`, `mjosefa-cms` (repos según P51) | D62: módulos sin `appkit` (desbloquea CONFIGURABLE_MODULES) | 🔵 [plan](modules_without_appkit/PLAN.md) aprobado; P57–P59 antes de las etapas con código (ejecución: EXECUTION_ORDER 17–18) |
 
 ## Bloqueos
 
