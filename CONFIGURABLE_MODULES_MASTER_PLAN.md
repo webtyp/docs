@@ -1,5 +1,5 @@
 # Módulos configurables (rubro y rol) — master plan
-> **Status:** PENDING · 2026-11-16 · P1–P9 cerradas (D1–D7); espera ARCHITECTURE D62 (fase 10: módulos sin `appkit`) (módulos sin `appkit`); renombrar `patient_directory` espera además a que PATIENT_DIRECTORY_USABILITY publique
+> **Status:** CLOSED · 2026-11-17 · fases 1–5 publicadas en puerta 23 de EXECUTION_ORDER (`model` v0.2.25 · `rbac` v0.0.48 · `crud` v0.0.18 · `view` v0.6.88 · `access` v0.0.70 · `layout` v0.3.130 · `appkit` v0.2.38 · `devtools` v0.0.41 · `devskills` v0.0.52 · `client_directory` v0.1.118 · `appointment_booking` v0.3.102 · `mjosefa-cms` v0.0.126).
 
 Dominio: que **un** módulo sirva a varias apps sin copiarlo: se adapta al **rubro** de la app (nombre, ícono, palabras) y al **rol** de quien lo usa (recepcionista ve buscar/editar a todos; el cliente solo su ficha), y que ambos se prueben en la demo del módulo sin montar la app.
 
@@ -25,11 +25,11 @@ Ninguna. Antes de planificar D7 (formulario de otro módulo) y la fase 3 («Ver 
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| 1 | `model`, `appkit` | Contrato de rubro e íconos (D1, D4–D6) | ✅ local (`gotest` verde; falta publicar en puerta 23 de EXECUTION_ORDER) |
-| 2 | `model`, `rbac`, `access`, `crud`, `view` | Maneras de uso y roles (D3); vínculo cuenta → ficha y `HiddenFromRecordOwner` (D2) | ✅ local (`gotest` verde; falta publicar en puerta 23 de EXECUTION_ORDER) |
-| 3 | `devtools` | «Ver como»: maneras del módulo en la demo, roles en la app ([maqueta](../devtools/docs/img/view-as-2.png)) | ✅ local (`gotest` verde en `layout` y `devtools`; falta publicar en puerta 23) |
-| 4 | `client_directory` (antes `patient_directory`), `appointment_booking`, `clinical_encounter`, `mjosefa-cms` | El repo ya está renombrado en GitHub y en local (2026-11-17); falta el interior: módulo, entidad y tabla; consumidores. Orden: después de RECORD_SEARCH (que agrega `text_search` a la tabla `patient`), para migrar la tabla una sola vez con su nombre final | 🔴 espera que PATIENT_DIRECTORY_USABILITY y RECORD_SEARCH publiquen |
-| 5 | `view`, `appointment_booking`, `client_directory` | Abrir el formulario de otro módulo y volver con el resultado (D7, [maqueta](../../veltylabs/modules/appointment_booking/docs/img/d7-client-form.png)) | ✅ local (`gotest` verde en `view` y `appointment_booking`; falta publicar en puerta 23) |
+| 1 | `model`, `appkit` | Contrato de rubro e íconos (D1, D4–D6) | ✅ publicado 2026-11-17 (`model` v0.2.25, `appkit` v0.2.38) |
+| 2 | `model`, `rbac`, `access`, `crud`, `view` | Maneras de uso y roles (D3); vínculo cuenta → ficha y `HiddenFromRecordOwner` (D2) | ✅ publicado 2026-11-17 (`model` v0.2.25, `rbac` v0.0.48, `access` v0.0.70, `crud` v0.0.18, `view` v0.6.88) |
+| 3 | `devtools` | «Ver como»: maneras del módulo en la demo, roles en la app ([maqueta](../devtools/docs/img/view-as-2.png)) | ✅ publicado 2026-11-17 (`layout` v0.3.130, `devtools` v0.0.41) |
+| 4 | `client_directory` (antes `patient_directory`), `appointment_booking`, `clinical_encounter`, `mjosefa-cms` | El repo ya está renombrado en GitHub y en local (2026-11-17); falta el interior: módulo, entidad y tabla; consumidores. Orden: después de RECORD_SEARCH (que agrega `text_search` a la tabla `patient`), para migrar la tabla una sola vez con su nombre final | ✅ publicado 2026-11-17 (`client_directory` v0.1.118, `mjosefa-cms` v0.0.126) |
+| 5 | `view`, `appointment_booking`, `client_directory` | Abrir el formulario de otro módulo y volver con el resultado (D7, [maqueta](../../veltylabs/modules/appointment_booking/docs/img/d7-client-form.png)) | ✅ publicado 2026-11-17 (`view` v0.6.88, `appointment_booking` v0.3.102) |
 
 ## Bloqueos
 
