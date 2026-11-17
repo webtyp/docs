@@ -27,9 +27,9 @@ Ninguna. Antes de planificar D7 (formulario de otro módulo) y la fase 3 («Ver 
 |---|---|---|---|
 | 1 | `model`, `appkit` | Contrato de rubro e íconos (D1, D4–D6) | ✅ local (`gotest` verde; falta publicar en puerta 23 de EXECUTION_ORDER) |
 | 2 | `model`, `rbac`, `access`, `crud`, `view` | Maneras de uso y roles (D3); vínculo cuenta → ficha y `HiddenFromRecordOwner` (D2) | ✅ local (`gotest` verde; falta publicar en puerta 23 de EXECUTION_ORDER) |
-| 3 | `devtools` | «Ver como»: maneras del módulo en la demo, roles en la app ([maqueta](../devtools/docs/img/view-as-2.png)) | 🔴 espera fase 2 |
+| 3 | `devtools` | «Ver como»: maneras del módulo en la demo, roles en la app ([maqueta](../devtools/docs/img/view-as-2.png)) | ✅ local (`gotest` verde en `layout` y `devtools`; falta publicar en puerta 23) |
 | 4 | `client_directory` (antes `patient_directory`), `appointment_booking`, `clinical_encounter`, `mjosefa-cms` | El repo ya está renombrado en GitHub y en local (2026-11-17); falta el interior: módulo, entidad y tabla; consumidores. Orden: después de RECORD_SEARCH (que agrega `text_search` a la tabla `patient`), para migrar la tabla una sola vez con su nombre final | 🔴 espera que PATIENT_DIRECTORY_USABILITY y RECORD_SEARCH publiquen |
-| 5 | `view`, `appointment_booking`, `client_directory` | Abrir el formulario de otro módulo y volver con el resultado (D7, [maqueta](../../veltylabs/modules/appointment_booking/docs/img/d7-client-form.png)) | 🔴 espera plan |
+| 5 | `view`, `appointment_booking`, `client_directory` | Abrir el formulario de otro módulo y volver con el resultado (D7, [maqueta](../../veltylabs/modules/appointment_booking/docs/img/d7-client-form.png)) | ✅ local (`gotest` verde en `view` y `appointment_booking`; falta publicar en puerta 23) |
 
 ## Bloqueos
 
