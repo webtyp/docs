@@ -34,10 +34,10 @@ Ninguna. P16–P17 (nombres sin tildes) pasaron a [RECORD_SEARCH_MASTER_PLAN.md]
 | 10 | `form`, `crudview` | D16 foco del «+» y D23 avance al elegir radio (misma lógica: «siguiente control enfocable»); prueba con grupo de radios primero | ✅ publicado `form` v0.4.68, `layout` v0.3.126 |
 | 11 | `input` | D18: traducciones de sexo | ✅ publicado `input` v0.2.4 |
 | 12 | `form`, `components` | D19: avisos de HTML; verificar con el script de auditoría y el panel Issues | ✅ publicado `form` v0.4.68, `components` v0.8.75 |
-| 13 | `patient_directory`, `view`, `appkit` | D17 verificar; D22 orden; D24 tipo por defecto (`appkit` tras EXECUTION_ORDER paso 14) | D17 y D22 ✅ publicado `patient_directory` v0.1.114; D24 ✅ local (paso 15; publica la puerta C) |
+| 13 | `client_directory` (antes `patient_directory`), `view`, `appkit` | D17 verificar; D22 orden; D24 tipo por defecto (`appkit` tras EXECUTION_ORDER paso 14) | ✅ publicado 2026-11-17 (puerta C): `client_directory` v0.1.117 · `view` v0.6.87 · `layout` v0.3.129 · `appkit` v0.2.37 |
 | 14 | `patient_directory` | Adoptar la búsqueda de RECORD_SEARCH: `ListsOnlyAfterSearch: true` y **borrar** `rule_patient_search.go` (RECORD_SEARCH D6, D8: no le queda nada); EXECUTION_ORDER paso 12 | ✅ publicado `patient_directory` v0.1.115 (falta ver «Escribe para buscar» en pantalla) |
 | 15 | `components/tapinfotip` | D20 | ✅ publicado `widget` v0.6.49, `components` v0.8.75 |
-| 16 | `appkit` | D21 | ✅ local (EXECUTION_ORDER paso 14; `replace` a `country` y `view` hasta puerta C) |
+| 16 | `appkit` | D21 | ✅ publicado 2026-11-17 (`appkit` v0.2.37) |
 
 ## Bloqueos
 
