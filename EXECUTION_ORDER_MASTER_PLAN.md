@@ -5,7 +5,7 @@ Orquesta, en orden, la ejecución **local** de cuatro masters: [PATIENT_DIRECTOR
 
 **Orden del dueño (2026-11-17): Antigravity ejecuta este archivo completo, hasta el paso 30, sin preguntarle nada.** Para esta ola, y solo para ella, esa orden reemplaza las puertas de revisión del dueño y la regla «los planes de arquitectura los revisa el dueño antes de ejecutar» de las skills: el dueño revisa **después**, con lo que deja el paso 30.
 
-**Punto de retorno (2026-11-17):** cada repo de `webtyp/`, `veltylabs/modules/` y `mjosefa-cms` que tenía trabajo local quedó con un commit `checkpoint: estado local antes de la ejecución de EXECUTION_ORDER por Antigravity` (sin `push`). Para volver a ese estado en un repo: `git log --oneline --grep='checkpoint: estado local'` da el commit; lo decide el dueño, nunca el ejecutor (regla 10).
+**Punto de retorno (2026-11-17):** cada repo de `webtyp/`, `veltylabs/modules/` y `mjosefa-cms` que tenía trabajo local quedó con un commit `checkpoint: estado local antes de la ejecución de EXECUTION_ORDER por Antigravity`, subido a GitHub en `main` (sin tag: no es una versión publicada). Para volver a ese estado en un repo: `git log --oneline --grep='checkpoint: estado local'` da el commit; lo decide el dueño, nunca el ejecutor (regla 10).
 
 **Protocolo del ejecutor (Antigravity) — leer completo antes de cada paso:**
 1. Leer las skills **master-plan** («Local execution across repos»), **agents-workflow**, **testing**, **zero-debt**, **bug-fix-flow** y las que nombre el paso. Las skills son la única fuente de cómo trabajar (`webtyp/devskills/skills`).
