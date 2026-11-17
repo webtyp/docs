@@ -197,6 +197,15 @@ Verificación al cerrar (D64, sin compuerta): `grep -l webtyp.com/appkit veltyla
 **Puerta 18 — orden de publicación** (de abajo hacia arriba): `country` → `events` (D72) → `view` → `layout` → `rpc` · `mcp` → `appkit` →
 `server` → 8 módulos → `access` → `mjosefa-cms`.
 
+## Correcciones de la ejecución (2026-11-16)
+
+1. `Database` y `NewIDs` van en `appkit.Server` (D73), no en `Backend`: el `migrate/main.go` generado lee `config.Server.Database`.
+2. `BuildModules` recibe `(app, backend, server, tx)`: los ids son del lado de la plataforma (`Server.NewIDs`).
+3. `SESSION_IDLE_MINUTES` se queda como `Server.SessionIdleMinutes` (la app lo lee del entorno en `config/server.go`); `appkit` ya no importa `env`.
+4. `staff_manager` y los demás hubo que subirlos al `crud` actual (`crud.RuleAnswer`) para compilar junto a `appkit`: `device_manager`, `business_calendar`, `staff_manager`, `room_layout`, `service_catalog` (los dos últimos eran los planes 27 y 28 del bloque E).
+5. El ingreso trae también las pantallas de usuarios y roles de `access/ui` (antes las ponía `access.Module`).
+6. `rpc` guarda ahora la comprobación de acciones públicas (`rpc.ErrPublicNotMounted`); `appkit.ErrPublicNotMounted` desaparece.
+
 ## Correcciones de la revisión (2026-11-16)
 
 1. «Nuevo: nada» contradecía D70: `rpc.JSON` y `mcp.Tools` son tipos nuevos.

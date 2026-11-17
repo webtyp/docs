@@ -28,7 +28,7 @@ Ninguna. Antes de planificar D7 (formulario de otro módulo) y la fase 3 («Ver 
 | 1 | `model`, `appkit` | Contrato de rubro e íconos (D1, D4–D6) | 🔴 espera ARCHITECTURE D62 |
 | 2 | `model`, `rbac`, `access`, `crud`, `view` | Maneras de uso y roles (D3); vínculo cuenta → ficha y `HiddenFromRecordOwner` (D2) | 🔴 espera ARCHITECTURE D62 |
 | 3 | `devtools` | «Ver como»: maneras del módulo en la demo, roles en la app ([maqueta](../devtools/docs/img/view-as-1.png), se rehace con las maneras de D3) | 🔴 espera fase 2 |
-| 4 | `patient_directory` → `client_directory`, `appointment_booking`, `clinical_encounter`, `mjosefa-cms` | Renombrar repo, módulo, entidad y tabla; consumidores. Orden: después de RECORD_SEARCH (que agrega `text_search` a la tabla `patient`), para migrar la tabla una sola vez con su nombre final | 🔴 espera que PATIENT_DIRECTORY_USABILITY y RECORD_SEARCH publiquen |
+| 4 | `client_directory` (antes `patient_directory`), `appointment_booking`, `clinical_encounter`, `mjosefa-cms` | El repo ya está renombrado en GitHub y en local (2026-11-17); falta el interior: módulo, entidad y tabla; consumidores. Orden: después de RECORD_SEARCH (que agrega `text_search` a la tabla `patient`), para migrar la tabla una sola vez con su nombre final | 🔴 espera que PATIENT_DIRECTORY_USABILITY y RECORD_SEARCH publiquen |
 | 5 | `view`, `appointment_booking`, `client_directory` | Abrir el formulario de otro módulo y volver con el resultado (D7) | 🔴 espera capturas del flujo |
 
 ## Bloqueos

@@ -1,5 +1,5 @@
 # Búsqueda de registros (dato exacto y búsqueda) — master plan
-> **Status:** IN PROGRESS · 2026-11-16 · fases 1–4 publicadas (puerta B); pendiente: 4 módulos con regla `Search` (`chat_room`, `editorial`, `room_layout`, `service_catalog`) en el bloque E de EXECUTION_ORDER; falta confirmar el relleno real de `text_search` en la base de pacientes
+> **Status:** IN PROGRESS · 2026-11-16 · fases 1–4 publicadas (puerta B); pendiente: 4 módulos con regla `Search` (`webtyp/auth/authority` ya migrado en local, 2026-11-17) (`chat_room`, `editorial`, `room_layout`, `service_catalog`) en el bloque E de EXECUTION_ORDER; falta confirmar el relleno real de `text_search` en la base de pacientes
 
 Dominio: cómo **guarda** el framework un dato para que sea exacto y cómo lo **encuentra** cualquier módulo (`model`, `crud`, `orm`, `ddl`, `definitionc`, `indexdb`, `sqlite`, `postgres`). Nació de PATIENT_DIRECTORY_USABILITY (P16–P17: «lucia» no encuentra «Lucía»). La búsqueda **por significado** (embeddings) sigue en [retrieval/docs/SEMANTIC_SEARCH_MASTER_PLAN.md](https://github.com/webtyp/retrieval/blob/main/docs/SEMANTIC_SEARCH_MASTER_PLAN.md) y AGENT_ECOSYSTEM; aquí solo se le reserva un enchufe.
 
