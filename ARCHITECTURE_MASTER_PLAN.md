@@ -7,7 +7,7 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 ## Preguntas abiertas
 
-Ninguna.
+**P60 — «Quién soy», el inicio de sesión y la configuración inicial pasan por `crud` (regla del dueño 2026-11-18: toda API pasa por `webtyp/crud`).** Hoy se ve: la consola del navegador muestra 404 en `/api/authority/me` y `/setup`. Causa: `layout` pide la operación `authority/me` (`layout/app/browser.go:29`, el navegador la convierte en `/api/authority/me`), pero `auth/authority/mount.go:22` registra una ruta suelta `GET /me`; lo mismo `/login`, `/logout` y `/setup` (`auth/trusted_ip/trusted_ip.go:228,241`). Además `Definition.Name` de `authority` es `"user"`, no `"authority"`. A) `me` como entidad de solo lectura de `crud` (`Me`, `Allow: model.Read`, regla de lectura que arma el perfil con las reglas de acceso), con permiso para cualquier usuario con sesión (`DefaultGrants` a `RoleAuthenticated`); `layout` la llama como `Operation{Module: "user", Entity: "me"}`; `login`, `logout` y `setup` quedan como rutas de transporte con su motivo escrito (ponen y quitan la cookie). B) Además `login`, `logout` y `setup` también como creaciones de `crud` (la cookie la pone el `Caller`). C) Solo cambiar `layout` para pedir `GET /me`: no cumple la regla. ¿Cuál evita el acoplamiento y es más mantenible? A: `layout` solo conoce un nombre de operación, no una ruta; B exige que `crud` sepa poner cookies. **Recomiendo A**: es lo que la regla pide para datos y deja la cookie en el transporte. Cambia el contrato público de `auth` (se borran `PathMe` y `handleMe`; 3 pruebas de `auth`/`appkit` que los nombran). Respuesta:
 
 ## Decisiones por implementar
 
