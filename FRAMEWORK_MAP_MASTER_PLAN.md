@@ -23,7 +23,7 @@ Cada fase termina con la revisión (🔵) del dueño antes de la siguiente.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| M2 | `devskills` | Una skill por dominio sin skill (offline sync, events, documents, AI and voice), una por vez; **sign-in-and-permissions** publicada (`devskills` v0.0.64): diagrama de quién importa a quién y la responsabilidad de cada repo, leído del código | 🔴 |
+| M2 | `devskills` | Una skill por dominio sin skill (offline sync, documents, AI and voice), una por vez; publicadas **sign-in-and-permissions** (v0.0.64) y **events-queues-and-alerts** (v0.0.68): diagrama de quién importa a quién y la responsabilidad de cada repo, leído del código | 🔴 |
 | M3 | repos 🔴 | Corregir cada 🔴 de `framework-map` (`appkit`, `auth`, `layout`, `server`, `lang`, `dbsync`, `pwa`, `image`, `imagemin`, `pdf`, `broker`, `binary`, `retrieval`); cada uno es una pregunta en ARCHITECTURE antes de tocarlo | 🔴 |
 
 ## Bloqueos
