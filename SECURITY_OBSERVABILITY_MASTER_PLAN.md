@@ -18,7 +18,16 @@ Reglas: **api-design** (puerta 4), **api-harness**, **zero-debt**, **console-log
 
 ## Preguntas abiertas
 
-Ninguna.
+**P4 — Nombre del repo del contrato (D1).** Lo que se lee en el código de cada capa:
+```go
+// A: securityevent  — «un evento de seguridad»
+securityevent.Publish(pub, securityevent.Event{Kind: securityevent.LoginFailed, IP: ip})
+// B: auditlog       — «registro de auditoría»
+auditlog.Publish(pub, auditlog.Event{Kind: auditlog.LoginFailed, IP: ip})
+// C: securitylog    — «registro de seguridad»
+securitylog.Publish(pub, securitylog.Event{Kind: securitylog.LoginFailed, IP: ip})
+```
+¿Cuál evita el acoplamiento y es más mantenible? A dice exactamente lo que el repo es: un vocabulario de eventos que se publican; no promete guardar nada (guardar, contar y avisar es de `appkit`, D2). B y C prometen un registro guardado, que este repo no hace; B además se confunde con `changelog` (que sí guarda cada escritura). Ninguno existe hoy en `webtyp`. **Recomiendo A, `webtyp.com/securityevent`** (singular, como `events.Event` → `securityevent.Event`; se crea con `gonew`). Respuesta:
 
 ## Decisiones por implementar
 
