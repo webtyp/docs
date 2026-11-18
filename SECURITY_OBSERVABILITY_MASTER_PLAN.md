@@ -18,16 +18,7 @@ Reglas: **api-design** (puerta 4), **api-harness**, **zero-debt**, **console-log
 
 ## Preguntas abiertas
 
-**P5 — ¿Quién bloquea la fuerza bruta: cada modo o el suscriptor común (D2)?** Hoy `trusted_ip` crea su propio limitador (`auth/trusted_ip/mode.go:61`, 3 intentos por IP cada 15 min) y `email_password` acepta otro; cada modo cuenta por su lado, así que alguien puede probar 3 veces en un modo y 3 en otro. El bloqueo tiene que ocurrir **antes** de atender el intento (en la misma petición); el suscriptor de D2 recibe el evento **después**.
-```go
-// A: un solo limitador para toda la app, en Ports; cada modo lo consulta antes de trabajar; el suscriptor solo cuenta para avisar
-ports.Limiter = auth.NewIPLimiter(3, 15*60, 15*60)            // appkit, una vez
-if err := p.Limiter.Check(ip); err != nil { /* RateLimited */ } // trusted_ip, email_password, passkey
-securityevent.Listen(broker, alertOnRepeatedFailures)          // appkit: authn_login_fail_max → notify
-// B: el suscriptor cuenta los LoginFailed y los modos le preguntan si la IP está bloqueada (el suscriptor pasa a ser un puerto)
-// C: como hoy, cada modo con su limitador; el suscriptor solo avisa
-```
-¿Cuál evita el acoplamiento y es más mantenible? A: un solo contador por IP para todos los modos, el bloqueo sigue en la petición (síncrono) y el suscriptor solo observa y avisa; ningún modo depende del suscriptor. B hace que los modos dependan de quien escucha eventos (dos responsabilidades en el suscriptor). C deja que un atacante sume intentos cambiando de modo. **Recomiendo A.** Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -61,6 +52,7 @@ Ninguna todavía.
 | D2 (P2-A) | **Un suscriptor en `appkit`:** línea con campos por evento, conteo por IP y por usuario en ventanas (fuerza bruta, rastreo) con bloqueo, alertas por los canales de `notify`, y vista en `webtyp dev`/MCP; exportar a OpenTelemetry queda como una salida más, después | `appkit`, `notify`, `app` |
 | D3 (P3-A, nivel bancario) | **Política de contenido estricta por defecto, sin nada en línea:** el HTML no lleva CSS, JS ni SVG dentro. `server/httpd` envía siempre una CSP estricta basada en hashes (como recomienda [web.dev](https://web.dev/articles/strict-csp) para páginas estáticas): `script-src 'sha384-…' 'strict-dynamic' 'wasm-unsafe-eval'`, `style-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `require-trusted-types-for 'script'` ([Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API)) y `report-to` hacia la ruta de reportes del framework. `sitec` calcula al compilar la firma (hash) del script y de la hoja de estilos y la escribe como `integrity` ([SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity)) y en la CSP: si el archivo cambia un byte, el navegador no lo ejecuta. **El SVG no se puede firmar con SRI** (solo cubre `<script>` y `<link rel=stylesheet>`): sale del HTML a un archivo propio del mismo origen, con su hash en el nombre (`sprite.<hash>.svg`), usado con `<use href>`, sin estilos en línea; la CSP impide que corra código dentro de él. El diccionario de traducciones sale también a un archivo. Lo que hoy rompería esta política se corrige en el mismo cambio: `style=""` en `components/calendarslider/calendarslider.go:610`, `components/cellgrid/cellgrid.go:57,83`, `layout/login/login.go:117` (pasan a clases o a `element.style.prop`, que la CSP permite según [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src)); `innerHTML`/`insertAdjacentHTML` en `dom/dom_frontend.go:202,279,1028` (pasan a construir nodos, o a una sola política de Trusted Types en `dom`) | `server`, `router/security`, `sitec`, `dom`, `components`, `layout` |
 | D4 (P4-A) | **El repo del contrato se llama `webtyp.com/securityevent`** (creado con `gonew` el 2026-11-18, v0.0.1, público, vacío): `securityevent.Event`, `securityevent.Publish`, `securityevent.LoginFailed`… | `securityevent` |
+| D5 (P5-A) | **Un solo limitador para toda la app:** `auth.Ports.Limiter` (lo crea `appkit` una vez: 3 intentos por IP cada 15 min); cada modo lo consulta antes de atender un intento (`trusted_ip`, el ingreso anónimo de `passkey`); el suscriptor de D2 solo observa y avisa con `notify.Raise` (10 ingresos fallidos de una IP en 15 min → `authn_login_fail_max`; lo grave —token falsificado o reusado, contenido bloqueado, almacén de seguridad caído, primer administrador— avisa de inmediato) | `auth`, `appkit` |
 
 ## Fases
 
