@@ -106,6 +106,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 
 ## Bloqueos
 
+- 2026-11-18 · D75 (inicio de sesión) espera la skill `sign-in` de [FRAMEWORK_MAP](FRAMEWORK_MAP_MASTER_PLAN.md) M4; su trabajo local en `auth`/`appkit` no se publica.
 - 2026-11-16 · Sin ejecutor remoto: Jules cerró y `codejob` no tiene agente. Las filas 🔴 se ejecutan en local; ninguna espera a una sesión. Prioridad para `mjosefa-cms`: `access`, `appointment_booking`. Pendiente tras el cierre de la ola: migrar las reglas de los módulos publicados antes de D58 a `ApplyAndPublish()`.
 
 ## Arreglos colaterales
