@@ -110,7 +110,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 
 ## Bloqueos
 
-- 2026-11-18 · El plan de D75–D82 (`auth/docs/PLAN.md`) espera P1 de [SECURITY_OBSERVABILITY](SECURITY_OBSERVABILITY_MASTER_PLAN.md) (el contrato de eventos de seguridad): su fase O2 va dentro del plan, para tocar `auth` una sola vez.
+- 2026-11-18 · El plan de D75–D82 (`auth/docs/PLAN.md`) espera O1 (el contrato, D1) de [SECURITY_OBSERVABILITY](SECURITY_OBSERVABILITY_MASTER_PLAN.md) (el contrato de eventos de seguridad): su fase O2 va dentro del plan, para tocar `auth` una sola vez.
 - 2026-11-18 · D75 (inicio de sesión) espera la skill **sign-in-and-permissions** de [FRAMEWORK_MAP](FRAMEWORK_MAP_MASTER_PLAN.md) M2; su trabajo local en `auth`/`appkit` no se publica.
 - 2026-11-16 · Sin ejecutor remoto: Jules cerró y `codejob` no tiene agente. Las filas 🔴 se ejecutan en local; ninguna espera a una sesión. Prioridad para `mjosefa-cms`: `access`, `appointment_booking`. Pendiente tras el cierre de la ola: migrar las reglas de los módulos publicados antes de D58 a `ApplyAndPublish()`.
 

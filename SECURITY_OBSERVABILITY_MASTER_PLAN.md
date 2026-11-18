@@ -1,5 +1,5 @@
 # Observabilidad de seguridad — master plan
-> **Status:** PENDING · 2026-11-18 · espera P1–P3 del dueño · el plan de inicio de sesión (ARCHITECTURE D75–D82, `auth/docs/PLAN.md`) espera P1 para que `auth` publique sus eventos una sola vez, con el contrato de aquí
+> **Status:** PENDING · 2026-11-18 · D1–D3 decididas; sigue O1 (el contrato, con su puerta de **api-design**) · el plan de inicio de sesión (ARCHITECTURE D75–D82, `auth/docs/PLAN.md`) espera O1 para que `auth` publique sus eventos una sola vez
 
 Problema que se ve: si alguien intenta entrar a la fuerza, prueba RUT al azar o inyecta un script en el navegador, nadie se entera. Hoy:
 - `auth` define 22 tipos de evento de seguridad (`auth/user.go:56-80`) y solo `auth/authority` los publica (`module.go:137`, tema `auth.security`); el único que escucha es `appkit` (`backend/signin.go:111`), que los escribe como una línea de texto. No se guardan, no se cuentan, no avisan a nadie.
@@ -18,26 +18,7 @@ Reglas: **api-design** (puerta 4), **api-harness**, **zero-debt**, **console-log
 
 ## Preguntas abiertas
 
-**P1 — Un solo contrato de eventos de seguridad para todas las capas: ¿dónde vive?** Hoy el tipo está en `auth`, así que `server/httpd` o `crud` no pueden publicar sin importar `auth` (una pieza de abajo dependería de una de arriba).
-```go
-// Hoy, solo auth:   m.events.Publish(events.Event{Topic: auth.TopicSecurity, Payload: &auth.SecurityEvent{Type: auth.EventUnknownRUT, IP: ip}})
-// A: repo nuevo y chico, solo el vocabulario (nombres de OWASP) y el tema; cada capa publica por el events.Publisher que ya recibe
-securityevent.Publish(pub, securityevent.Event{Kind: securityevent.LoginFailed, IP: ip, Mode: "trusted_ip"})   // auth
-securityevent.Publish(pub, securityevent.Event{Kind: securityevent.AccessDenied, UserID: uid, Resource: res})   // server/httpd
-// B: el vocabulario dentro de `events` (junto al mecanismo de publicar y suscribir)
-// C: queda en `auth` y las demás capas importan `auth`
-```
-¿Cuál evita el acoplamiento y es más mantenible? A: una sola lista de nombres para todo el framework, cada capa depende solo de algo más bajo que ella, y `auth` borra su `SecurityEventType`. B mezcla dos responsabilidades en `events` (cómo se publica y qué significa un ataque). C hace que `server` y `crud` dependan de `auth`. **Recomiendo A** (nombre por decidir en la puerta de **api-design**; dos palabras). Respuesta:
-
-**P2 — Qué se hace con los eventos: ver, detectar y avisar.**
-A) `appkit` conecta un solo suscriptor que (1) escribe cada evento como línea con campos (OWASP: hora, app, evento, nivel, IP, usuario, sin secretos), (2) cuenta por IP y por usuario en ventanas de tiempo para detectar fuerza bruta o rastreo (por ejemplo 10 ingresos fallidos en 15 minutos → `authn_login_fail_max` y bloqueo), (3) envía lo grave por los canales de `notify` que la app configuró, y (4) el entorno de desarrollo (`webtyp dev`, MCP) los muestra. Exportar a OpenTelemetry queda como una salida más, después.
-B) Solo exportar a OpenTelemetry y dejar la detección a un sistema externo.
-C) Solo escribir líneas en el registro.
-¿Cuál evita el acoplamiento y es más mantenible? A: funciona sin infraestructura extra (una clínica no tiene un colector), reutiliza `notify` y el contrato de P1 deja abierta la exportación. B exige montar otro sistema. C registra pero nadie se entera a tiempo. **Recomiendo A.** Respuesta:
-
-**P3 — El navegador: qué se puede detectar de verdad.** Ningún navegador puede saber si un programa malicioso en el equipo captura lo que se escribe. Lo que sí se puede: que las llaves no se puedan robar (passkey: la llave privada nunca sale del celular y solo funciona en su dominio), bloquear scripts inyectados con una política de contenido (CSP) estricta, y recibir el reporte cuando el navegador bloquea uno.
-A) `server/httpd` pone por defecto las cabeceras de `router/security` con una CSP estricta (con `'wasm-unsafe-eval'`, que necesita el WASM) y `report-to` hacia una ruta que monta el framework; cada reporte se publica como evento de seguridad (P1). B) Dejar las cabeceras opcionales, como hoy (solo las monta `iam`).
-¿Cuál evita el acoplamiento y es más mantenible? A: cerrado por defecto (**api-harness** regla 7) y un solo lugar que lo hace para todas las apps. B deja cada app sin protección hasta que alguien se acuerde. **Recomiendo A.** Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -47,16 +28,45 @@ Ninguna todavía.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| O1 | repo nuevo (P1) | El contrato: vocabulario OWASP, campos, `Publish`; lo que no se registra (contraseñas, tokens, ids de sesión) | 🔴 espera P1 |
+| O1 | repo nuevo (D1) | El contrato: vocabulario OWASP, campos, `Publish`; lo que no se registra (contraseñas, tokens, ids de sesión) | 🔴 |
 | O2 | `auth` | Publicar con el contrato y borrar `auth.SecurityEventType`; va dentro del plan de inicio de sesión (`auth/docs/PLAN.md`), no aparte | 🔴 espera O1 |
-| O3 | `server`, `crud`, `router` | Cada capa informa lo suyo: permisos negados (401/403), validación rechazada, cuerpo demasiado grande, ruta de reportes CSP (P3) | 🔴 espera P1, P3 |
-| O4 | `appkit`, `notify` | El suscriptor de P2: líneas con campos, conteo por ventana, bloqueo, alertas | 🔴 espera P2 |
+| O3 | `server`, `crud`, `router` | Cada capa informa lo suyo: permisos negados (401/403), validación rechazada, cuerpo demasiado grande, ruta de reportes CSP (D3) | 🔴 espera O1 |
+| O3b | `sitec`, `dom`, `components`, `layout`, `server` | D3: nada en línea, firmas (hash) del script y la hoja de estilos en `integrity` y en la CSP, sprite y diccionario a archivos, `style=""` e `innerHTML` corregidos, CSP estricta siempre activa | 🔴 |
+| O4 | `appkit`, `notify` | El suscriptor de D2: líneas con campos, conteo por ventana, bloqueo, alertas | 🔴 espera O1 |
 | O5 | `app` (`webtyp dev`, MCP) | Ver los eventos de seguridad mientras se desarrolla | 🔴 espera O4 |
 | O6 | `devskills` | Skill del dominio y su fila en `framework-map` | 🔴 |
 
 ## Bloqueos
 
-- 2026-11-18 · Todo espera P1–P3. El plan de inicio de sesión espera P1 (O2 va dentro de él).
+- 2026-11-18 · O1 (el contrato) va primero; el plan de inicio de sesión lo espera, porque O2 va dentro de él.
+
+## Relación con otras olas
+
+- ARCHITECTURE: el plan de D75–D82 (`auth/docs/PLAN.md`) incluye O2; no se ejecuta antes de que P1 esté decidida, para no tocar `auth` dos veces.
+- El registro sin campos (`func(...any)` en todo el framework) es un problema más amplio que la seguridad: se pregunta aparte cuando se cierre este master.
+## Decisiones por implementar
+
+| # | Decisión | Dónde se implementa |
+|---|---|---|
+| D1 (P1-A) | **Un solo contrato de eventos de seguridad, en un repo nuevo y chico:** el vocabulario de OWASP (`authn_login_fail`, `authn_login_fail_max`, `authn_login_lock`, `authz_fail`, `excess_rate_limit_exceeded`, `input_validation_fail`, `malicious_csp_violation`…), los campos y `Publish` sobre `events.Publisher`; nunca lleva contraseñas, tokens ni ids de sesión. `auth` borra `SecurityEventType`; nombre del repo en la puerta de **api-design** (dos palabras) | repo nuevo, `auth`, `server`, `crud`, `router` |
+| D2 (P2-A) | **Un suscriptor en `appkit`:** línea con campos por evento, conteo por IP y por usuario en ventanas (fuerza bruta, rastreo) con bloqueo, alertas por los canales de `notify`, y vista en `webtyp dev`/MCP; exportar a OpenTelemetry queda como una salida más, después | `appkit`, `notify`, `app` |
+| D3 (P3-A, nivel bancario) | **Política de contenido estricta por defecto, sin nada en línea:** el HTML no lleva CSS, JS ni SVG dentro. `server/httpd` envía siempre una CSP estricta basada en hashes (como recomienda [web.dev](https://web.dev/articles/strict-csp) para páginas estáticas): `script-src 'sha384-…' 'strict-dynamic' 'wasm-unsafe-eval'`, `style-src 'self'`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `require-trusted-types-for 'script'` ([Trusted Types](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API)) y `report-to` hacia la ruta de reportes del framework. `sitec` calcula al compilar la firma (hash) del script y de la hoja de estilos y la escribe como `integrity` ([SRI](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity)) y en la CSP: si el archivo cambia un byte, el navegador no lo ejecuta. **El SVG no se puede firmar con SRI** (solo cubre `<script>` y `<link rel=stylesheet>`): sale del HTML a un archivo propio del mismo origen, con su hash en el nombre (`sprite.<hash>.svg`), usado con `<use href>`, sin estilos en línea; la CSP impide que corra código dentro de él. El diccionario de traducciones sale también a un archivo. Lo que hoy rompería esta política se corrige en el mismo cambio: `style=""` en `components/calendarslider/calendarslider.go:610`, `components/cellgrid/cellgrid.go:57,83`, `layout/login/login.go:117` (pasan a clases o a `element.style.prop`, que la CSP permite según [MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src)); `innerHTML`/`insertAdjacentHTML` en `dom/dom_frontend.go:202,279,1028` (pasan a construir nodos, o a una sola política de Trusted Types en `dom`) | `server`, `router/security`, `sitec`, `dom`, `components`, `layout` |
+
+## Fases
+
+| Fase | Repo | Qué | Estado |
+|---|---|---|---|
+| O1 | repo nuevo (D1) | El contrato: vocabulario OWASP, campos, `Publish`; lo que no se registra (contraseñas, tokens, ids de sesión) | 🔴 |
+| O2 | `auth` | Publicar con el contrato y borrar `auth.SecurityEventType`; va dentro del plan de inicio de sesión (`auth/docs/PLAN.md`), no aparte | 🔴 espera O1 |
+| O3 | `server`, `crud`, `router` | Cada capa informa lo suyo: permisos negados (401/403), validación rechazada, cuerpo demasiado grande, ruta de reportes CSP (D3) | 🔴 espera O1 |
+| O3b | `sitec`, `dom`, `components`, `layout`, `server` | D3: nada en línea, firmas (hash) del script y la hoja de estilos en `integrity` y en la CSP, sprite y diccionario a archivos, `style=""` e `innerHTML` corregidos, CSP estricta siempre activa | 🔴 |
+| O4 | `appkit`, `notify` | El suscriptor de D2: líneas con campos, conteo por ventana, bloqueo, alertas | 🔴 espera O1 |
+| O5 | `app` (`webtyp dev`, MCP) | Ver los eventos de seguridad mientras se desarrolla | 🔴 espera O4 |
+| O6 | `devskills` | Skill del dominio y su fila en `framework-map` | 🔴 |
+
+## Bloqueos
+
+- 2026-11-18 · O1 (el contrato) va primero; el plan de inicio de sesión lo espera, porque O2 va dentro de él.
 
 ## Relación con otras olas
 
