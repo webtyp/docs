@@ -1,5 +1,5 @@
 # Mapa del framework — master plan
-> **Status:** IN PROGRESS · 2026-11-18 · M1 publicada (`devskills` v0.0.57); grupos por dominio y marcas 🟢/🔴 publicados (`devskills` v0.0.61); sigue M2 (skill **session**); sin automatización · bloquea D75 de [ARCHITECTURE](ARCHITECTURE_MASTER_PLAN.md) (inicio de sesión), que espera la skill de su componente
+> **Status:** IN PROGRESS · 2026-11-18 · M1 publicada (`devskills` v0.0.57); grupos por dominio y marcas 🟢/🔴 publicados (`devskills` v0.0.61); sigue M2 (skill **sign-in-and-permissions**); sin automatización · bloquea D75 de [ARCHITECTURE](ARCHITECTURE_MASTER_PLAN.md) (inicio de sesión), que espera la skill de su componente
 
 Problema que se ve: un agente llega sin saber qué piezas forman una app ni qué skill explica cada una. Entonces supone, pone código en la pieza equivocada y el dueño tiene que revisarlo todo. Caso real (2026-11-18): el modo de entrada `trusted_ip` quedó dentro de `appkit` (D68), y ninguna skill dice qué repos forman el componente «sesión».
 Reglas: **devskills** (una skill = un dominio, ≤50 líneas es lo ideal, más de 150 se rechaza).
@@ -23,7 +23,7 @@ Cada fase termina con la revisión (🔵) del dueño antes de la siguiente.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| M2 | `devskills` | Una skill por dominio sin skill (offline sync, events, session, documents, AI and voice), una por vez, empezando por **session** (desbloquea D75): diagrama de quién importa a quién y la responsabilidad de cada repo, leído del código | 🔴 |
+| M2 | `devskills` | Una skill por dominio sin skill (offline sync, events, documents, AI and voice), una por vez; **sign-in-and-permissions** publicada (`devskills` v0.0.64): diagrama de quién importa a quién y la responsabilidad de cada repo, leído del código | 🔴 |
 | M3 | repos 🔴 | Corregir cada 🔴 de `framework-map` (`appkit`, `auth`, `layout`, `server`, `lang`, `dbsync`, `pwa`, `image`, `imagemin`, `pdf`, `broker`, `binary`, `retrieval`); cada uno es una pregunta en ARCHITECTURE antes de tocarlo | 🔴 |
 
 ## Bloqueos
@@ -32,4 +32,4 @@ Cada fase termina con la revisión (🔵) del dueño antes de la siguiente.
 
 ## Relación con otras olas
 
-- ARCHITECTURE: D75 (el inicio de sesión como una pieza) espera la skill **session** (M2).
+- ARCHITECTURE: D75 (el inicio de sesión como una pieza) espera la skill **sign-in-and-permissions** (M2).

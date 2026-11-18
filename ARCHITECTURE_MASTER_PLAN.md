@@ -12,7 +12,7 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 (b) Hoy se ve: si el servidor está caído, la app muestra la pantalla de acceso como si solo faltara entrar (`layout/app/browser.go:161-163`). A) dejarlo así. B) la pantalla de entrada dice «el servidor no respondió» y qué hacer.
 ¿Cuál evita el acoplamiento y es más mantenible? En las dos, B: cada respuesta tiene un solo significado, y la mitad del navegador de `auth` la traduce sin adivinar. **Recomiendo B en ambas**: en la red local, «ya hay administrador» no revela nada que la pantalla de acceso no muestre ya, y un fallo nunca queda en silencio (**api-harness** regla 5). Respuesta:
 
-**P63 — Corregir el dominio sesión de una vez (grafo en la skill **session**).** Hoy se ve: agregar o quitar un modo de entrada obliga a tocar `appkit`, `auth/authority`, `appkit/browser` y `layout`, y el navegador da 404. Causa: el módulo común `auth/authority` importa dos modos (`credentials_lan.go`, `lan_store.go` → `trusted_ip`; `credentials_password.go` → `email_password`), y `appkit/backend/signin.go` construye `trusted_ip` por nombre (equipos del personal, primer administrador por RUT). Los constructores de los modos piden piezas que arma `authority` (`IdentityStore`, `SessionIssuer`…), así que la app no puede construirlos sola.
+**P63 — Corregir el dominio sesión de una vez (grafo en la skill **sign-in-and-permissions**).** Hoy se ve: agregar o quitar un modo de entrada obliga a tocar `appkit`, `auth/authority`, `appkit/browser` y `layout`, y el navegador da 404. Causa: el módulo común `auth/authority` importa dos modos (`credentials_lan.go`, `lan_store.go` → `trusted_ip`; `credentials_password.go` → `email_password`), y `appkit/backend/signin.go` construye `trusted_ip` por nombre (equipos del personal, primer administrador por RUT). Los constructores de los modos piden piezas que arma `authority` (`IdentityStore`, `SessionIssuer`…), así que la app no puede construirlos sola.
 ```go
 // Hoy (config/app.go):  SignIn: appkit.SignInByTrustedIP          // appkit sabe qué es trusted_ip
 // A: la app elige valores de cada modo; cada modo se arma con lo que le da authority (una interfaz chica en auth)
@@ -121,7 +121,7 @@ Marcas: 🔴 te toca a ti (plan sin crear o sin revisar, pregunta por responder,
 
 ## Bloqueos
 
-- 2026-11-18 · D75 (inicio de sesión) espera la skill `sign-in` de [FRAMEWORK_MAP](FRAMEWORK_MAP_MASTER_PLAN.md) M2; su trabajo local en `auth`/`appkit` no se publica.
+- 2026-11-18 · D75 (inicio de sesión) espera la skill **sign-in-and-permissions** de [FRAMEWORK_MAP](FRAMEWORK_MAP_MASTER_PLAN.md) M2; su trabajo local en `auth`/`appkit` no se publica.
 - 2026-11-16 · Sin ejecutor remoto: Jules cerró y `codejob` no tiene agente. Las filas 🔴 se ejecutan en local; ninguna espera a una sesión. Prioridad para `mjosefa-cms`: `access`, `appointment_booking`. Pendiente tras el cierre de la ola: migrar las reglas de los módulos publicados antes de D58 a `ApplyAndPublish()`.
 
 ## Arreglos colaterales
