@@ -9,6 +9,7 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 
 | Master plan | Estado | Relación con otras olas |
 |---|---|---|
+| [SECURITY_OBSERVABILITY_MASTER_PLAN.md](SECURITY_OBSERVABILITY_MASTER_PLAN.md) | PENDING · 2026-11-18 — espera P1–P3 del dueño | Ver, detectar y avisar ataques (fuerza bruta, rastreo, scripts inyectados) con un solo contrato de eventos para todas las capas; el plan de inicio de sesión de ARCHITECTURE espera su P1 |
 | [FRAMEWORK_MAP_MASTER_PLAN.md](FRAMEWORK_MAP_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — M1 publicada (`framework-map`, devskills v0.0.57); sigue M2: skill **sign-in-and-permissions** | Skill índice `framework-map`: componentes de una app → su skill; sin automatización; bloquea ARCHITECTURE D75 |
 | [DEV_INSTANCES_MASTER_PLAN.md](DEV_INSTANCES_MASTER_PLAN.md) | CLOSED · 2026-11-05 — fases 0–6 cerradas (app v0.7.62, devskills v0.0.38) | Lo que el dev hace en la TUI, el agente lo hace por MCP; sale de DATA_IMPORT (M6) |
 | [DATABASE_DX_MASTER_PLAN.md](DATABASE_DX_MASTER_PLAN.md) | IN PROGRESS · 2026-11-17 — fases 0–2 en local (`gotest` ✅); espera revisión del dueño para publicar | Mejora UX/DX de `DATABASE`/`MIGRATE` en `webtyp dev` (traducción, contexto, cola, bloqueo navegador) y corrige falso positivo `text_search` en `ddl.Leftovers`; extiende TUI_STAGES |
