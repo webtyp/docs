@@ -7,7 +7,24 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 ## Preguntas abiertas
 
-Ninguna.
+Las cinco que siguen salieron de revisar el plan de D75–D77 (`auth/docs/PLAN.md`) contra el diagrama, las skills y el código; el plan espera sus respuestas.
+
+**P64 — Qué pantallas de entrada se muestran según la puerta.** Hoy se ve (con el plan tal cual): desde Internet aparecería el formulario de RUT, que el servidor rechaza con 404. Causa: el plan da una pantalla por modo sin saber por qué puerta llegó la visita; mjosefa quiere RUT solo en la clínica y passkey desde afuera (`mjosefa-cms/docs/ACCESO_DESDE_INTERNET.md`).
+```go
+// A: la mitad del navegador de cada modo pregunta a su propia ruta si está abierta en esta puerta; si no, no se muestra
+//    trusted_ip/browser: GET /setup → 404 (Internet) = no se muestra; 200 = se muestra (setup o acceso)
+// B: un «modos abiertos aquí» nuevo en authority que el navegador lee antes de dibujar
+// C: se muestran todas y el modo rechaza en la puerta equivocada
+```
+¿Cuál evita el acoplamiento y es más mantenible? A: cada modo sigue siendo dueño de sus dos mitades, sin contrato nuevo; con D76 el 404 queda solo para Internet. B suma un contrato que conoce todos los modos. C confunde a la persona. **Recomiendo A.** Respuesta:
+
+**P65 — El primer administrador en una app que solo usa passkey.** Hoy se ve: registrar la primera passkey exige una sesión abierta (`passkey/passkey.go`, `freshLoginWindow`), así que una app solo con passkey no puede crear a su primer administrador. A) passkey tiene configuración inicial como `trusted_ip`, solo desde la red local (una app en la nube no tiene red local). B) `appkit` se niega a arrancar si ningún modo elegido sabe crear al primer administrador, con un mensaje que dice cuál agregar. C) configuración inicial con un código de un solo uso que el servidor escribe en su registro, desde cualquier puerta. ¿Cuál evita el acoplamiento y es más mantenible? B no agrega código nuevo y falla en voz alta; C sirve también en la nube, pero es una función nueva. **Recomiendo B ahora** (ninguna app de `appkit` usa solo passkey; mjosefa tiene `trusted_ip`) **y C cuando aparezca la primera.** Respuesta:
+
+**P66 — Dos registros de equipos de confianza.** Hoy se ve: `authority` tiene su propia tabla de IPs por usuario (`lanip`, `AssignLANIP`, `IsTrustedIP` en `ports.go:96`), pero `appkit` usa los equipos del módulo de personal de la app y, si no hay ninguno, `refuseAllIPs` rechaza a todos **sin avisar**. Además, la entidad crud `lan_identity` no la usa ninguna pantalla (la relación RUT ↔ usuario ya es una `Identity` con proveedor `trusted_ip`). A) se borran `lanip` y `lan_identity` de `auth`; `trustedip.Mode{Devices}` es obligatorio (cualquier módulo que cumpla `auth.TrustedIPStore`) y `appkit` se niega a arrancar sin él. B) `trusted_ip` trae su propia tabla de equipos y su pantalla; `Devices` es opcional. ¿Cuál evita el acoplamiento y es más mantenible? A: un solo registro de equipos, el que la app ya administra; nada en silencio. B duplica el inventario de equipos que mjosefa ya tiene. **Recomiendo A.** Respuesta:
+
+**P67 — Las tablas de cada modo no se migran.** Hoy se ve: `passkey` tiene su `Migrate` (`passkey/passkey.go:101`), pero la migración generada de una app solo corre `access/migrate` (`appkitc/migrations.go:126`): elegir passkey dejaría su tabla sin crear. A) un modo con tablas cumple una interfaz chica opcional (`Migrate(ddl.Execer, ddl.Compiler) error`) y la migración de la app recorre `App.SignIn` y la llama. B) `authority` migra las tablas de todos los modos. ¿Cuál evita el acoplamiento y es más mantenible? A: el modo es dueño de sus tablas y un modo sin tablas no escribe un método vacío (**api-harness** regla 8). B vuelve a hacer que `authority` conozca los modos. **Recomiendo A.** Respuesta:
+
+**P68 — Una app sin ningún modo.** Hoy hay tres versiones distintas: la skill dice «passkey por defecto», el diagrama dice que `appkit` se niega a arrancar y `appkit` hoy arranca y avisa que nadie puede entrar (`build.go:30`). A) sin modos = app sin inicio de sesión: arranca, avisa, y toda operación protegida se niega. B) passkey implícito. C) no arranca. ¿Cuál evita el acoplamiento y es más mantenible? A: cerrado por defecto y en voz alta (regla 7), y sirve a una app solo pública; B prende un modo que nadie escribió y además necesita su `Origin`. **Recomiendo A**, y la skill dirá «passkey es el modo recomendado desde afuera», no «por defecto». Respuesta:
 
 ## Decisiones por implementar
 
