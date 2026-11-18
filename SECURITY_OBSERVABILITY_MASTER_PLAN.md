@@ -1,5 +1,5 @@
 # Observabilidad de seguridad — master plan
-> **Status:** PENDING · 2026-11-18 · D1–D4 decididas; repo `securityevent` creado (v0.0.1, vacío); sigue O1 (el contrato, con su puerta de **api-design**) · el plan de inicio de sesión (ARCHITECTURE D75–D82, `auth/docs/PLAN.md`) espera O1 para que `auth` publique sus eventos una sola vez
+> **Status:** PENDING · 2026-11-18 · D1–D4 decididas; O1 hecho en local (`securityevent`, `gotest` ✅), espera revisión del dueño · el plan de inicio de sesión (ARCHITECTURE D75–D82, `auth/docs/PLAN.md`) espera O1 para que `auth` publique sus eventos una sola vez
 
 Problema que se ve: si alguien intenta entrar a la fuerza, prueba RUT al azar o inyecta un script en el navegador, nadie se entera. Hoy:
 - `auth` define 22 tipos de evento de seguridad (`auth/user.go:56-80`) y solo `auth/authority` los publica (`module.go:137`, tema `auth.security`); el único que escucha es `appkit` (`backend/signin.go:111`), que los escribe como una línea de texto. No se guardan, no se cuentan, no avisan a nadie.
@@ -28,7 +28,7 @@ Ninguna todavía.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| O1 | `securityevent` (D1, D4) | El contrato: vocabulario OWASP, campos, `Publish`; lo que no se registra (contraseñas, tokens, ids de sesión) | 🔴 |
+| O1 | `securityevent` (D1, D4) | El contrato: `Kind` (16 tipos con nombre OWASP y nivel), `Event`, `Reporter` (`New`, `Report`), `Listen`; nunca secretos | 🟡 hecho en local, `gotest` ✅ (98%); espera revisión del dueño para publicar |
 | O2 | `auth` | Publicar con el contrato y borrar `auth.SecurityEventType`; va dentro del plan de inicio de sesión (`auth/docs/PLAN.md`), no aparte | 🔴 espera O1 |
 | O3 | `server`, `crud`, `router` | Cada capa informa lo suyo: permisos negados (401/403), validación rechazada, cuerpo demasiado grande, ruta de reportes CSP (D3) | 🔴 espera O1 |
 | O3b | `sitec`, `dom`, `components`, `layout`, `server` | D3: nada en línea, firmas (hash) del script y la hoja de estilos en `integrity` y en la CSP, sprite y diccionario a archivos, `style=""` e `innerHTML` corregidos, CSP estricta siempre activa | 🔴 |
@@ -57,7 +57,7 @@ Ninguna todavía.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| O1 | `securityevent` (D1, D4) | El contrato: vocabulario OWASP, campos, `Publish`; lo que no se registra (contraseñas, tokens, ids de sesión) | 🔴 |
+| O1 | `securityevent` (D1, D4) | El contrato: `Kind` (16 tipos con nombre OWASP y nivel), `Event`, `Reporter` (`New`, `Report`), `Listen`; nunca secretos | 🟡 hecho en local, `gotest` ✅ (98%); espera revisión del dueño para publicar |
 | O2 | `auth` | Publicar con el contrato y borrar `auth.SecurityEventType`; va dentro del plan de inicio de sesión (`auth/docs/PLAN.md`), no aparte | 🔴 espera O1 |
 | O3 | `server`, `crud`, `router` | Cada capa informa lo suyo: permisos negados (401/403), validación rechazada, cuerpo demasiado grande, ruta de reportes CSP (D3) | 🔴 espera O1 |
 | O3b | `sitec`, `dom`, `components`, `layout`, `server` | D3: nada en línea, firmas (hash) del script y la hoja de estilos en `integrity` y en la CSP, sprite y diccionario a archivos, `style=""` e `innerHTML` corregidos, CSP estricta siempre activa | 🔴 |
