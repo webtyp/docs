@@ -12,7 +12,7 @@ Reparto (dueño, 2026-11-18): Claude hace lo de arquitectura (diseño, contratos
 5. **Si algo pide una decisión** (un texto ambiguo, una regla que no aplica, un error que no es de traducción), no lo decidas: escríbelo en «Preguntas abiertas» de este master, con el repo y la línea, y sigue con el siguiente repo.
 6. **El mapa al día:** si un cambio altera qué hace un repo o sus imports, actualiza su fila en `framework-map` y la skill de su dominio en el mismo cambio. Una traducción o un documento no los altera.
 
-**Repos reservados (no tocar hasta que G3 se desbloquee):** `model`, `router`, `view`, `auth`, `appkit`, `appkitc`, `layout`, `devskills`, `server`, `crud`, `notify`, `securityevent`, `veltylabs/mjosefa-cms`.
+**Repos reservados (no tocar hasta que G3 se desbloquee):** `auth`, `appkit`, `appkitc`, `layout`, `devskills`, `server`, `crud`, `notify`, `securityevent`, `veltylabs/mjosefa-cms`.
 
 ## Preguntas abiertas
 
