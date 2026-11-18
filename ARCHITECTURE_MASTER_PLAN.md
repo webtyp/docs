@@ -7,15 +7,7 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 
 ## Preguntas abiertas
 
-**P67 — ¿Quién crea las tablas de cada modo de entrada?** (reescrita, más simple). Un modo que guarda datos necesita su tabla. Ejemplo: passkey guarda la llave de cada celular en la tabla `passkey`. Hoy, cuando una app corre su migración (`go run ./migrate`), solo se crean las tablas de usuarios y roles (`appkitc/migrations.go:126` llama `access/migrate`); la tabla de passkey nunca se crea, y al registrar la primera llave el servidor fallaría.
-```go
-// A: cada modo crea sus tablas; la migración de la app recorre los modos que eligió
-for _, m := range config.App.SignIn {
-    if t, ok := m.(auth.ModeWithTables); ok { err = t.Migrate(conn, compiler) } // passkey crea la suya; trusted_ip (tras D79) no tiene
-}
-// B: authority crea las tablas de todos los modos, los elija la app o no
-```
-¿Cuál evita el acoplamiento y es más mantenible? A: el modo es dueño de sus tablas, una app solo crea las de los modos que eligió, y un modo sin tablas no escribe nada (**api-harness** regla 8). B vuelve a hacer que `authority` conozca cada modo, lo que D77 acaba de quitar. **Recomiendo A.** Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -94,6 +86,7 @@ for _, m := range config.App.SignIn {
 | D79 (P66-A) | **Un solo registro de equipos de confianza, el de la app:** se borran `lanip` (`AssignLANIP`, `RevokeLANIP`, `GetLANIPs`, `IsTrustedIP` de `authority`) y la entidad crud `lan_identity`; `trustedip.Mode{Devices}` es obligatorio (un módulo que cumpla `auth.TrustedIPStore`) y `appkit` no arranca sin él (reemplaza `refuseAllIPs`, que rechazaba en silencio) | `auth`, `appkit`, `mjosefa-cms` |
 | D80 (P68-A) | **Una app sin modos no tiene inicio de sesión:** arranca, avisa (`build.go:30`) y toda operación protegida se niega; ningún modo viene por defecto; passkey es el recomendado desde afuera | `appkit`, diagrama `SIGN_IN.md` |
 | D81 (P65-C) | **Primer administrador con passkey: código de un solo uso en el registro del servidor.** Mientras no exista administrador, el servidor genera un código al arrancar y lo escribe en su registro; quien lo presenta registra su passkey y queda como administrador (`Ports.MakeAdmin`); el código sirve una vez y la ruta se cierra para siempre. Como Jupyter ([el primer ingreso usa un token](https://jupyter-server.readthedocs.io/en/latest/operators/public-server.html)) y Keycloak ([administrador inicial creado por quien controla el arranque, temporal](https://www.keycloak.org/server/bootstrap-admin-recovery)): prueba que controlas el servidor. Se descarta «el primero que llega» de [Home Assistant](https://www.home-assistant.io/getting-started/onboarding/), que en Internet lo gana cualquiera | `auth` (`passkey`), `appkit` |
+| D82 (P67-A) | **Cada modo crea sus propias tablas:** un modo con tablas cumple la interfaz chica opcional `auth.ModeWithTables{ Migrate(ddl.Execer, ddl.Compiler) error }`; la migración generada de la app (`appkitc`) recorre `App.SignIn` y la llama; un modo sin tablas no escribe nada | `auth` (`passkey`), `appkitc` |
 
 ## Fases
 
