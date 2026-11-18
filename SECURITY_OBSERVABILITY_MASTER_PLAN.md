@@ -29,7 +29,7 @@ Ninguna todavía.
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | O1 | `securityevent` (D1, D4) | El contrato: `Kind` (16 tipos con nombre OWASP y nivel), `Event`, `Reporter` (`New`, `Report`), `Listen`; nunca secretos | ✅ publicado `securityevent` v0.0.2 (errores traducidos, `gotest` 100%) |
-| O2 | `auth` | Publicar con el contrato y borrar `auth.SecurityEventType`; va dentro del plan de inicio de sesión (`auth/docs/PLAN.md`), no aparte | 🔴 espera O1 |
+| O2 | `auth` | Publicar con el contrato y borrar `auth.SecurityEventType`; va dentro del plan de inicio de sesión | 🟡 hecho en local (etapa 4b del plan), sin publicar; `appkit` escribe cada evento en el registro |
 | O3 | `server`, `crud`, `router` | Cada capa informa lo suyo: permisos negados (401/403), validación rechazada, cuerpo demasiado grande, ruta de reportes CSP (D3) | 🔴 espera O1 |
 | O3b | `sitec`, `dom`, `components`, `layout`, `server` | D3: nada en línea, firmas (hash) del script y la hoja de estilos en `integrity` y en la CSP, sprite y diccionario a archivos, `style=""` e `innerHTML` corregidos, CSP estricta siempre activa | 🔴 |
 | O4 | `appkit`, `notify` | El suscriptor de D2: líneas con campos, conteo por ventana, bloqueo, alertas | 🔴 espera O1 |
