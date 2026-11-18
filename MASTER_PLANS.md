@@ -9,7 +9,7 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 
 | Master plan | Estado | Relación con otras olas |
 |---|---|---|
-| [FRAMEWORK_MAP_MASTER_PLAN.md](FRAMEWORK_MAP_MASTER_PLAN.md) | PENDING · 2026-11-18 — espera P6 del dueño | Skill índice `framework-map`: componentes de una app → su skill; sin automatización; bloquea ARCHITECTURE D75 |
+| [FRAMEWORK_MAP_MASTER_PLAN.md](FRAMEWORK_MAP_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — M1 publicada (`framework-map`, devskills v0.0.57); sigue M2: skill **session** | Skill índice `framework-map`: componentes de una app → su skill; sin automatización; bloquea ARCHITECTURE D75 |
 | [DEV_INSTANCES_MASTER_PLAN.md](DEV_INSTANCES_MASTER_PLAN.md) | CLOSED · 2026-11-05 — fases 0–6 cerradas (app v0.7.62, devskills v0.0.38) | Lo que el dev hace en la TUI, el agente lo hace por MCP; sale de DATA_IMPORT (M6) |
 | [DATABASE_DX_MASTER_PLAN.md](DATABASE_DX_MASTER_PLAN.md) | IN PROGRESS · 2026-11-17 — fases 0–2 en local (`gotest` ✅); espera revisión del dueño para publicar | Mejora UX/DX de `DATABASE`/`MIGRATE` en `webtyp dev` (traducción, contexto, cola, bloqueo navegador) y corrige falso positivo `text_search` en `ddl.Leftovers`; extiende TUI_STAGES |
 | [TUI_STAGES_MASTER_PLAN.md](TUI_STAGES_MASTER_PLAN.md) | IN PROGRESS · 2026-11-06 — fases 1, 1b, 2, 3a, 4a y 5 cerradas; siguen 3b y 4b (`app`), luego 6 (`mjosefa-cms`) | Se lleva P47, D53 y D64 de DATA_IMPORT; comparte la pestaña MCP con DEV_INSTANCES |
