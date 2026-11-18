@@ -9,6 +9,7 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 
 | Master plan | Estado | Relación con otras olas |
 |---|---|---|
+| [ANTIGRAVITY_WORK_MASTER_PLAN.md](ANTIGRAVITY_WORK_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — G1 (traducciones) y G2 (documentación vieja) listas; G3 bloqueada | Trabajo largo sin decisiones de diseño, para Antigravity; Claude hace la arquitectura. Lista de repos reservados mientras Claude tiene cambios sin publicar |
 | [SECURITY_OBSERVABILITY_MASTER_PLAN.md](SECURITY_OBSERVABILITY_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — O1 publicado (`securityevent` v0.0.2); O2 va en el plan de inicio de sesión | Ver, detectar y avisar ataques (fuerza bruta, rastreo, scripts inyectados) con un solo contrato de eventos para todas las capas; el plan de inicio de sesión de ARCHITECTURE espera su O1 |
 | [FRAMEWORK_MAP_MASTER_PLAN.md](FRAMEWORK_MAP_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — M1 publicada (`framework-map`, devskills v0.0.57); sigue M2: skill **sign-in-and-permissions** | Skill índice `framework-map`: componentes de una app → su skill; sin automatización; bloquea ARCHITECTURE D75 |
 | [DEV_INSTANCES_MASTER_PLAN.md](DEV_INSTANCES_MASTER_PLAN.md) | CLOSED · 2026-11-05 — fases 0–6 cerradas (app v0.7.62, devskills v0.0.38) | Lo que el dev hace en la TUI, el agente lo hace por MCP; sale de DATA_IMPORT (M6) |
