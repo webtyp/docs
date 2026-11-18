@@ -18,7 +18,16 @@ Reglas: **api-design** (puerta 4), **api-harness**, **zero-debt**, **console-log
 
 ## Preguntas abiertas
 
-Ninguna.
+**P5 — ¿Quién bloquea la fuerza bruta: cada modo o el suscriptor común (D2)?** Hoy `trusted_ip` crea su propio limitador (`auth/trusted_ip/mode.go:61`, 3 intentos por IP cada 15 min) y `email_password` acepta otro; cada modo cuenta por su lado, así que alguien puede probar 3 veces en un modo y 3 en otro. El bloqueo tiene que ocurrir **antes** de atender el intento (en la misma petición); el suscriptor de D2 recibe el evento **después**.
+```go
+// A: un solo limitador para toda la app, en Ports; cada modo lo consulta antes de trabajar; el suscriptor solo cuenta para avisar
+ports.Limiter = auth.NewIPLimiter(3, 15*60, 15*60)            // appkit, una vez
+if err := p.Limiter.Check(ip); err != nil { /* RateLimited */ } // trusted_ip, email_password, passkey
+securityevent.Listen(broker, alertOnRepeatedFailures)          // appkit: authn_login_fail_max → notify
+// B: el suscriptor cuenta los LoginFailed y los modos le preguntan si la IP está bloqueada (el suscriptor pasa a ser un puerto)
+// C: como hoy, cada modo con su limitador; el suscriptor solo avisa
+```
+¿Cuál evita el acoplamiento y es más mantenible? A: un solo contador por IP para todos los modos, el bloqueo sigue en la petición (síncrono) y el suscriptor solo observa y avisa; ningún modo depende del suscriptor. B hace que los modos dependan de quien escucha eventos (dos responsabilidades en el suscriptor). C deja que un atacante sume intentos cambiando de modo. **Recomiendo A.** Respuesta:
 
 ## Decisiones por implementar
 
