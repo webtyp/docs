@@ -12,6 +12,21 @@ La firma de `crud.Registry` queda fijada por D7–D13; cambiarla después obliga
 (b) Hoy se ve: si el servidor está caído, la app muestra la pantalla de acceso como si solo faltara entrar (`layout/app/browser.go:161-163`). A) dejarlo así. B) la pantalla de entrada dice «el servidor no respondió» y qué hacer.
 ¿Cuál evita el acoplamiento y es más mantenible? En las dos, B: cada respuesta tiene un solo significado, y la mitad del navegador de `auth` la traduce sin adivinar. **Recomiendo B en ambas**: en la red local, «ya hay administrador» no revela nada que la pantalla de acceso no muestre ya, y un fallo nunca queda en silencio (**api-harness** regla 5). Respuesta:
 
+**P63 — Corregir el dominio sesión de una vez (grafo en la skill **session**).** Hoy se ve: agregar o quitar un modo de entrada obliga a tocar `appkit`, `auth/authority`, `appkit/browser` y `layout`, y el navegador da 404. Causa: el módulo común `auth/authority` importa dos modos (`credentials_lan.go`, `lan_store.go` → `trusted_ip`; `credentials_password.go` → `email_password`), y `appkit/backend/signin.go` construye `trusted_ip` por nombre (equipos del personal, primer administrador por RUT). Los constructores de los modos piden piezas que arma `authority` (`IdentityStore`, `SessionIssuer`…), así que la app no puede construirlos sola.
+```go
+// Hoy (config/app.go):  SignIn: appkit.SignInByTrustedIP          // appkit sabe qué es trusted_ip
+// A: la app elige valores de cada modo; cada modo se arma con lo que le da authority (una interfaz chica en auth)
+SignIn: []auth.Mode{
+    trustedip.Mode{Devices: staffmanager.Definition},          // dentro de la clínica: RUT desde un equipo registrado
+    passkey.Mode{Origin: "https://app.monjitaschillan.cl"},    // desde afuera
+}
+type Mode interface{ Build(p Ports) (Authenticator, error) }   // auth: Ports = identidades, sesiones, avisos, base, ids, MakeAdmin, Built
+// C: la app arma cada modo con los constructores de hoy, recibiendo authority
+SignIn: func(u *authority.Module) []auth.Authenticator { return []auth.Authenticator{trustedip.New(u, staff, u, u, false), …} }
+```
+En ambas: `authority` deja de importar modos (RUT, equipos LAN y su tabla pasan a `trusted_ip`; el hash de contraseña a `email_password`); el primer administrador es común (`Ports.MakeAdmin`, que da el rol `admin` con `access`/`rbac`) y cada modo decide cómo reconoce a esa primera persona; cada modo trae su pantalla (`trusted_ip/browser`, como `passkey/browser`); `appkit` borra `SignInMethod`, `signin.go` de backend y de browser, y solo recorre la lista; `layout` recibe `view.Session` (D75).
+¿Cuál evita el acoplamiento y es más mantenible? A: la app escribe una línea por modo y nunca ve los puertos; `appkit` no conoce ningún modo; un modo nuevo no toca `appkit`. C usa solo lo que existe, pero cada app repite el cableado de puertos (5 argumentos) y depende de `authority`. **Recomiendo A.** Falta la puerta de **api-design** (prior art con enlace leído) antes de escribir el plan. Respuesta:
+
 ## Decisiones por implementar
 
 | ID | Decisión | Fase |
