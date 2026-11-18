@@ -13,6 +13,16 @@ B) además `login`, `logout` y `setup` por `crud` (la cookie la pondría el `Cal
 C) solo cambiar `layout` para pedir `GET /me`: no cumple la regla.
 ¿Cuál evita el acoplamiento y es más mantenible? A: `layout` solo conoce un nombre de operación; usa el permiso que ya existe; no toca el contrato de `crud`. B obliga a `crud` a manejar cookies. **Recomiendo A.** Seguridad: sin sesión → denegado (`RoleAuthenticated` solo lo tiene un id no vacío, `rbac/authenticated.go:8`); con sesión → solo su propio registro. Se borran `PathMe` y `handleMe` (3 pruebas los nombran) y se añade una prueba de `appkit` que llama `me` con el `rpc.Caller` real. Falta la puerta de **api-design**: prior art (≥3 con enlace leído) sin verificar. Respuesta:
 
+**P61 — Dónde vive el tipo `Me` que comparten el servidor y el navegador (bloquea P60-A).** P60-A está hecho en local, sin publicar: `auth/authority` sirve `me` por `crud` (`rule_me_read.go`, pruebas por `crud.LoopbackActingAs`) y `appkit` concede `me` a `RoleAuthenticated` (prueba con el `rbac` real: con sesión llega a la regla, sin sesión 403). Falta `layout`: una lectura de `crud` responde una lista (`[{…}]`, `json/decode.go:62`) y para leerla el navegador necesita el tipo generado `MeList`. Hoy está en `auth/authority`, que en WASM arrastra `bcrypt`, `orm`, `ddl`, `crypto/aes`, `os`; `definitionc` rechaza declarar la entidad con un modelo de otro paquete («each handler must be written XModel», probado). 
+```go
+// A: el modelo en el paquete raíz `auth` (en WASM solo model, json, router, lang: ya están en layout)
+var Definition = model.ModuleDefinition{Name: "user", Entities: []model.Definition{UserModel, auth.MeModel, …}} // definitionc genera &auth.Me{}
+var rows auth.MeList; caller.Call(auth.OpMe, &crud.ReadArgs{}, &rows, done)                                  // layout
+// B: layout importa auth/authority → browser.wasm carga bcrypt, orm, ddl, os
+// C: layout escribe su propia copia del modelo `me` (Schema, Pointers) → dos copias que divergen: el defecto de hoy
+```
+¿Cuál evita el acoplamiento y es más mantenible? A: el tipo vive una vez en el paquete liviano que ya es el contrato entre las dos mitades (`LoginData`, `SetupData` viven ahí); `layout` deja de escribir a mano la operación (`"authority"` escrito a mano causó el 404). **Recomiendo A**: cambio en `definitionc` (aceptar `pkg.XModel` en `Entities`), luego `auth` (`Me` en la raíz; se borran `ProfileDTO`, `Grant`, `Can`, `RememberSession`, sin usos fuera de `auth`) y `layout` (se borra `profileDTO`). Respuesta:
+
 ## Decisiones por implementar
 
 | ID | Decisión | Fase |
