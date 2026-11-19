@@ -1,5 +1,5 @@
 # Señal de errores, TUI compacta y `logs.log` crítico — master plan
-> **Status:** IN PROGRESS · 2026-11-19 · D1–D7 pasadas por la puerta `api-design`/`api-harness` (Step 0 + 5 respuestas); listo para ejecutar L1–L5 en local con `replace`
+> **Status:** IN PROGRESS · 2026-11-19 · L1–L5 implementadas y verificadas en local (`gotest` 100% verde en los 8 repos; binario local `webtyp` instalado); esperando luz verde para publicar en cascada
 
 Problema que se ve:
 - En `webtyp dev`, los errores se duplican (`ASSETS`/`SERVER` + `WATCH`), se repiten por línea (`undefined: X` × 8) y `go.mod`/`go.sum` desfasado detiene el hot-reload (D1–D3).
@@ -41,11 +41,11 @@ Ninguna.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| L1 | `devwatch` | D1: `AlreadyLoggedError` + `IsAlreadyLogged` + tests | 🔴 listo para ejecutar |
-| L2 | `gobuild` | D2+D4: `CompactErrors` + `OperationID` + `tui.LogOpen`/`LogClose` + tests | 🔴 listo para ejecutar |
-| L3 | `devflow` | D3: detector y `TidyIfNeeded` (1 reintento) para `updates to go.mod needed` / `missing go.sum entry` + tests | 🔴 listo para ejecutar |
-| L4 | `server`, `devbrowser`, `app` | D1+D2+D3+D4+D5: conectar `AlreadyLogged`, `CompactErrors`, auto-tidy y `OperationID`/`LogOpen`/`LogClose` en todos los manejadores de `BUILD` | 🔴 después de L1–L3 |
-| L5 | `notify`, `appkit` | D6+D7: `notify.NewCriticalFileLog` (`!wasm`, 7 días / 1 MB) + cableado en `appkit/backend` + tests | 🔴 en paralelo con L1–L3 |
+| L1 | `devwatch` | D1: `AlreadyLoggedError` + `IsAlreadyLogged` + tests | 🔵 ✅ local (`gotest` ✅ 86.1%, sin publicar) |
+| L2 | `gobuild` | D2: `CompactErrors` (agrupado por archivo+mensaje con `~`) + tests | 🔵 ✅ local (`gotest` ✅ 82.8%, sin publicar) |
+| L3 | `devflow` | D3: `NeedsGoModTidy` + `TidyIfNeeded` (1 reintento) + tests | 🔵 ✅ local (`gotest` ✅ 66.1%, sin publicar) |
+| L4 | `server`, `devbrowser`, `app` | D1–D5: `AlreadyLogged`, `CompactErrors`, auto-tidy y 1 línea viva (`OperationID`/`LogOpen`/`LogClose`) en todos los manejadores de `BUILD` | 🔵 ✅ local (`gotest` ✅ + `go install`, sin publicar) |
+| L5 | `notify`, `appkit` | D6+D7: `notify.NewCriticalFileLog` (`!wasm`, 7 días / 1 MB) + cableado en `appkit/backend` + tests | 🔵 ✅ local (`gotest` ✅ `notify` 97.6% / `appkit` 85.2%, sin publicar) |
 
 ## Bloqueos
 
