@@ -255,16 +255,16 @@ falta un forward explícito + `var _ view.Updater = requirePatient{}`, igual que
   maquinaria de hashing y el runtime de TinyGo al binario, que es justo lo que
   este ecosistema no puede permitirse. La forma sustituta:
   - conjunto → `[]string` (o el slice del tipo que sea)
-  - clave→valor de cadenas → `[]fmt.KeyValue` de `github.com/tinywasm/fmt`
+  - clave→valor de cadenas → `[]fmt.KeyValue` de `github.com/webtyp/fmt`
   - clave→valor de otro tipo → un slice de un par tipado propio, nunca un mapa
 
   Un mapa **sí** es legítimo en un fichero `//go:build !wasm` — todo
   `widget/style` los usa en su emisor de hojas de estilo, que nunca llega al
   navegador. La regla es sobre lo que se compila a WASM, no sobre el estilo.
 - **Nada de stdlib en paquetes que compilan a WASM.** Usa
-  `github.com/tinywasm/fmt` en lugar de `errors`, `strconv`, `strings`.
+  `github.com/webtyp/fmt` en lugar de `errors`, `strconv`, `strings`.
   `fmt.Sprintf`, `fmt.Err`, `fmt.Errf`, `fmt.Contains`, `fmt.Matches`.
-  **`tinywasm/fmt` NO tiene `Itoa` ni `FormatInt`** — para intercalar un entero
+  **`webtyp/fmt` NO tiene `Itoa` ni `FormatInt`** — para intercalar un entero
   usa `fmt.Sprintf`.
 - **Anti-footgun, y esta ya mordió una vez.** La regla de arriba tiene dos
   mitades y sólo una es "no uses stdlib":
@@ -272,13 +272,13 @@ falta un forward explícito + `var _ view.Updater = requirePatient{}`, igual que
      backend (`storage`, `sqlt`, y los ficheros `//go:build !wasm` de
      cualquiera). Están bien donde están; no los "arregles".
   2. **Al escribir código nuevo, sigue el idioma que ese paquete ya usa** —
-     no lo que su carpeta te sugiera. Míralo antes: `grep -rn "tinywasm/fmt"`
+     no lo que su carpeta te sugiera. Míralo antes: `grep -rn "webtyp/fmt"`
      en el paquete te lo dice en un segundo.
 
   El caso real: el plan de `orm` decía sólo la mitad 1, y el agente dedujo que
   `orm` "es backend, luego stdlib vale" y metió `errors.New` y `fmt.Errorf` en
   `db.go` — los **únicos** de todo el paquete, que construye sus errores con
-  `fmt.Err`/`fmt.Errf` de `tinywasm/fmt` en `errors.go` y `validate.go`. Compiló,
+  `fmt.Err`/`fmt.Errf` de `webtyp/fmt` en `errors.go` y `validate.go`. Compiló,
   pasó los tests, y habría entrado stdlib en un paquete que no la usa.
 - **Embebido por valor:** `dom.Element` se embebe por valor, nunca
   `*dom.Element`.

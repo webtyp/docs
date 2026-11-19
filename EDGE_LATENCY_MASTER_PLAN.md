@@ -26,7 +26,7 @@ Reordenado por impacto real:
 |---|---|---|
 | Que el health check no consulte D1 | 163 ms → **<10 ms** | `veltylabs/iam` |
 | ~~Réplicas de lectura de D1~~ | **medido 2026-08-26: cero efecto para este tráfico.** No hay región D1 en Sudamérica | descartado — ver abajo |
-| Borrar `warmUp` | quita un escaneo de tabla por isolate frío (la diferencia entre 163 y 349 ms) | `tinywasm/auth` |
+| Borrar `warmUp` | quita un escaneo de tabla por isolate frío (la diferencia entre 163 y 349 ms) | `webtyp/auth` |
 | bcrypt fuera del camino caliente | ~50-100 ms de **CPU** por `POST /api/token`, contra un límite de 10 ms de CPU en el plan Free | `veltylabs/iam` |
 | Adelgazar el binario | 10-30 ms, **solo en arranques en frío** | `veltylabs/iam` |
 
@@ -34,11 +34,11 @@ Reordenado por impacto real:
 
 **"Probablemente se colaron stdlib o librerías ajenas al ecosistema."** No se
 coló nada. Corriendo la guarda de imports contra el grafo real del edge de iam:
-**cero** paquetes `github.com/tinywasm/*` o `github.com/veltylabs/*` importan
+**cero** paquetes `github.com/webtyp/*` o `github.com/veltylabs/*` importan
 directamente stdlib prohibida. Los 87 paquetes de stdlib presentes se alcanzan
 íntegramente a través de un solo import deliberado y documentado,
-`tinywasm/crypto/hmac` → `crypto/sha256`, que es la excepción explícita del
-[AGENTS.md de tinywasm/crypto](https://github.com/tinywasm/crypto/blob/main/AGENTS.md).
+`webtyp/crypto/hmac` → `crypto/sha256`, que es la excepción explícita del
+[AGENTS.md de webtyp/crypto](https://github.com/webtyp/crypto/blob/main/AGENTS.md).
 La disciplina del ecosistema está intacta. **No refactorices `crypto`.**
 
 Lo que sí encontró la medición fue peso muerto en **iam**, no en las librerías:
@@ -73,17 +73,17 @@ Dos consecuencias:
 
 ```mermaid
 flowchart TD
-    B1[B1 tinywasm/auth<br/>borrar warmUp] --> B2[B2 veltylabs/iam<br/>etapas 1 y 2]
-    B3[B3 tinywasm/cloudflare<br/>Sessions API de D1] --> B2
-    A[Plan A tinywasm/goflare<br/>action y binario] --> B4[B2 etapa 3<br/>adoptar la action]
+    B1[B1 webtyp/auth<br/>borrar warmUp] --> B2[B2 veltylabs/iam<br/>etapas 1 y 2]
+    B3[B3 webtyp/cloudflare<br/>Sessions API de D1] --> B2
+    A[Plan A webtyp/goflare<br/>action y binario] --> B4[B2 etapa 3<br/>adoptar la action]
     B2 --> B4
     B4 --> V[verificar en produccion<br/>con Observability]
 ```
 
 | Fase | Repo | Puerta | Puede correr en paralelo con |
 |---|---|---|---|
-| B1 | `tinywasm/auth` | ninguna | B3, Plan A |
-| B3 | `tinywasm/cloudflare` | ninguna | B1, Plan A |
+| B1 | `webtyp/auth` | ninguna | B3, Plan A |
+| B3 | `webtyp/cloudflare` | ninguna | B1, Plan A |
 | B2 etapas 1-2 | `veltylabs/iam` | B1 y B3 publicados | — |
 | B2 etapa 3 | `veltylabs/iam` | **Plan A publicado** | — |
 
@@ -167,8 +167,8 @@ Workers Observability, sobre el Worker desplegado:
 
 ## Estado
 
-- [x] B1 — `tinywasm/auth`: borrar `warmUp` (PR #2, en review)
-- [x] B3 — `tinywasm/cloudflare`: Sessions API de D1 (PR #2)
+- [x] B1 — `webtyp/auth`: borrar `warmUp` (PR #2, en review)
+- [x] B3 — `webtyp/cloudflare`: Sessions API de D1 (PR #2)
 - [~] infra — ~~activar `read_replication: auto` en `velty-iam-db`~~ **cancelado:
   medido, cero efecto para tráfico sudamericano**
 - [ ] B2 etapa 1 — `veltylabs/iam`: separar el health check

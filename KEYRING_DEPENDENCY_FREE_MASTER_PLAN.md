@@ -1,4 +1,4 @@
-# Master Plan — A dependency-free `tinywasm/keyring` with a browser backend
+# Master Plan — A dependency-free `webtyp/keyring` with a browser backend
 
 > Orchestrator for a change that spans **six** repositories: three new modules
 > (`dbus`, `webauthn`, `await`) and three existing ones that adopt the third
@@ -10,18 +10,18 @@
 
 ## Goal
 
-`github.com/tinywasm/keyring` becomes the ecosystem's single answer to "where do
+`github.com/webtyp/keyring` becomes the ecosystem's single answer to "where do
 I keep a secret", on **four** environments — Linux, macOS, Windows and the
 **browser** — with:
 
-- **zero third-party dependencies** in `go.mod` (only `tinywasm/*`),
+- **zero third-party dependencies** in `go.mod` (only `webtyp/*`),
 - a **browser backend** whose key material cannot be exfiltrated by XSS,
 - **no growth** of the WASM binary from code that only serves native OSes.
 
 ## Why the current shape fails
 
 ```
-tinywasm/keyring
+webtyp/keyring
 └── github.com/zalando/go-keyring v0.2.6
     ├── github.com/godbus/dbus/v5      (Linux — Secret Service)
     ├── github.com/danieljoos/wincred  (Windows)
@@ -39,8 +39,8 @@ the platform this ecosystem exists to serve.
 This is the trap to avoid. `linux/`, `darwin/` and `windows/` are excluded from
 the WASM build by build tags, so **their stdlib imports cost the browser binary
 nothing**. Replacing `os/exec`, `net` or `syscall` in those folders with
-`tinywasm/*` equivalents would be pure churn — and, per the measured lesson in
-`tinywasm/base64` (importing `tinywasm/fmt` there cost **74 KB more** than the
+`webtyp/*` equivalents would be pure churn — and, per the measured lesson in
+`webtyp/base64` (importing `webtyp/fmt` there cost **74 KB more** than the
 stdlib), potentially a regression.
 
 The rule that actually matters:
@@ -49,7 +49,7 @@ The rule that actually matters:
 > and only those two, are held to the zero-stdlib / zero-dependency standard.
 
 Every plan in this wave restates this rule inline, because a literal-minded
-agent applying "no stdlib in tinywasm" repo-wide would gut the native backends.
+agent applying "no stdlib in webtyp" repo-wide would gut the native backends.
 
 ## Target architecture
 
@@ -59,7 +59,7 @@ keyring/
 ├── errors.go             typed error constants — zero imports
 ├── provider.go           Provider interface + Fallback + Ensurer
 ├── auto/     OPTIONAL: chooses a backend for the build target
-├── linux/    Secret Service over D-Bus  → tinywasm/dbus
+├── linux/    Secret Service over D-Bus  → webtyp/dbus
 ├── darwin/   /usr/bin/security          → stdlib only
 ├── windows/  advapi32.dll via syscall   → stdlib only
 ├── browser/  WebCrypto + IndexedDB      → syscall/js
@@ -107,12 +107,12 @@ must support N wrapped copies **from stage 5**, even though only one exists then
 While designing the browser and passkey stages, the plan initially called for
 copying a ~35-line "block a goroutine on a JS event" helper into
 `keyring/browser` and, separately, into `webauthn` — on the reasoning that
-importing `tinywasm/jsvalue` (which already has this code, as `AwaitPromise` /
-`AwaitRequest`) pulls in `tinywasm/fmt` and `tinywasm/model`, too much weight
+importing `webtyp/jsvalue` (which already has this code, as `AwaitPromise` /
+`AwaitRequest`) pulls in `webtyp/fmt` and `webtyp/model`, too much weight
 for a size-sensitive package.
 
 That reasoning about `jsvalue` was correct. The conclusion — copy it — was not.
-**`tinywasm/indexdb` already imports `jsvalue` and still keeps its own third
+**`webtyp/indexdb` already imports `jsvalue` and still keeps its own third
 copy of the same pattern** (`tx.go`'s two-listener wait), so the duplication
 this plan was about to add was a fourth and fifth instance of something
 already duplicated once, live, in production code. The fix is the one the rest
@@ -120,31 +120,31 @@ of this ecosystem uses for exactly this shape of problem: extract to a new,
 genuinely zero-dependency module, per `feedback-medir-antes-de-sustituir-stdlib`
 — a dependency only pays for itself when it has none of its own.
 
-`github.com/tinywasm/await` is that extraction: `Promise`, `Event`, `Request`,
+`github.com/webtyp/await` is that extraction: `Promise`, `Event`, `Request`,
 `syscall/js` only. `keyring/browser` and `webauthn` import it instead of
 copying. `jsvalue` sheds `AwaitPromise`/`AwaitRequest` and becomes a pure
 codec. `indexdb` drops its call sites into `jsvalue.AwaitRequest` in favour of
 `await.Request` — its *other* duplicate, the cursor-iteration loop in `tx.go`,
 is a genuinely different (multi-fire) pattern and stays untouched; see
-`https://github.com/tinywasm/indexdb/blob/main/docs/PLAN.md` for why.
+`https://github.com/webtyp/indexdb/blob/main/docs/PLAN.md` for why.
 
 `goflare` (`r2/bucket.go`, `d1/adapter.go`) also calls `jsvalue.AwaitPromise`
 and is **out of scope for this wave** — noted as a one-line follow-up
 (`jsvalue.AwaitPromise(x)` → `await.Promise(x)`) in
-`https://github.com/tinywasm/jsvalue/blob/main/docs/PLAN.md`, not dispatched
+`https://github.com/webtyp/jsvalue/blob/main/docs/PLAN.md`, not dispatched
 here.
 
 ## Repository graph
 
 ```mermaid
 flowchart LR
-    AW["tinywasm/await<br/>NEW module"] --> K5["keyring stage 5<br/>browser device KEK"]
-    AW --> W["tinywasm/webauthn<br/>NEW module"]
+    AW["webtyp/await<br/>NEW module"] --> K5["keyring stage 5<br/>browser device KEK"]
+    AW --> W["webtyp/webauthn<br/>NEW module"]
     AW --> JV["jsvalue<br/>drop AwaitPromise/Request"]
     AW --> IDB["indexdb<br/>use await.Request"]
     JV --> IDB
 
-    A["tinywasm/dbus<br/>NEW module"] --> K4["keyring stage 4<br/>linux backend"]
+    A["webtyp/dbus<br/>NEW module"] --> K4["keyring stage 4<br/>linux backend"]
     K123["keyring stages 1-3<br/>core + windows + darwin"] --> K4
     K4 --> K5
     K5 --> K6["keyring stage 6<br/>passkey KEK"]
@@ -154,25 +154,25 @@ flowchart LR
 
 | Phase | Repo | Plan | Blocks | Can run in parallel with |
 |---|---|---|---|---|
-| 1 | `tinywasm/dbus` | `docs/PLAN.md` (new module) | keyring stage 4 | keyring stages 1–3, `await` |
-| 1 | `tinywasm/await` | `docs/PLAN.md` (new module) | keyring stage 5, `webauthn`, `jsvalue`, `indexdb` | `dbus`, keyring stages 1–3 |
-| 2 | `tinywasm/keyring` | `docs/PLAN.md` stages 1–3 | stage 4 | `dbus`, `await` |
-| 2 | `tinywasm/jsvalue` | `docs/PLAN.md` | `indexdb` | `dbus`, keyring stages 1–4 |
-| 3 | `tinywasm/keyring` | stage 4 | stage 5 | `jsvalue` |
-| 3 | `tinywasm/indexdb` | `docs/PLAN.md` | — | keyring stage 4 |
-| 4 | `tinywasm/keyring` | stage 5 | — **release point** | `tinywasm/webauthn` |
-| 5 | `tinywasm/webauthn` | `docs/PLAN.md` (new module) | keyring stage 6 | keyring stage 5 |
-| 6 | `tinywasm/keyring` | stage 6 | — | — |
+| 1 | `webtyp/dbus` | `docs/PLAN.md` (new module) | keyring stage 4 | keyring stages 1–3, `await` |
+| 1 | `webtyp/await` | `docs/PLAN.md` (new module) | keyring stage 5, `webauthn`, `jsvalue`, `indexdb` | `dbus`, keyring stages 1–3 |
+| 2 | `webtyp/keyring` | `docs/PLAN.md` stages 1–3 | stage 4 | `dbus`, `await` |
+| 2 | `webtyp/jsvalue` | `docs/PLAN.md` | `indexdb` | `dbus`, keyring stages 1–4 |
+| 3 | `webtyp/keyring` | stage 4 | stage 5 | `jsvalue` |
+| 3 | `webtyp/indexdb` | `docs/PLAN.md` | — | keyring stage 4 |
+| 4 | `webtyp/keyring` | stage 5 | — **release point** | `webtyp/webauthn` |
+| 5 | `webtyp/webauthn` | `docs/PLAN.md` (new module) | keyring stage 6 | keyring stage 5 |
+| 6 | `webtyp/keyring` | stage 6 | — | — |
 
 **Gate:** phase 4 is the release point. After it, `keyring` has zero third-party
 dependencies and works on four platforms. Stage 6 (passkey) is deliberately
-severable: if `tinywasm/webauthn` stalls, keyring still ships complete.
+severable: if `webtyp/webauthn` stalls, keyring still ships complete.
 `jsvalue` and `indexdb` are independent of the keyring release — they can land
 before, after, or never relative to it, gated only on `await`.
 
 ## The three new modules — created
 
-`dbus`, `await` and `webauthn` exist as public `tinywasm` org repositories with
+`dbus`, `await` and `webauthn` exist as public `webtyp` org repositories with
 their plans already at `<repo>/docs/PLAN.md` (2026-08-16, via `gonew`). `jsvalue`
 and `indexdb` already existed; their plans are at `jsvalue/docs/PLAN.md` and
 `indexdb/docs/PLAN.md`.
@@ -216,7 +216,7 @@ what. The agent copies the logic and swaps the dependency — nothing else.
 |---|---|---|
 | 2 — Windows | `keyring_windows.go` | `wincred` → `syscall` + `advapi32.dll` |
 | 3 — macOS | `keyring_darwin.go` | `shellescape` → a local `quote` |
-| 4 — Linux | `keyring_unix.go`, `secret_service/secret_service.go` | `godbus` → `tinywasm/dbus` |
+| 4 — Linux | `keyring_unix.go`, `secret_service/secret_service.go` | `godbus` → `webtyp/dbus` |
 
 **Only `browser/` (stage 5) is new code.** It has no upstream, because
 `go-keyring` has no browser backend at all — that absence is the reason this
@@ -243,7 +243,7 @@ exact signatures so the 12 existing call sites in `devflow` and `app` migrate by
 changing **one import line**:
 
 ```go
-import keyring "github.com/tinywasm/keyring/auto"   // the whole migration
+import keyring "github.com/webtyp/keyring/auto"   // the whole migration
 ```
 
 ```go
@@ -266,14 +266,14 @@ reports the import change rather than making it.
 
 The browser backend keeps these **synchronous** signatures by blocking the
 calling goroutine on JS promises and IndexedDB requests through
-`github.com/tinywasm/await` (`Promise`, `Request`) — see the section above.
+`github.com/webtyp/await` (`Promise`, `Request`) — see the section above.
 
 ## Definition of done
 
 ```bash
 # 1. no third-party dependency survives
 grep -rn "zalando\|godbus\|wincred\|shellescape\|golang.org/x/sys" keyring/  # → empty
-cat keyring/go.mod                                                          # → only tinywasm/dbus, tinywasm/await
+cat keyring/go.mod                                                          # → only webtyp/dbus, webtyp/await
 
 # 1b. the JS-async pattern is not duplicated anywhere it used to be
 grep -rn "AwaitPromise\|AwaitRequest" jsvalue/ indexdb/                     # → empty

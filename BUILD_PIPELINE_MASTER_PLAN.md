@@ -56,9 +56,9 @@ flowchart LR
 
 | Etapa | Repo | Tipo | Bloquea a | Plan |
 |---|---|---|---|---|
-| A | `tinywasm/svg` | **gate** | B | `svg/docs/PLAN.md` |
-| B | `tinywasm/sitec` | **gate** | C, D | `sitec/docs/PLAN.md` |
-| C | `tinywasm/app` | secuencial | D | `app/docs/PLAN.md` |
+| A | `webtyp/svg` | **gate** | B | `svg/docs/PLAN.md` |
+| B | `webtyp/sitec` | **gate** | C, D | `sitec/docs/PLAN.md` |
+| C | `webtyp/app` | secuencial | D | `app/docs/PLAN.md` |
 | D | sitios (`veltylabs/mjosefa-website`, …) | manual | — | sin plan; borrar `tools/build/` y llamar a `sitec.Build` |
 
 A y B son gates: no empieces la siguiente hasta que la anterior esté publicada.
