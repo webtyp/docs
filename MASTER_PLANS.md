@@ -9,7 +9,6 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 
 | Master plan | Estado | Relación con otras olas |
 |---|---|---|
-| [OPERATION_CONFORMANCE_MASTER_PLAN.md](OPERATION_CONFORMANCE_MASTER_PLAN.md) | PENDING · 2026-11-18 — lo ejecuta Antigravity (C1 lista) | Una suite de conformidad por contrato: `Run` para los servidores HTTP y `RunOperations` para quien también registra operaciones (`router/mock`); quita las omisiones ruidosas |
 | [ANTIGRAVITY_WORK_MASTER_PLAN.md](ANTIGRAVITY_WORK_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — G1 (traducciones) y G2 (documentación vieja) listas; G3 bloqueada | Trabajo largo sin decisiones de diseño, para Antigravity; Claude hace la arquitectura. Lista de repos reservados mientras Claude tiene cambios sin publicar |
 | [SECURITY_OBSERVABILITY_MASTER_PLAN.md](SECURITY_OBSERVABILITY_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — O1 publicado (`securityevent` v0.0.2); O2 va en el plan de inicio de sesión | Ver, detectar y avisar ataques (fuerza bruta, rastreo, scripts inyectados) con un solo contrato de eventos para todas las capas; el plan de inicio de sesión de ARCHITECTURE espera su O1 |
 | [FRAMEWORK_MAP_MASTER_PLAN.md](FRAMEWORK_MAP_MASTER_PLAN.md) | IN PROGRESS · 2026-11-18 — M1 publicada (`framework-map`, devskills v0.0.57); sigue M2: skill **sign-in-and-permissions** | Skill índice `framework-map`: componentes de una app → su skill; sin automatización; bloquea ARCHITECTURE D75 |
@@ -51,6 +50,8 @@ Orden entre olas multi-repo. Cada master plan declara su propio estado en su seg
 | [CONFIGURABLE_MODULES_MASTER_PLAN.md](CONFIGURABLE_MODULES_MASTER_PLAN.md) | PENDING · 2026-11-16 — P1–P9 cerradas (rubro, `client_directory`, vínculo cuenta → ficha, roles por maneras de uso y rubros como constantes en `model`, palabras en `lang.json`, 4 rubros, ícono por rubro, formulario de otro módulo en `view`); sin preguntas; espera ARCHITECTURE D62 (fase 10) | `patient_directory` → `client_directory` tras PATIENT_DIRECTORY_USABILITY; toca `appkit` y `access` (ACCESS_REUSE) |
 
 ## Cerrados y archivados (ya no viven aquí)
+
+- **OPERATION_CONFORMANCE** — cerrada en local 2026-11-18: `router/conformance` separa `Run(t, f)` (solo `Router`) de `RunOperations(t, f)` (`OperationRegistry`), eliminando los `t.Skip` en servidores HTTP; `router`, `cloudflare` y `server` (con `replace webtyp.com/router => ../router`) verificados con `gotest` ✅, sin publicar.
 
 - **TIME_ZONE** — cerrada 2026-11-04: toda hora local sale de una `time.Zone` cargada por nombre (`time` v0.6.4, `appkit` v0.2.8 `Deps.Zone`/`BrowserDeps`); una reserva guarda un solo instante; 10 módulos migrados; `mjosefa-cms` con `America/Santiago`. Regla Z9 en **wasm**/**module-layout**. Queda T3b (`agentcontext`, `agent`, `agenteval`, `mjosefa-cote`: `Clock` devuelve una `Zone`) para la etapa final de agentes.
 - **DATA_IMPORT** (`mjosefa-cms`) — cerrada 2026-11-06: Pa100T importado en la base local (45.973 pacientes, 171.170 reservas, 64.356 fichas, 0 problemas) por `migrate/pastdb` sobre `dataimport`; reglas en `mjosefa-cms/docs/PASTDB_MAPPING.md`; producción recibe la base ya importada. Pendientes → APP_USABILITY.
