@@ -1,18 +1,19 @@
 # Agenda del doctor en vivo (ficha clínica) — master plan
-> **Status:** PENDING · 2026-11-20 · sin preguntas; sigue A0 (cerrar el PR #20) y el `## Design gate` de A1
+> **Status:** IN PROGRESS · 2026-11-20 · A1–A3 y A6 hechos en local con `replace` y verificados en vivo; espera que el dueño revise antes de publicar. Pendientes: A0 (PR #20) y A4 (chat, fuera de la app)
 
-**Para retomar:** skills `framework-map`, `app-modules`, `module-layout`, `events-queues-and-alerts`, `api-design`, `sign-in-and-permissions`, `ui-consistency`. Probar en `~/Dev/Project/veltylabs/mjosefa-cms` con DEV_AUTOLOGIN de un usuario que sea profesional (`staff_manager`).
+**Para retomar:** skills `codejob` («gopush and local `replace`»), `events-queues-and-alerts` (regla de avisos), `app-modules`, `testing`. Probar en `~/Dev/Project/veltylabs/mjosefa-cms` (DEV_AUTOLOGIN abre la sesión de «Cesar», que es el profesional `1789255672828331302`).
 
-**Qué pide el dueño (2026-11-20):** el doctor abre «Ficha Paciente», ve en un `selectsearch` las reservas de **su día** y elige al paciente que va a atender; ahí se cargan sus fichas. Si entra una reserva nueva o cambia el estado de una, lo ve sin recargar. Así era el sistema anterior (la demo de referencia ya lo hacía: `~/Dev/Archive/app-demo/modules/medicalhistory`, `medicalhistory.go:114-139`, `model.go:89-97`):
+**Qué pidió el dueño:** el doctor elige en un `selectsearch` una reserva de su día y ve las fichas de ese paciente; la lista cambia sola cuando entra o cambia una reserva. Sistema anterior y demo de referencia (`~/Dev/Archive/app-demo/modules/medicalhistory`):
 
 ![ficha](../../veltylabs/modules/clinical_encounter/docs/img/agenda-old-1-ficha.png) ![selector](../../veltylabs/modules/clinical_encounter/docs/img/agenda-old-2-selector.png) ![paciente](../../veltylabs/modules/clinical_encounter/docs/img/agenda-old-3-paciente.png)
 
-**Qué hay hoy (verificado):**
-- `clinical_encounter/ui/browser.go:115` declara `var myAgenda` y nunca la lee: `StaffId` siempre vacío → el selector **no aparece nunca**. Y si se leyera, lo haría bloqueando dentro de `Screens()` con una llamada por paciente (`blockingCall`, N+1; `docs/BUGS_UI.md` CE-3).
-- `MyAgenda` (`agenda.go`) solo trae reservas CONFIRMED (`appointment_booking/booking.go:296` `ConfirmedByStaff`) y no trae estado, edad ni nombre del servicio.
-- La lista de fichas usa `targethour` (horas del día, `ui/browser.go:105`) desde que se creó la UI (`4dcf728`); la referencia usaba `targetdate` (día/fecha de cada consulta, panel derecho de la tercera captura). `MedicalHistory.Item()` ya pone `attention_at` en `Badge` (`definition.go:21`), que es lo que lee `targetdate`; `Description` lleva el estado en vez del doctor (`definition.go:20`).
-- `selectsearch.SetOptions` ya cambia la lista en caliente (`components/selectsearch/selectsearch.go:172`).
-- **El aviso al navegador se perdió con appkit:** `mjosefa-cms` tenía push por SSE (`ac494a3`: `/inbox` solo para usuarios con sesión, un canal por usuario, `sse.Publisher` en `events.Fanout`, `sse.Subscriber` en el navegador). La recomposición del MVP (`4577178`) lo quitó y appkit no lo trae: `view.BrowserDeps` (`view/browser.go:21`) no tiene suscriptor y nada monta el stream. `chat_room` sigue publicando `InboxTopic(userID)` (`message.go:155`) sin que nadie escuche.
+**Qué funciona ahora (verificado en vivo por MCP, 2026-11-20 15:05):**
+- Al abrir «Historial Clínico» se lee `my_agenda_result` (asíncrono, nunca en `Screens()`); el selector muestra «kechnide montruil montruil, 40 años · 26523459-3 · 16:30 · Confirmada» y la pendiente atenuada y sin poder elegirse.
+- Cambio de estado por la API (`PATCH /api/appointment_booking/reservation`, PENDING→CONFIRMED) → el selector se actualizó **sin recargar** (aviso por `/notices`, EventSource 200).
+- Elegir una reserva trae las fichas de su paciente por `patient_id` (53 filas en `targetdate`: «Mar 26 Abr · onicotomia · marta navarrete»).
+- Tests: `go test` verde en `sse`, `view`, `appkit`, `components/selectsearch`, `staff_manager`, `client_directory`, `appointment_booking/tests`, `clinical_encounter` (incluye tests nuevos de cada pieza).
+
+**Datos de prueba en la base local:** reservas `test-agenda-1` y `test-agenda-2` (nota «prueba agenda en vivo») de hoy para Cesar. Borrar cuando el dueño termine de mirar: `DELETE FROM reservation WHERE id LIKE 'test-agenda-%'`.
 
 ## Preguntas abiertas
 Ninguna.
@@ -20,27 +21,29 @@ Ninguna.
 ## Decisiones por implementar
 | # | Decisión | Dónde se implementa |
 |---|---|---|
-| D1 (P1 · A) | **Aviso por usuario, sin datos en el cable** (lo que existía en `mjosefa-cms` `ac494a3`): appkit monta **un solo** stream SSE para usuarios con sesión y cada uno recibe solo su canal; `view.BrowserDeps` trae el suscriptor y el id del usuario. `appointment_booking` avisa el cambio de agenda de un profesional por la interfaz que `clinical_encounter` ya consume (`interfaces.go`, como `ConfirmedByStaff`), sin que ningún módulo nombre a otro; `clinical_encounter` lo traduce al usuario del profesional y publica `AgendaTopic(userID)`; la pantalla vuelve a leer `my_agenda` y hace `SetOptions`. REACTIVE_RECORDS F5 agrega después su evento al mismo stream | `view`, `appkit`, `appointment_booking`, `clinical_encounter` |
-| D2 | El selector muestra las reservas **activas** del día del profesional, cada una con su estado como etiqueta: PENDING, CONFIRMED, COMPLETED, NO_SHOW, CONFLICTED. CANCELLED, EXPIRED y RESCHEDULED no aparecen. Solo CONFIRMED y COMPLETED abren la ficha (dueño, 2026-11-20). `ConfirmedByStaff` se reemplaza por un lector que devuelve también el estado | `appointment_booking` (lector), `clinical_encounter` (`MyAgenda`, UI) |
-| D3 | Cada opción del selector como en la referencia y el sistema anterior: «Nombre, Edad años», RUT debajo, «09:35 - Servicio» como etiqueta, más la etiqueta del estado (D2); `AgendaEntry` suma estado, edad y nombre del servicio | `clinical_encounter` |
-| D5 | La lista de fichas del paciente vuelve a `targetdate` (dueño, 2026-11-20: «ya se había creado»): día de la semana / número / mes-año a la izquierda, motivo como título, **doctor** como etiqueta (`Item: model.ItemDescription` pasa de `status` a `doctor_name_snapshot`, `definition.go:20`); `targethour` sale de `ui/browser.go` | `clinical_encounter` |
-| D4 | La agenda se carga **al abrir la pantalla**, nunca en `Screens()`, y las fichas del paciente al elegirlo, sin llamadas bloqueantes (cierra CE-1 y CE-3 de `docs/BUGS_UI.md`; CE-2: placeholder con `lang`) | `clinical_encounter/ui` |
+| D1 (P1 · A) | Aviso por usuario sin datos: `sse.UserNotices` (un canal por usuario con sesión) montado por appkit en `appkit.NoticesPath` (`/notices`); `backend.Deps.Notices` (`Notifier`) y `backend.Deps.Subscriber`; `view.BrowserDeps.Notices`. appointment_booking avisa por `WatchStaffAgenda`, clinical_encounter traduce profesional → usuario (`UserByStaff`) y publica `AgendaChanged` | hecho en local |
+| D2 | Selector con reservas activas (PENDING, CONFIRMED, COMPLETED, NO_SHOW, CONFLICTED) y su estado; solo CONFIRMED y COMPLETED se eligen (`Attendable`, `SsOption.Disabled`). `ActiveByStaff` reemplaza `ConfirmedByStaff` | hecho en local |
+| D3 | Opción «Nombre, Edad años» / RUT / «hora - servicio · estado» (`AgendaEntry` suma `service_name`, `patient_age`, `reservation_status`) | hecho en local |
+| D4 | Agenda al abrir la pantalla (`Presenter.Reload` de `Activate`), fichas al elegir, nada bloqueante; error de configuración visible en la pantalla | hecho en local |
+| D5 | Fichas con `targetdate`; `Item` de `medical_history` con el doctor como descripción | hecho en local |
 
 ## Fases
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| A0 | clinical_encounter | Cerrar el plan viejo: `docs/PLAN.md` (part 2b, textos) tiene el PR #20 abierto desde 2026-11-12 sin sesión viva → revisarlo en local (**plan-review**), terminar en su rama y `codejob close` | 🔴 |
-| A1 | view, appkit (+ sse si falta algo) | D1: el stream y su suscriptor en `view.BrowserDeps`; `## Design gate` (**api-design**) revisado por el dueño antes de codificar | 🔴 |
-| A2 | appointment_booking | D2 (lector con estado, reemplaza `ConfirmedByStaff`) y el aviso de cambio de agenda de D1 | 🔴 |
-| A3 | clinical_encounter | D1–D5 | 🔴 tras A0–A2 |
-| A4 | chat_room | Vuelve a recibir su aviso por el mismo stream (`ui.WithInbox`) | 🔴 tras A1 |
-| A5 | mjosefa-cms | En vivo: dos sesiones; recepción crea y confirma una reserva → la lista del doctor cambia sola | 🔴 al final |
-| A6 | devskills | `events-queues-and-alerts` / `app-modules`: cómo una pantalla recibe avisos | 🔴 tras A3 |
+| A0 | clinical_encounter | `docs/PLAN.md` (part 2b, textos) con PR #20 abierto desde 2026-11-12, sin sesión viva: revisarlo en local (**plan-review**) y `codejob close`. Toca `errors.go`/`lang.json`, que este trabajo también tocó: conciliar | 🔴 |
+| A1 | sse, view, appkit | **sse** (sin commit): `user_notices.go`, `tests/user_notices_test.go`. **view**: `browser.go` (`BrowserDeps.Notices`), `go.mod`. **appkit**: `app.go` (`NoticesPath`), `backend/backend.go` (`Notifier`, `Deps.Subscriber/Notices`), `backend/build.go`, `backend/notices.go` + `notices_wasm.go`, `browser/browser.go` (pantallas después de `ReadMe`), `browser/notices.go` + `notices_wasm.go`, `go.mod` (`replace` sse, view) | 🟢 local, espera revisión |
+| A2 | appointment_booking, staff_manager, client_directory | **booking**: `booking.go` (`ActiveByStaff`), `module.go` (`Deps.Subscriber`), `agenda_watch.go`, `tests/agenda_watch_test.go`. **staff**: `module.go` (`UserByStaff`), `tests/test_readers_test.go`. **client_directory**: `readers.go` (`PatientBirthdate`), `tests/patient_test.go` | 🟢 local, espera revisión |
+| A3 | clinical_encounter, components, mjosefa-cms | **clinical**: `interfaces.go`, `const.go`, `module.go`, `agenda.go`, `definition.go` + `definition_gen.go`, `rule_medical_history_search.go`, `ui/browser.go`, `lang.json`, `seed/demo.go`, `tests/agenda_test.go`, `go.mod` (`replace` components, view, form, model, dom, input, css, layout, color, palette, widget; `crud` subió a v0.0.19). **components**: `selectsearch/selectsearch.go`, `css.go`, `selectsearch_test.go` (`Disabled`). **mjosefa-cms**: `config/services/backend.go` (`Subscriber`, `Services`, `Notices`), `go.mod` (`replace` client_directory, sse) | 🟢 local, espera revisión |
+| A4 | chat_room | Volver a recibir su aviso por `/notices` (`Deps.Notices` + `ui.WithInbox` sobre `BrowserDeps.Notices`). chat_room no está en mjosefa-cms: no se puede verificar en vivo | 🔴 cuando el chat vuelva a la app |
+| A6 | devskills | `events-queues-and-alerts`: regla de avisos con línea STATUS; sincronizado (`devskills -f`), sin publicar | 🟢 local |
+| P | todos | Publicar en orden de dependencias con `gopush` (la cascada quita cada `replace`): sse → view → components → appkit → staff_manager, client_directory, appointment_booking → clinical_encounter → mjosefa-cms; borrar la línea STATUS del skill y este master | 🔴 tras revisión del dueño |
+
+**Trabajo de otro agente en los mismos repos (no commitear ni revertir por error):** UI_BUGS de Antigravity (`veltylabs/mjosefa-cms/docs/UI_BUGS_MASTER_PLAN.md`): `appkit/browser/browser.go` (`GroupScreens`), `view/screen.go`, casi todo `components` salvo `selectsearch`, `appointment_booking/{definition*,lang.json,svg.go,ui/*}`, `staff_manager/{docs,rule_staff_member_delete.go,tests/test_staff_delete_test.go}`, `clinical_encounter/{tests/model_test.go,ui/svg.go}`, en mjosefa-cms todo menos `config/services/backend.go` y las dos líneas `replace`. `appointment_booking/ui` no compila hoy por ese trabajo (`calendarslider.New`).
 
 ## Bloqueos
 - Ninguno.
 
 ## Relación con otras olas
-- REACTIVE_RECORDS F5: comparte el stream SSE de appkit (D1).
-- mjosefa-cms UI_BUGS: `clinical_encounter/docs/BUGS_UI.md` CE-1–CE-3 se cierran en A3.
-- LOG_NOISE: mismo chat de origen, sin dependencia.
+- REACTIVE_RECORDS F5: comparte el stream `/notices` (D1).
+- mjosefa-cms UI_BUGS: CE-1–CE-3 de `clinical_encounter/docs/BUGS_UI.md` quedan resueltos por A3.
+- Hallazgos de otros dominios, por mover a su master: (1) un `crud.ReadArgs.Filter` codifica también los campos de resultado del modelo y un GET falla con un array (`MyAgendaResult.entries`; parche local `OmitEmpty`) → ARCHITECTURE; (2) `webtyp dev` no recompila el cliente cuando cambia la carpeta `ui/` de un módulo con `replace` → LOG_NOISE/devflow; (3) `browser_screenshot` del MCP vence en toda página (también en `/favicon.svg`).
