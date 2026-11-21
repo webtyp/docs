@@ -1,5 +1,5 @@
 # Pruebas del dominio — master plan
-> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); H-ACCESS-01 y 02 🟢; D13 (P11) hecho en local; **H-ACCESS-03 🔴 espera P13** (cómo elige el formulario varios equipos y los guarda); las historias ya no usan atajos HTTP: todo por pantalla**; S3/S4 (orden de pruebas existentes) siguen al final
+> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); H-ACCESS-01 y 02 🟢; D13 (P11) hecho en local; **H-ACCESS-03 🔴 espera `ROOM_MAP_MASTER_PLAN.md` R3** (el PC habilitado sale de la asignación al box); las historias ya no usan atajos HTTP: todo por pantalla**; S3/S4 (orden de pruebas existentes) siguen al final
 
 Cada agente agrega pruebas sin criterio de dominio: `mjosefa-cms/tests/` tiene 34 pruebas en 20 archivos y la
 mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDefaultDeny_NoAuthorizeConfigured`,
@@ -16,27 +16,7 @@ con cualquier DSN; `devbrowser` ya maneja Chrome (chromedp). Nada los une.
 
 ## Preguntas abiertas
 
-**P13 — Cómo elige el formulario varios registros de otro módulo y los guarda (para «Equipos» en «Personal», D14).**
-Hoy · Propuesta:
-![hoy](../../veltylabs/modules/staff_manager/docs/img/personal-equipos-1-hoy.png)
-![propuesta](../../veltylabs/modules/staff_manager/docs/img/personal-equipos-2-propuesta.png)
-Lo que falta en el framework (búsqueda hecha): `input` no tiene selección múltiple; `form` llena un selector desde
-otra pantalla buscando por el nombre del modelo (`layout/app/menu.go:235-250`, `view.Screen.OptionSources`); nada
-guarda una lista de elegidos en una tabla de vínculo (`staff_device`). El mismo caso se repite: equipos de una sala,
-roles de un usuario, servicios de un profesional. A) **genérico en el framework**: el campo declara su tabla de
-vínculo y `crud` reemplaza las filas en la misma transacción del registro; `input` gana una lista con casillas;
-B) solo en `staff_manager`: un campo sin columna que su regla `Create/Update` escribe a mano en `staff_device`.
-**Recomiendo A**: B es justo el parche que se repetiría en cada módulo con vínculos (zero-debt: la misma lógica en
-dos repos es un tercero); A se escribe una vez, con su prueba de conformidad en `crud`. ¿Cuál evita el acoplamiento
-y es más mantenible? A: el módulo solo declara; los equipos le llegan por el nombre de su lista como cualquier
-selector de hoy, sin importar `device_manager`.
-```go
-// A — staff_manager/definition.go (todo lo que escribe el módulo)
-{Name: "devices", Type: input.CheckList(), Label: "Devices", Options: &DeviceChoiceModel, // lista que entrega la app
-	SavedIn: &StaffDeviceModel}, // crud reemplaza las filas staff_device del profesional al guardar
-// B — staff_manager/rule_staff_member_create.go: leer p.DeviceIds y crear/borrar staff_device a mano (y en Update)
-```
-Respuesta:
+Ninguna.
 
 ## Catálogo de historias (mjosefa-cms)
 
@@ -49,7 +29,7 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 |---|---|---|---|
 | H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol | 🟢 lista (`auth/stories`, 6 s) |
 | H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar | 🟢 lista (el navegador entra desde loopback; el setup se hace desde la IP de red del equipo) |
-| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔴 no pasa: el profesional ya recibe su cuenta (D13) y el servidor lo rechaza con `device not trusted`; falta asignarle un equipo: la ficha «Personal» no tiene «Equipos» (D14, espera P13) |
+| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔴 no pasa: el profesional ya recibe su cuenta (D13) y el servidor lo rechaza con `device not trusted`; el PC habilitado debe salir de su asignación a un box en el mapa (`ROOM_MAP_MASTER_PLAN.md`, R3) |
 | H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva | 🔵 por revisar |
 | H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva | 🔵 por revisar |
 | H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas | 🔵 por revisar |
@@ -82,7 +62,6 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | D11 | **Id de historia `H-<DOMINIO>-<NN>`**, número por dominio, sin renumerar; archivo `stories/h_<dominio>_<nn>_<flujo>.go`; la subprueba lleva el id (`TestStories/H-ENCOUNTER-01`) y la fila de `docs/TESTS.md` también (dueño, 2026-11-20) | E2, E5 |
 | D12 | **Colores de estado de una historia**: 🔵 por revisar, 🟡 construyendo, 🟠 depurando, 🔴 no pasa, 🟢 lista e implementada; `gotest -stories` escribe 🟢/🔴, el agente marca 🟡/🟠 mientras trabaja (dueño, 2026-11-20) | E2, E5 |
 | D13 (P11) | **Al guardar un profesional con RUT, `staff_manager` le da su cuenta de entrada** por su interfaz `SignInAccounts` (`GiveSignIn(rut, name)`); `appkit` la entrega en `Deps.SignInAccounts`, conectada tarde al modo que sepa dar cuentas (`auth.GivesSignIn`, que `trusted_ip` implementa); sin modo que pueda, guardar responde `ErrNoAccountGiver`. Además corrige que el profesional heredaba el `UserId` del administrador que lo creaba | hecho en local |
-| D14 (P12) | **«Equipos» en la ficha del profesional** («Personal»): el administrador elige ahí desde qué equipos entra cada uno; se guarda en `staff_device`. Cómo lo ofrece el framework: P13 | espera P13 |
 
 ## Fases
 
@@ -116,6 +95,8 @@ El dueño publicó la cascada el 2026-11-20 23:17 (server v0.2.142, staff_manage
 - Hallazgo (este dominio): las pruebas de los módulos usan `storage/mem`, que no revisa llaves foráneas; el fallo del primer administrador solo apareció contra Postgres.
 
 ## Bloqueos
+
+- 2026-11-21 · H-ACCESS-03 espera `ROOM_MAP_MASTER_PLAN.md` (P1, R3): desde qué PC entra un profesional sale de su asignación a un box en `room_layout`, no de un campo en «Personal» (dueño).
 
 - S3: `mjosefa-cms` tiene trabajo sin commit (DATA_IMPORT) y dependencias con `replace` local; no se despacha hasta que quede limpio.
 
