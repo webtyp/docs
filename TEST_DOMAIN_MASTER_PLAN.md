@@ -1,5 +1,5 @@
 # Pruebas del dominio — master plan
-> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); E2 = plan de `apptest` en redacción, luego revisión del dueño**; S3/S4 (orden de pruebas existentes) siguen al final
+> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); E2 = plan de `apptest` escrito, espera revisión del dueño**; S3/S4 (orden de pruebas existentes) siguen al final
 
 Cada agente agrega pruebas sin criterio de dominio: `mjosefa-cms/tests/` tiene 34 pruebas en 20 archivos y la
 mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDefaultDeny_NoAuthorizeConfigured`,
@@ -69,7 +69,7 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | S2 | `devflow` (`gotest`) | control de D5 (sin `docs/TESTS.md` → solo aviso; con él → falla) | 🟢 hecho 2026-11-05 (`v0.4.165`) |
 | S3 | `mjosefa-cms` | `docs/TESTS.md`; mover las pruebas del framework a su librería; renombrar | espera: cierre de DATA_IMPORT (repo con cambios sin commit y `replace` locales) |
 | S4 | librerías y módulos | lo mismo, repo por repo, al tocarse | al final |
-| E2 | `apptest` (nueva, `gonew`), `devflow` (`gotest -stories`) | `docs/PLAN.md` con el gate de **api-design** (D7–D10), revisado por el dueño antes de escribir código | 🔴 [Claude · 2026-11-20] redactando el plan |
+| E2 | `apptest` (nueva, `gonew`), `devflow` (`gotest -stories`) | [`apptest/docs/PLAN.md`](https://github.com/webtyp/apptest/blob/main/docs/PLAN.md) escrito: gate de **api-design**, 9 etapas (extiende `postgres` con `NewEmptyDatabase` y `fetch` con cookie jar; reusa el `web/server` generado, `sitec`, `devbrowser/chromedp`, `DEV_AUTOLOGIN`) | 🔴 tuyo: revisar el plan; con 🔵 se ejecuta en local |
 | E3 | `clinical_encounter`, `appointment_booking`, `mjosefa-cms` | piloto H-ENCOUNTER-01…04 contra Postgres de prueba; cada fallo queda ❌ con su porqué en `docs/TESTS.md` y se arregla en la librería dueña (**bug-fix-flow**) | tras E2 |
 | E4 | resto de módulos | el resto del catálogo, dominio por dominio | tras E3 |
 | E5 | `devskills` (**testing**) | regla «historias de usuario»: dónde viven, cómo se corren, cómo se marcan | con E2 |
