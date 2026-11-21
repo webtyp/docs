@@ -1,5 +1,5 @@
 # Pruebas del dominio — master plan
-> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); E2 = plan de `apptest` escrito, espera revisión del dueño**; S3/S4 (orden de pruebas existentes) siguen al final
+> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); E2 aprobado; construyendo H-ACCESS-01**; S3/S4 (orden de pruebas existentes) siguen al final
 
 Cada agente agrega pruebas sin criterio de dominio: `mjosefa-cms/tests/` tiene 34 pruebas en 20 archivos y la
 mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDefaultDeny_NoAuthorizeConfigured`,
@@ -23,27 +23,27 @@ Ninguna.
 Id = `H-<DOMINIO>-<NN>` (D11): el número cuenta dentro de su dominio; agregar toma el siguiente de ese dominio,
 quitar deja el hueco (nunca se renumera). Archivo `stories/h_<dominio>_<nn>_<flujo>.go` en el módulo dueño, así la
 carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a la vez. Cada fila pasa al
-`docs/TESTS.md` de su módulo (D1) cuando su historia se escribe. **Piloto: H-ENCOUNTER-01…04.**
+`docs/TESTS.md` de su módulo (D1) cuando su historia se escribe. **Estado (D12):** 🔵 por revisar · 🟡 construyendo · 🟠 depurando · 🔴 no pasa · 🟢 lista e implementada. **Primero H-ACCESS-01** (dueño, 2026-11-20); las demás después.
 
-| Id | Módulo · flujo | Historia |
-|---|---|---|
-| H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol |
-| H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar |
-| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» |
-| H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva |
-| H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva |
-| H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas |
-| H-PATIENT-01 | client_directory · alta | Paciente con RUT válido se crea; RUT inválido o repetido se rechaza con su mensaje |
-| H-PATIENT-02 | client_directory · búsqueda | Se encuentra un paciente por nombre y por RUT |
-| H-BOOKING-01 | appointment_booking · mesón | La recepción reserva una hora libre con un paciente nuevo creado en el mismo paso |
-| H-BOOKING-02 | appointment_booking · mesón | Una hora ya tomada no se ofrece (2 sesiones reservando la misma hora: una gana) |
-| H-BOOKING-03 | appointment_booking · estados | Confirmar, cancelar y «no asistió» cambian el estado que se ve en la lista |
-| H-RECORDS-01 | view (cualquier módulo) · en vivo | Lo que una sesión edita se ve en la otra sin recargar (2 sesiones) |
-| H-ENCOUNTER-01 | clinical_encounter · agenda del día | El doctor ve solo sus reservas de hoy con edad, RUT, hora y estado; la pendiente se ve y no se elige |
-| H-ENCOUNTER-02 | clinical_encounter · agenda del día | La agenda abre sola al entrar; al elegir una confirmada se listan las fichas de ese paciente, por fecha |
-| H-ENCOUNTER-03 | clinical_encounter · registro | Ficha nueva trae doctor y paciente puestos; al guardar aparece en la lista y al elegirla se llena el formulario |
-| H-ENCOUNTER-04 | clinical_encounter · agenda en vivo | La recepción confirma una reserva y la agenda del doctor la muestra sin recargar (2 sesiones) |
-| H-ENCOUNTER-05 | clinical_encounter · privacidad | Un doctor no ve las fichas de un paciente que no está en su agenda |
+| Id | Módulo · flujo | Historia | Estado |
+|---|---|---|---|
+| H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol | 🟡 construyendo |
+| H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar | 🔵 por revisar |
+| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔵 por revisar |
+| H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva | 🔵 por revisar |
+| H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva | 🔵 por revisar |
+| H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas | 🔵 por revisar |
+| H-PATIENT-01 | client_directory · alta | Paciente con RUT válido se crea; RUT inválido o repetido se rechaza con su mensaje | 🔵 por revisar |
+| H-PATIENT-02 | client_directory · búsqueda | Se encuentra un paciente por nombre y por RUT | 🔵 por revisar |
+| H-BOOKING-01 | appointment_booking · mesón | La recepción reserva una hora libre con un paciente nuevo creado en el mismo paso | 🔵 por revisar |
+| H-BOOKING-02 | appointment_booking · mesón | Una hora ya tomada no se ofrece (2 sesiones reservando la misma hora: una gana) | 🔵 por revisar |
+| H-BOOKING-03 | appointment_booking · estados | Confirmar, cancelar y «no asistió» cambian el estado que se ve en la lista | 🔵 por revisar |
+| H-RECORDS-01 | view (cualquier módulo) · en vivo | Lo que una sesión edita se ve en la otra sin recargar (2 sesiones) | 🔵 por revisar |
+| H-ENCOUNTER-01 | clinical_encounter · agenda del día | El doctor ve solo sus reservas de hoy con edad, RUT, hora y estado; la pendiente se ve y no se elige | 🔵 por revisar |
+| H-ENCOUNTER-02 | clinical_encounter · agenda del día | La agenda abre sola al entrar; al elegir una confirmada se listan las fichas de ese paciente, por fecha | 🔵 por revisar |
+| H-ENCOUNTER-03 | clinical_encounter · registro | Ficha nueva trae doctor y paciente puestos; al guardar aparece en la lista y al elegirla se llena el formulario | 🔵 por revisar |
+| H-ENCOUNTER-04 | clinical_encounter · agenda en vivo | La recepción confirma una reserva y la agenda del doctor la muestra sin recargar (2 sesiones) | 🔵 por revisar |
+| H-ENCOUNTER-05 | clinical_encounter · privacidad | Un doctor no ve las fichas de un paciente que no está en su agenda | 🔵 por revisar |
 
 ## Decisiones por implementar
 
@@ -58,8 +58,9 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | D7 (P7) | **Navegador real** (Chrome sin ventana) sobre el wasm de la app y su servidor real; los datos previos se crean con las operaciones reales actuando como un usuario: sin mocks, sin SQL a mano | E2 |
 | D8 (P8) | **Base nueva del motor de la app por corrida** (Postgres en mjosefa-cms), migrada con la migración de la app y borrada al final; la conexión de prueba sale del keyring de desarrollo (**secrets**) | E2 |
 | D9 (P9) | **Librería nueva `webtyp/apptest`** (`Story`, `Session`, `Run`) sobre `appkit/backend.Build` y el Chrome de `devbrowser`; se corre con `gotest -stories`, no en cada `gotest` | E2 |
-| D10 (P10) | **`gotest -stories` escribe la columna «Estado»** de `docs/TESTS.md` (✅, o ❌ con la primera línea del fallo y la fecha) | E2 |
+| D10 (P10) | **`gotest -stories` escribe la columna «Estado»** de `docs/TESTS.md` (🟢, o 🔴 con la primera línea del fallo y la fecha; colores en D12) | E2 |
 | D11 | **Id de historia `H-<DOMINIO>-<NN>`**, número por dominio, sin renumerar; archivo `stories/h_<dominio>_<nn>_<flujo>.go`; la subprueba lleva el id (`TestStories/H-ENCOUNTER-01`) y la fila de `docs/TESTS.md` también (dueño, 2026-11-20) | E2, E5 |
+| D12 | **Colores de estado de una historia**: 🔵 por revisar, 🟡 construyendo, 🟠 depurando, 🔴 no pasa, 🟢 lista e implementada; `gotest -stories` escribe 🟢/🔴, el agente marca 🟡/🟠 mientras trabaja (dueño, 2026-11-20) | E2, E5 |
 
 ## Fases
 
@@ -69,7 +70,7 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | S2 | `devflow` (`gotest`) | control de D5 (sin `docs/TESTS.md` → solo aviso; con él → falla) | 🟢 hecho 2026-11-05 (`v0.4.165`) |
 | S3 | `mjosefa-cms` | `docs/TESTS.md`; mover las pruebas del framework a su librería; renombrar | espera: cierre de DATA_IMPORT (repo con cambios sin commit y `replace` locales) |
 | S4 | librerías y módulos | lo mismo, repo por repo, al tocarse | al final |
-| E2 | `apptest` (nueva, `gonew`), `devflow` (`gotest -stories`) | [`apptest/docs/PLAN.md`](https://github.com/webtyp/apptest/blob/main/docs/PLAN.md) escrito: gate de **api-design**, 9 etapas (extiende `postgres` con `NewEmptyDatabase` y `fetch` con cookie jar; reusa el `web/server` generado, `sitec`, `devbrowser/chromedp`, `DEV_AUTOLOGIN`) | 🔴 tuyo: revisar el plan; con 🔵 se ejecuta en local |
+| E2 | `apptest` (nueva, `gonew`), `devflow` (`gotest -stories`) | [`apptest/docs/PLAN.md`](https://github.com/webtyp/apptest/blob/main/docs/PLAN.md) escrito: gate de **api-design**, 9 etapas (extiende `postgres` con `NewEmptyDatabase` y `fetch` con cookie jar; reusa el `web/server` generado, `sitec`, `devbrowser/chromedp`, `DEV_AUTOLOGIN`) | 🔵 [Claude · 2026-11-20] en curso: solo lo que pide H-ACCESS-01 (etapas 1, 3, 4, 5, 6 y la historia); `fetch` y `DEV_AUTOLOGIN` después |
 | E3 | `clinical_encounter`, `appointment_booking`, `mjosefa-cms` | piloto H-ENCOUNTER-01…04 contra Postgres de prueba; cada fallo queda ❌ con su porqué en `docs/TESTS.md` y se arregla en la librería dueña (**bug-fix-flow**) | tras E2 |
 | E4 | resto de módulos | el resto del catálogo, dominio por dominio | tras E3 |
 | E5 | `devskills` (**testing**) | regla «historias de usuario»: dónde viven, cómo se corren, cómo se marcan | con E2 |
