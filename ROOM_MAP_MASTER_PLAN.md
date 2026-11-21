@@ -1,5 +1,5 @@
 # Mapa de ocupación (`room_layout`): la configuración única del recinto — master plan
-> **Status:** IN PROGRESS · 2026-11-21 · sin preguntas; R1–R2d, R2f y R3 hechos en local; sigue **R2e** (diálogo de asignar, D8, D9) y luego H-ACCESS-03; D1 hecho en local (abre en «Operación»)
+> **Status:** IN PROGRESS · 2026-11-21 · sin preguntas; R1–R2d, R2f y R3 hechos en local, sin publicar; sigue **R2e** (diálogo de asignar, D8, D9) y luego H-ACCESS-03; el desplazamiento lento espera `RENDER_RESOURCES_MASTER_PLAN.md`; D1 hecho en local (abre en «Operación»)
 
 **Regla del dueño (2026-11-21):** `room_layout` es la pieza central: ahí se elige al profesional y se le asigna el
 box donde trabaja y qué días. Esa asignación es la única configuración y todo sale de ella: su agenda y desde qué

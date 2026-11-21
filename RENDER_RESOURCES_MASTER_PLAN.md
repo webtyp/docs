@@ -1,5 +1,5 @@
 # Recursos de lo que no se ve: el framework los libera, una vez y para todos — master plan
-> **Status:** IN PROGRESS · 2026-11-21 · P1–P3 cerradas (D2–D4); F1 en curso
+> **Status:** IN PROGRESS · 2026-11-21 · P1–P3 cerradas (D2–D4); F1 investigada, sin código (pasos exactos en la fila F1)
 
 **Regla del dueño (2026-11-21):** como un auto en una ciudad abierta, donde los edificios del fondo se ven borrosos
 porque no se cargan todas sus texturas, el framework libera lo que no se está viendo, **de forma centralizada**: nunca
@@ -33,7 +33,7 @@ Ninguna.
 
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
-| F1 | `layout/platformd` | D2 | 🟡 [Claude · 2026-11-21] en curso |
+| F1 | `layout/platformd` | D2. **Sin código todavía; investigado, listo para hacer**: (1) `platformd.go:700-735` monta `m.View()` en cada `Section` de pantalla para siempre; cambiar por `Show(<activa o saliendo>, …)` con un `p.leaving` que guarda la pantalla anterior hasta que termina la animación de `SlideDeck` (`MotionBase`) y luego la suelta. (2) `dom` ya lo soporta: `unmountRecursive` (`dom/dom_frontend.go:606-667`) limpia listeners, suscripciones y cleanups y saca el id de `initedIDs`, así que al volver se llama `Init` otra vez y luego `Render`. (3) Riesgo a revisar: todo `Init` debe poder repetirse sin acumular (suscripciones de larga vida van en el constructor). Verificado: `crudview` se suscribe a `OnChange` en `New` (`layout/crudview/crud.go:147`), no en `Init`. Falta revisar `room_layout.RootView.Init` (rearma etapas y relee: aceptable) y los demás `Init` de pantallas. (4) Verificar en vivo: total de elementos de la página baja de ~7.100 a lo de la pantalla visible; navegar entre pantallas sin errores; volver a una pantalla la muestra con sus datos | 🔴 siguiente |
 | F2 | `widget/style`, `layout`, `room_layout` | D3 | tras F1 |
 | F3 | `devtools`/`app` (MCP), skill **wasm** | D4 | tras F2 |
 | F4 | `room_layout` | medir de nuevo «Espacios» con F1 y F2; si sigue lento, la planta como un solo fondo (decisión en `ROOM_MAP_MASTER_PLAN.md`) | tras F1, F2 |
