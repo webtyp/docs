@@ -1,5 +1,5 @@
 # Mapa de ocupación (`room_layout`): la configuración única del recinto — master plan
-> **Status:** IN PROGRESS · 2026-11-21 · espera **P4** (un solo modelo para lo que hay en un box); D1 y D6 hechos en local; R3 en curso; D1 hecho en local (abre en «Operación»)
+> **Status:** IN PROGRESS · 2026-11-21 · sin preguntas; R1 y R3 (backend) hechos en local; sigue **R2** (la pantalla «Ocupación»), que deja verde H-ACCESS-03; D1 hecho en local (abre en «Operación»)
 
 **Regla del dueño (2026-11-21):** `room_layout` es la pieza central: ahí se elige al profesional y se le asigna el
 box donde trabaja y qué días. Esa asignación es la única configuración y todo sale de ella: su agenda y desde qué
@@ -17,25 +17,7 @@ de usuario: todo por pantalla); probar en `veltylabs/mjosefa-cms` (MCP de webtyp
 
 ## Preguntas abiertas
 
-**P4 — Un solo modelo para «lo que hay en un box» (D5 necesita que el PC del mapa sepa su equipo de red).** Lo
-que se ve: el administrador pone un PC en el Box 2 en el mapa, pero el sistema no sabe qué computador es (su IP), así
-que no puede habilitarlo para quien trabaja en ese box. La causa: `room_layout` tiene dos modelos para lo mismo. El
-mapa dibuja `RoomArtifact` (tipo, código, celda, estado, mantención; **sin** equipo de red; 21 filas en la base de
-desarrollo) y la pantalla «Equipamiento» usa `Equipment` + `RoomEquipment` (con `device_id`; **0 filas**: nadie la
-usa). A) **queda `RoomArtifact`**: gana `device_id`, que se elige al tocar el PC en el mapa (la lista de equipos de
-`device_manager` llega por una interfaz propia); se borran `Equipment`, `RoomEquipment` y la pantalla
-«Equipamiento». B) queda `Equipment` y el mapa se reescribe sobre él (le faltan celda, tipo y estado; se migran 21
-filas). **Recomiendo A**: es lo que el mapa ya usa y tiene datos; lo otro está vacío y duplicado (una intención, un
-camino). ¿Cuál evita el acoplamiento y es más mantenible? A: un modelo, y `room_layout` sigue sin importar
-`device_manager`.
-```go
-// A — room_layout/definition.go: RoomArtifactModel gana el equipo de red (vacío si no tiene red: un gastroscopio)
-{Name: "device_id", Type: model.Text(), OmitEmpty: true},
-// room_layout/interfaces.go: los equipos para elegir al tocar el PC (la app conecta device_manager)
-type DeviceReader interface { DeviceOptions(tenantID string) ([]fmt.KeyValue, error) }
-// se borran EquipmentModel, RoomEquipmentModel, equipment.go (Save/List/SetRoomEquipment) y la pantalla «Equipamiento»
-```
-Respuesta:
+Ninguna.
 
 ## Decisiones por implementar
 
@@ -46,6 +28,7 @@ Respuesta:
 | D3 | **La asignación profesional → box → días es la única configuración**: agenda y equipos habilitados salen de ella (P1) | `room_layout`, `staff_manager` |
 | D5 (P1) | **El PC habilitado sale del turno** (A simplificada): `staff_manager` declara `DeviceAssignments{UsesDevice(tenantID, occupantID, deviceID) (bool, error)}` y `IsTrustedIP` acepta su fila `staff_device` (solo el primer administrador) o `UsesDevice == true`; `room_layout` lo responde (turno activo del ocupante → equipos del box → `device_id`); la app conecta con un adaptador que resuelve `room_layout` al preguntar (`FindBuiltModule`): los módulos siguen sin importarse y ninguno necesita al otro al construirse | `staff_manager`, `room_layout`, `mjosefa-cms` |
 | D6 (P3) | **La pantalla se llama «Ocupación»** (clave `Occupancy`): nombra la tarea, no el dibujo | `room_layout/ui`, `lang.json` |
+| D7 (P4) | **Un solo modelo para lo que hay en un espacio: `RoomArtifact`** (qué, dónde, estado) con ids blandos al módulo dueño de cada cosa (`device_id` → `device_manager` para los que tienen red). Un tipo nuevo es un valor de `kind`, sin tablas; una columna nueva solo cuando aparece un **módulo dueño** nuevo (pocos), nunca por tipo. `next_maintenance` e `items` se mudan a su módulo dueño (mantención, stock) cuando exista. `Equipment`, `RoomEquipment` y la pantalla «Equipamiento» (vacíos) se borraron | hecho en local |
 | D4 (P2) | **El personal sigue en `staff_manager`**; el panel «Profesionales» del mapa trae «+ Agregar profesional» (RUT, nombre, especialidad) que guarda por la operación de `staff_manager` (interfaz propia de `room_layout`, la app la conecta): el administrador no sale del mapa | `room_layout/ui` + `interfaces.go`, `mjosefa-cms` |
 
 ## Fases
@@ -53,8 +36,8 @@ Respuesta:
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | R1 | `room_layout` | D1: `NewMap` abre en `StageOperation` (constantes `StagePlan…StageOperation`), `tests/ui_start_test.go`, `docs/TESTS.md`; borrado `docs/PLAN.md` obsoleto (cumplido y publicado en v0.3.93) | 🟢 local, espera revisión |
-| R2 | `room_layout` | D2, D4 y el flujo de asignar de la referencia (tocar profesional → ver dónde calza → diálogo de días), comparado con `ui-reference` | tras R3 |
-| R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | D6 hecho en local (`ui/browser.go`: «Ocupación», id `room_layout.occupancy`, ayuda nueva en 8 idiomas, clave «Map» borrada). D5 en `staff_manager` hecho en local (`interfaces.go` `DeviceAssignments`, `module.go` `Deps.Assignments` e `IsTrustedIP`: fila `staff_device` o turno; `tests/trust_assignment_test.go`, `docs/TESTS.md`). Falta `room_layout.UsesDevice` y el adaptador en `mjosefa-cms`: esperan P4 | 🟡 espera P4 |
+| R2 | `room_layout` | D2, D4, elegir el equipo de red al tocar un PC (D7: interfaz `DeviceReader` de `room_layout`, la app conecta `device_manager`) y el flujo de asignar de la referencia (tocar profesional → ver dónde calza → diálogo de días), comparado con `ui-reference`; termina con la «Dado» de H-ACCESS-03 por esta pantalla | siguiente |
+| R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | Hecho en local. **room_layout**: `artifact.go` (nuevo: funciones de artefacto, tipos `Artifact*` y estados `ArtifactStatus*` del dominio, `UsesDevice`), `definition.go` (`RoomArtifact.device_id`; fuera `Equipment`, `RoomEquipment`, sus temas; filtro del tablero `artifact_kind`), `definition_gen.go` (regenerado; `crud` subido a v0.0.19), `day.go` (tablero y libres leen artefactos), `checks.go`, `order.go`, `rows.go`, `view.go`, `migrate/migrate.go`, `seed/seed.go` (siembra artefactos), `ui/browser.go` (D6 y sin «Equipamiento»), `ui/svg.go`, `ui/types.go`, `lang.json`; borrados `equipment.go`, 5 `rule_room_*equipment*`, `tests/equipment_test.go`, `tests/equipment_device_test.go`; `tests/uses_device_test.go` nuevo; ajustados `rules_test`, `screen_save_test`, `view_test`, `widgets_test`, `seed_test`, `orm_coverage_test`, `ui_view_test`, `migrate_test`, `docs/TESTS.md`. **staff_manager**: `DeviceAssignments`, `Deps.Assignments`, `IsTrustedIP`, `tests/trust_assignment_test.go`. **mjosefa-cms**: `config/services/backend.go` (`roomAssignments`: busca `room_layout` al preguntar), `errors.go` (`errRoomsType`), `go.mod` (`replace` room_layout). Tablas `room_equipment` y `room_space_equipment` quedan en la base (vacías) hasta borrarlas con `migrate -drop` | 🟢 local, espera revisión |
 | R4 | `room_layout`, `staff_manager` | historias `H-ROOM-<NN>` (asignar en el mapa) y la «Dado» de H-ACCESS-03 por el mapa | tras R2, R3 |
 
 ## Bloqueos
