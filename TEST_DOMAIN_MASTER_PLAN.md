@@ -1,5 +1,5 @@
 # Pruebas del dominio — master plan
-> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); E2 aprobado; construyendo H-ACCESS-01**; S3/S4 (orden de pruebas existentes) siguen al final
+> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); H-ACCESS-01 🟢 en local (encontró y arregló 2 fallos reales); espera revisión del dueño antes de la siguiente historia**; S3/S4 (orden de pruebas existentes) siguen al final
 
 Cada agente agrega pruebas sin criterio de dominio: `mjosefa-cms/tests/` tiene 34 pruebas en 20 archivos y la
 mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDefaultDeny_NoAuthorizeConfigured`,
@@ -27,7 +27,7 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 
 | Id | Módulo · flujo | Historia | Estado |
 |---|---|---|---|
-| H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol | 🟡 construyendo |
+| H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol | 🟢 lista (`auth/stories`, 6 s) |
 | H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar | 🔵 por revisar |
 | H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔵 por revisar |
 | H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva | 🔵 por revisar |
@@ -70,10 +70,21 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | S2 | `devflow` (`gotest`) | control de D5 (sin `docs/TESTS.md` → solo aviso; con él → falla) | 🟢 hecho 2026-11-05 (`v0.4.165`) |
 | S3 | `mjosefa-cms` | `docs/TESTS.md`; mover las pruebas del framework a su librería; renombrar | espera: cierre de DATA_IMPORT (repo con cambios sin commit y `replace` locales) |
 | S4 | librerías y módulos | lo mismo, repo por repo, al tocarse | al final |
-| E2 | `apptest` (nueva, `gonew`), `devflow` (`gotest -stories`) | [`apptest/docs/PLAN.md`](https://github.com/webtyp/apptest/blob/main/docs/PLAN.md) escrito: gate de **api-design**, 9 etapas (extiende `postgres` con `NewEmptyDatabase` y `fetch` con cookie jar; reusa el `web/server` generado, `sitec`, `devbrowser/chromedp`, `DEV_AUTOLOGIN`) | 🔵 [Claude · 2026-11-20] en curso: solo lo que pide H-ACCESS-01 (etapas 1, 3, 4, 5, 6 y la historia); `fetch` y `DEV_AUTOLOGIN` después |
+| E2 | `apptest`, `postgres`, `auth/stories`, `server`, `staff_manager`, `layout`, `mjosefa-cms` | Hecho en local para H-ACCESS-01 (etapas 1, 3–6 y la historia). Correr: `cd mjosefa-cms && go test -tags stories -run TestStories -v ./tests/`. Falta: etapa 2 (`fetch` cookie jar) y `SignedInAs`/`DEV_AUTOLOGIN` (las piden las historias con datos previos), etapa 7 (`gotest -stories` escribe el Estado; hoy se marca a mano aquí) | 🟢 local, espera revisión |
 | E3 | `clinical_encounter`, `appointment_booking`, `mjosefa-cms` | piloto H-ENCOUNTER-01…04 contra Postgres de prueba; cada fallo queda ❌ con su porqué en `docs/TESTS.md` y se arregla en la librería dueña (**bug-fix-flow**) | tras E2 |
 | E4 | resto de módulos | el resto del catálogo, dominio por dominio | tras E3 |
 | E5 | `devskills` (**testing**) | regla «historias de usuario»: dónde viven, cómo se corren, cómo se marcan | con E2 |
+
+## Trabajo local sin publicar (H-ACCESS-01)
+
+- **apptest** (repo nuevo, solo `docs/PLAN.md` publicado): `apptest.go` (`Story[G]`, `Stories[G]`, `UsingGiven`, `Run`), `app.go` (compila `web/server` con `-tags dev`, la migración y el sitio con `sitec` una vez; por historia: base nueva, migración, servidor en puerto libre sin `DEV_AUTOLOGIN`, Chrome sin ventana; `PostJSON` → `Reply`), `session.go` (`NewSession`, `OpenHome`, `FillField`, `Submit`, `Find`, `FindField`, `Expect*`; al fallar: PNG en `/tmp/apptest-failures/`, URL y texto de la página). `go.mod`: `replace` postgres.
+- **postgres**: `empty_database.go` (`NewEmptyDatabase`), `backup.go` lo usa, `tests/empty_database_test.go`, README.
+- **auth/stories** (módulo nuevo dentro de `auth`, para que `auth` no cargue Chrome): `given.go`, `h_access_01_sign_in.go`, `go.mod` (`replace` apptest, postgres).
+- **server**: `httpd/static.go` + `httpd/shell.go` (`isShellAtRoot`: `/app/` → `/` cuando la app no tiene páginas públicas), `tests/shell_gate_test.go`, `docs/TESTS.md`. **Fallo real 1**: tras entrar, `auth` manda a `/app/`, que daba 404 en toda app sin páginas; el formulario lo mostraba como «Access not authorized on this device». `DEV_AUTOLOGIN` lo tapaba en desarrollo. El mismo repo trae cambios sin commit de otra ola (`strategies.go`, `restart_opid_test.go`: LOG_NOISE).
+- **staff_manager**: `first_admin.go` (`db.Tx` con los dos almacenes). **Fallo real 2**: el primer administrador de una instalación nueva no se podía crear en Postgres: el vínculo con el equipo se escribía fuera de la transacción del profesional y la llave foránea fallaba. Las pruebas del módulo usan `storage/mem`, que no revisa llaves foráneas: por eso no lo vieron. `docs/TESTS.md` (`TestUserByStaff`).
+- **layout**: `platformd` exporta `ClsNavItem` (la historia cuenta las entradas del menú).
+- **mjosefa-cms**: `tests/stories_test.go` (`//go:build stories`); `go.mod`: `replace` apptest, auth/stories, postgres, server (`go mod tidy` además subió appkit, auth, devtools, input y layout).
+- Publicar (tras revisión): postgres → server → layout → staff_manager → apptest → auth/stories → mjosefa-cms.
 
 ## Bloqueos
 
