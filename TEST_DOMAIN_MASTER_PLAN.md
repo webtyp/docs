@@ -7,8 +7,6 @@ mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDef
 que sería idéntica en cualquier otra app pertenece a la librería que dueña ese comportamiento (responsabilidad única).
 Meta: abrir un repo y saber, en un documento, qué reglas de su negocio están protegidas y dónde.
 
-## Preguntas abiertas
-
 **Disparador (dueño, 2026-11-20):** probar a mano cada pantalla es caro y deja pasar fallos (RUT invisible, selector
 que no abre, formulario vacío). Las piezas existen; falta probar **las historias de usuario** contra una base **real de
 prueba** del motor que usa la app, sin mocks, sin repetir código de implementación en cada app, y con un documento
@@ -16,32 +14,36 @@ que diga qué historia falla y por qué. Hoy: `gotest` ya compila a wasm y corre
 (`wasmbrowsertest`), pero sin servidor; `appkit/backend.Build(app, b, s, dsn, schema)` ya arma el servidor completo
 con cualquier DSN; `devbrowser` ya maneja Chrome (chromedp). Nada los une.
 
+## Preguntas abiertas
+
 Ninguna.
 
 ## Catálogo de historias (mjosefa-cms)
 
-Por dominio (módulo) y flujo; «2 sesiones» = dos navegadores a la vez. Cada fila pasa al `docs/TESTS.md` de su
-módulo (D1) cuando su historia se escribe. **Piloto: H13–H16** (la agenda clínica, lo que hoy se prueba a mano).
+Id = `H-<DOMINIO>-<NN>` (D11): el número cuenta dentro de su dominio; agregar toma el siguiente de ese dominio,
+quitar deja el hueco (nunca se renumera). Archivo `stories/h_<dominio>_<nn>_<flujo>.go` en el módulo dueño, así la
+carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a la vez. Cada fila pasa al
+`docs/TESTS.md` de su módulo (D1) cuando su historia se escribe. **Piloto: H-ENCOUNTER-01…04.**
 
-| # | Dominio · flujo | Historia: «como … quiero …, entonces …» |
+| Id | Módulo · flujo | Historia |
 |---|---|---|
-| H1 | Acceso · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol |
-| H2 | Acceso · entrar | Desde un equipo no registrado no se puede entrar |
-| H3 | Acceso · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» |
-| H4 | Personal · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva |
-| H5 | Catálogo · alta | Se crea un servicio con duración y precio y aparece en la reserva |
-| H6 | Calendario · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas |
-| H7 | Pacientes · alta | Se crea un paciente con RUT válido; un RUT inválido o repetido se rechaza con su mensaje |
-| H8 | Pacientes · búsqueda | Se encuentra un paciente por nombre y por RUT |
-| H9 | Reservas · mesón | La recepción reserva una hora libre con un paciente nuevo creado en el mismo paso |
-| H10 | Reservas · mesón | Una hora ya tomada no se ofrece (2 sesiones reservando la misma hora: una gana) |
-| H11 | Reservas · estados | Confirmar, cancelar y «no asistió» cambian el estado que se ve en la lista |
-| H12 | Registros · en vivo | Lo que una sesión edita se ve en la otra sin recargar (2 sesiones) |
-| H13 | Ficha · agenda del día | El doctor ve solo sus reservas de hoy con edad, RUT, hora y estado; la pendiente se ve y no se elige |
-| H14 | Ficha · agenda del día | La agenda abre sola al entrar; al elegir una confirmada se listan las fichas de ese paciente, por fecha |
-| H15 | Ficha · registro | Ficha nueva trae doctor y paciente puestos; al guardar aparece en la lista y al elegirla se llena el formulario |
-| H16 | Ficha · agenda en vivo | La recepción confirma una reserva y la agenda del doctor la muestra sin recargar (2 sesiones) |
-| H17 | Ficha · privacidad | Un doctor no ve las fichas de un paciente que no está en su agenda |
+| H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol |
+| H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar |
+| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» |
+| H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva |
+| H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva |
+| H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas |
+| H-PATIENT-01 | client_directory · alta | Paciente con RUT válido se crea; RUT inválido o repetido se rechaza con su mensaje |
+| H-PATIENT-02 | client_directory · búsqueda | Se encuentra un paciente por nombre y por RUT |
+| H-BOOKING-01 | appointment_booking · mesón | La recepción reserva una hora libre con un paciente nuevo creado en el mismo paso |
+| H-BOOKING-02 | appointment_booking · mesón | Una hora ya tomada no se ofrece (2 sesiones reservando la misma hora: una gana) |
+| H-BOOKING-03 | appointment_booking · estados | Confirmar, cancelar y «no asistió» cambian el estado que se ve en la lista |
+| H-RECORDS-01 | view (cualquier módulo) · en vivo | Lo que una sesión edita se ve en la otra sin recargar (2 sesiones) |
+| H-ENCOUNTER-01 | clinical_encounter · agenda del día | El doctor ve solo sus reservas de hoy con edad, RUT, hora y estado; la pendiente se ve y no se elige |
+| H-ENCOUNTER-02 | clinical_encounter · agenda del día | La agenda abre sola al entrar; al elegir una confirmada se listan las fichas de ese paciente, por fecha |
+| H-ENCOUNTER-03 | clinical_encounter · registro | Ficha nueva trae doctor y paciente puestos; al guardar aparece en la lista y al elegirla se llena el formulario |
+| H-ENCOUNTER-04 | clinical_encounter · agenda en vivo | La recepción confirma una reserva y la agenda del doctor la muestra sin recargar (2 sesiones) |
+| H-ENCOUNTER-05 | clinical_encounter · privacidad | Un doctor no ve las fichas de un paciente que no está en su agenda |
 
 ## Decisiones por implementar
 
@@ -57,6 +59,7 @@ módulo (D1) cuando su historia se escribe. **Piloto: H13–H16** (la agenda cl�
 | D8 (P8) | **Base nueva del motor de la app por corrida** (Postgres en mjosefa-cms), migrada con la migración de la app y borrada al final; la conexión de prueba sale del keyring de desarrollo (**secrets**) | E2 |
 | D9 (P9) | **Librería nueva `webtyp/apptest`** (`Story`, `Session`, `Run`) sobre `appkit/backend.Build` y el Chrome de `devbrowser`; se corre con `gotest -stories`, no en cada `gotest` | E2 |
 | D10 (P10) | **`gotest -stories` escribe la columna «Estado»** de `docs/TESTS.md` (✅, o ❌ con la primera línea del fallo y la fecha) | E2 |
+| D11 | **Id de historia `H-<DOMINIO>-<NN>`**, número por dominio, sin renumerar; archivo `stories/h_<dominio>_<nn>_<flujo>.go`; la subprueba lleva el id (`TestStories/H-ENCOUNTER-01`) y la fila de `docs/TESTS.md` también (dueño, 2026-11-20) | E2, E5 |
 
 ## Fases
 
@@ -67,8 +70,8 @@ módulo (D1) cuando su historia se escribe. **Piloto: H13–H16** (la agenda cl�
 | S3 | `mjosefa-cms` | `docs/TESTS.md`; mover las pruebas del framework a su librería; renombrar | espera: cierre de DATA_IMPORT (repo con cambios sin commit y `replace` locales) |
 | S4 | librerías y módulos | lo mismo, repo por repo, al tocarse | al final |
 | E2 | `apptest` (nueva, `gonew`), `devflow` (`gotest -stories`) | `docs/PLAN.md` con el gate de **api-design** (D7–D10), revisado por el dueño antes de escribir código | 🔴 [Claude · 2026-11-20] redactando el plan |
-| E3 | `clinical_encounter`, `appointment_booking`, `mjosefa-cms` | piloto H13–H16 contra Postgres de prueba; cada fallo queda ❌ con su porqué en `docs/TESTS.md` y se arregla en la librería dueña (**bug-fix-flow**) | tras E2 |
-| E4 | resto de módulos | H1–H12, H17, dominio por dominio | tras E3 |
+| E3 | `clinical_encounter`, `appointment_booking`, `mjosefa-cms` | piloto H-ENCOUNTER-01…04 contra Postgres de prueba; cada fallo queda ❌ con su porqué en `docs/TESTS.md` y se arregla en la librería dueña (**bug-fix-flow**) | tras E2 |
+| E4 | resto de módulos | el resto del catálogo, dominio por dominio | tras E3 |
 | E5 | `devskills` (**testing**) | regla «historias de usuario»: dónde viven, cómo se corren, cómo se marcan | con E2 |
 
 ## Bloqueos
