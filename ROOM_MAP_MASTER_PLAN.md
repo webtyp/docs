@@ -1,5 +1,5 @@
 # Mapa de ocupación (`room_layout`): la configuración única del recinto — master plan
-> **Status:** IN PROGRESS · 2026-11-21 · sin preguntas; D1 hecho en local; ahora R3 (D5) y D6, luego R2; D1 hecho en local (abre en «Operación»)
+> **Status:** IN PROGRESS · 2026-11-21 · espera **P4** (un solo modelo para lo que hay en un box); D1 y D6 hechos en local; R3 en curso; D1 hecho en local (abre en «Operación»)
 
 **Regla del dueño (2026-11-21):** `room_layout` es la pieza central: ahí se elige al profesional y se le asigna el
 box donde trabaja y qué días. Esa asignación es la única configuración y todo sale de ella: su agenda y desde qué
@@ -17,7 +17,25 @@ de usuario: todo por pantalla); probar en `veltylabs/mjosefa-cms` (MCP de webtyp
 
 ## Preguntas abiertas
 
-Ninguna.
+**P4 — Un solo modelo para «lo que hay en un box» (D5 necesita que el PC del mapa sepa su equipo de red).** Lo
+que se ve: el administrador pone un PC en el Box 2 en el mapa, pero el sistema no sabe qué computador es (su IP), así
+que no puede habilitarlo para quien trabaja en ese box. La causa: `room_layout` tiene dos modelos para lo mismo. El
+mapa dibuja `RoomArtifact` (tipo, código, celda, estado, mantención; **sin** equipo de red; 21 filas en la base de
+desarrollo) y la pantalla «Equipamiento» usa `Equipment` + `RoomEquipment` (con `device_id`; **0 filas**: nadie la
+usa). A) **queda `RoomArtifact`**: gana `device_id`, que se elige al tocar el PC en el mapa (la lista de equipos de
+`device_manager` llega por una interfaz propia); se borran `Equipment`, `RoomEquipment` y la pantalla
+«Equipamiento». B) queda `Equipment` y el mapa se reescribe sobre él (le faltan celda, tipo y estado; se migran 21
+filas). **Recomiendo A**: es lo que el mapa ya usa y tiene datos; lo otro está vacío y duplicado (una intención, un
+camino). ¿Cuál evita el acoplamiento y es más mantenible? A: un modelo, y `room_layout` sigue sin importar
+`device_manager`.
+```go
+// A — room_layout/definition.go: RoomArtifactModel gana el equipo de red (vacío si no tiene red: un gastroscopio)
+{Name: "device_id", Type: model.Text(), OmitEmpty: true},
+// room_layout/interfaces.go: los equipos para elegir al tocar el PC (la app conecta device_manager)
+type DeviceReader interface { DeviceOptions(tenantID string) ([]fmt.KeyValue, error) }
+// se borran EquipmentModel, RoomEquipmentModel, equipment.go (Save/List/SetRoomEquipment) y la pantalla «Equipamiento»
+```
+Respuesta:
 
 ## Decisiones por implementar
 
@@ -36,7 +54,7 @@ Ninguna.
 |---|---|---|---|
 | R1 | `room_layout` | D1: `NewMap` abre en `StageOperation` (constantes `StagePlan…StageOperation`), `tests/ui_start_test.go`, `docs/TESTS.md`; borrado `docs/PLAN.md` obsoleto (cumplido y publicado en v0.3.93) | 🟢 local, espera revisión |
 | R2 | `room_layout` | D2, D4 y el flujo de asignar de la referencia (tocar profesional → ver dónde calza → diálogo de días), comparado con `ui-reference` | tras R3 |
-| R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | D5 y D6 | 🟡 [Claude · 2026-11-21] en curso |
+| R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | D6 hecho en local (`ui/browser.go`: «Ocupación», id `room_layout.occupancy`, ayuda nueva en 8 idiomas, clave «Map» borrada). D5: `staff_manager` en curso; `room_layout.UsesDevice` espera P4 | 🟡 [Claude · 2026-11-21] |
 | R4 | `room_layout`, `staff_manager` | historias `H-ROOM-<NN>` (asignar en el mapa) y la «Dado» de H-ACCESS-03 por el mapa | tras R2, R3 |
 
 ## Bloqueos
