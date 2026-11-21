@@ -1,5 +1,5 @@
 # Recursos de lo que no se ve: el framework los libera, una vez y para todos — master plan
-> **Status:** IN PROGRESS · 2026-11-21 · P1–P3 cerradas (D2–D4); F1a 🟢 en local (7.102 → 2.330 elementos); sigue F1b (`gotest` en `layout`), luego F1c (subpantallas)
+> **Status:** IN PROGRESS · 2026-11-21 · P1–P3 cerradas (D2–D4); F1a 🟢 en local (7.102 → 2.330 elementos); F1b 🟢 (`gotest` en `layout`); sigue F1c (subpantallas)
 
 **Regla del dueño (2026-11-21):** como un auto en una ciudad abierta, donde los edificios del fondo se ven borrosos
 porque no se cargan todas sus texturas, el framework libera lo que no se está viendo, **de forma centralizada**: nunca
@@ -36,8 +36,8 @@ Marcas: 🔴 pendiente, sigue · ⚪ pendiente, espera otra fase · 🟡 en curs
 | Fase | Repo | Qué | Estado |
 |---|---|---|---|
 | F1a | `layout/platformd` | D2: cada pantalla se monta solo mientras está activa o saliendo (`screenPanel`, `release`, `p.leaving`, `leaveTimer`, `leaveMillis = 250`, que `leave_millis_test.go` ata a `css.DurationBase`, porque `webtyp.com/css` no compila a wasm). `dom` desmonta limpiando todo y vuelve a llamar `Init` al regresar; los 12 `Init` de pantallas se pueden repetir (revisado). Skill **components** ya lo dice (local, con línea STATUS) | 🟢 en vivo en mjosefa-cms: 7.102 → 2.330 elementos, solo la pantalla activa queda montada, ir a «Recepción» y volver la muestra con sus datos, sin errores de JavaScript; `go test` y el build wasm pasan |
-| F1b | `layout` | correr `gotest` en `layout` con el cambio de F1a | 🔴 sigue |
-| F1c | `layout`, `room_layout` | subpantallas: «Ocupación» elige su paso con cuatro `dom.Show` a mano (`room_layout/ui/rootview.go:212-222`), lo que choca con D1. Sacar la regla de F1a a un contenedor de pasos del framework, en `layout`, con la misma animación de salida, y que `RootView.Render` lo use. Ya descartado: `Refresh` no reconstruye el paso, porque `SignalString.Set` ignora el valor igual (`dom/signal.go:72`) | 🔴 tras F1b |
+| F1b | `layout` | correr `gotest` en `layout` con el cambio de F1a | 🟢 vet, style, race, tests y wasm pasan; cobertura 70,8 % |
+| F1c | `layout`, `room_layout` | subpantallas: «Ocupación» elige su paso con cuatro `dom.Show` a mano (`room_layout/ui/rootview.go:212-222`), lo que choca con D1. Sacar la regla de F1a a un contenedor de pasos del framework, en `layout`, con la misma animación de salida, y que `RootView.Render` lo use. Ya descartado: `Refresh` no reconstruye el paso, porque `SignalString.Set` ignora el valor igual (`dom/signal.go:72`) | 🔴 sigue |
 | F2 | `widget/style`, `layout`, `room_layout` | D3: `SkipOffscreen()` | ⚪ tras F1c |
 | F3 | `devtools`/`app` (MCP), skill **wasm** | D4: la memoria pedida por acción | ⚪ tras F2 |
 | F4 | `room_layout` | medir de nuevo «Espacios» con F1 y F2; si sigue lento, la planta como un solo fondo (decisión en `ROOM_MAP_MASTER_PLAN.md`) | ⚪ tras F2 |
