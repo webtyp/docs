@@ -53,6 +53,8 @@ Ninguna.
 
 ## Bloqueos
 
+- 2026-11-21 · el desplazamiento de «Espacios» va a tropezones (pintado: 1.672 celdas + 7.102 elementos con todas las pantallas montadas): lo resuelve el framework de forma central, `RENDER_RESOURCES_MASTER_PLAN.md` (P1, P2).
+
 - 2026-11-21 · H-ACCESS-03 (`TEST_DOMAIN_MASTER_PLAN.md`) espera R3: el profesional no puede entrar hasta que un box asignado le habilite su PC.
 
 ## Relación con otras olas
