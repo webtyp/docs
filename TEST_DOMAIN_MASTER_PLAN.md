@@ -1,5 +1,5 @@
 # Pruebas del dominio — master plan
-> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); H-ACCESS-01 🟢 en local (encontró y arregló 2 fallos reales); espera revisión del dueño antes de la siguiente historia**; S3/S4 (orden de pruebas existentes) siguen al final
+> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); H-ACCESS-01 y 02 🟢; **H-ACCESS-03 🔴 espera P11** (cómo recibe acceso un profesional nuevo)**; S3/S4 (orden de pruebas existentes) siguen al final
 
 Cada agente agrega pruebas sin criterio de dominio: `mjosefa-cms/tests/` tiene 34 pruebas en 20 archivos y la
 mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDefaultDeny_NoAuthorizeConfigured`,
@@ -16,7 +16,28 @@ con cualquier DSN; `devbrowser` ya maneja Chrome (chromedp). Nada los une.
 
 ## Preguntas abiertas
 
-Ninguna.
+**P11 — Cómo recibe acceso un profesional nuevo (bloquea H-ACCESS-03 y cualquier historia con un segundo usuario).**
+Lo que se ve: el administrador crea a la Dra. Rojas en «Personal» con su RUT y su equipo, pero ella no puede entrar
+nunca: el login responde «Access not authorized». La causa: entrar con RUT pide un usuario con identidad RUT
+(`trustedip.RegisterRUT`), y hoy eso solo lo hacen el setup del primer administrador (`auth/trusted_ip/mode.go:41-50`)
+y el importador de la base antigua (`mjosefa-cms/migrate/pastdb/staff.go:176-199`). Ninguna pantalla lo hace.
+A) **al guardar un profesional con RUT, `staff_manager` le da acceso** por una interfaz propia que la app entrega
+armada desde su modo de entrada (mismo patrón que `Registrar` para los equipos); el rol de permisos se sigue
+asignando en «Permisos» (`access`). B) una pantalla nueva en `access`, «Dar acceso», pide RUT, nombre y rol, crea el
+usuario, y `staff_manager` lo vincula por RUT. **Recomiendo A**: el administrador ya escribe el RUT y el equipo en el
+formulario de personal, que es donde espera que la persona quede lista para entrar; con B escribe el mismo RUT dos
+veces en dos pantallas. ¿Cuál evita el acoplamiento y es más mantenible? A: `staff_manager` no importa `auth`, solo
+declara la interfaz; B suma a `access` un vínculo con el directorio de personal.
+```go
+// A — staff_manager/interfaces.go (el módulo declara lo que necesita, sin importar auth)
+type SignInAccounts interface {
+	GiveSignIn(rut, name string) (userID string, err error) // crea el usuario con identidad RUT, o devuelve el que ya existe
+}
+// A — mjosefa-cms/config/services/backend.go (la app lo arma desde su modo de entrada, como hoy Registrar)
+staffmanager.Deps{..., Accounts: d.SignInAccounts}
+// B — access/ui: pantalla «Dar acceso» con RUT + nombre + rol; staff_manager busca el usuario por RUT al guardar
+```
+Respuesta:
 
 ## Catálogo de historias (mjosefa-cms)
 
@@ -28,8 +49,8 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | Id | Módulo · flujo | Historia | Estado |
 |---|---|---|---|
 | H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol | 🟢 lista (`auth/stories`, 6 s) |
-| H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar | 🔵 por revisar |
-| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔵 por revisar |
+| H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar | 🟢 lista (el navegador entra desde loopback; el setup se hace desde la IP de red del equipo) |
+| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔴 no pasa: ningún flujo da acceso a un segundo profesional (P11) |
 | H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva | 🔵 por revisar |
 | H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva | 🔵 por revisar |
 | H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas | 🔵 por revisar |
@@ -75,16 +96,18 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 | E4 | resto de módulos | el resto del catálogo, dominio por dominio | tras E3 |
 | E5 | `devskills` (**testing**) | regla «historias de usuario»: dónde viven, cómo se corren, cómo se marcan | con E2 |
 
-## Trabajo local sin publicar (H-ACCESS-01)
+## Trabajo local sin publicar (H-ACCESS-01, 02)
 
-- **apptest** (repo nuevo, solo `docs/PLAN.md` publicado): `apptest.go` (`Story[G]`, `Stories[G]`, `UsingGiven`, `Run`), `app.go` (compila `web/server` con `-tags dev`, la migración y el sitio con `sitec` una vez; por historia: base nueva, migración, servidor en puerto libre sin `DEV_AUTOLOGIN`, Chrome sin ventana; `PostJSON` → `Reply`), `session.go` (`NewSession`, `OpenHome`, `FillField`, `Submit`, `Find`, `FindField`, `Expect*`; al fallar: PNG en `/tmp/apptest-failures/`, URL y texto de la página). `go.mod`: `replace` postgres.
+El dueño publicó la cascada el 2026-11-20 23:17 (server v0.2.142, staff_manager, layout, mjosefa-cms v0.0.133…): los arreglos de H-ACCESS-01 ya están publicados. Queda local:
+
+- **apptest** (solo `docs/PLAN.md` publicado): `apptest.go` (`Story[G]`, `Stories[G]`, `UsingGiven`, `Run`), `app.go` (compila una vez `web/server` `-tags dev`, la migración y el sitio; por historia: base nueva, migración, servidor sin `DEV_AUTOLOGIN`, Chrome sin ventana; `ThisDevice`/`AnotherDevice` (IP de red del equipo; sin ella la historia se salta), `PostJSON` → `Reply{Status, Body, Location}`, `Logf`, `Fatalf`), `session.go` (`NewSession`, `OpenHome`, `FillField`, `Submit`, `Find`, `FindField`, `ExpectVisible/Gone/Count/AtLeast/SomeText`, `Click`; al fallar: PNG en `/tmp/apptest-failures/`, URL y texto). `go.mod`: `replace` postgres.
 - **postgres**: `empty_database.go` (`NewEmptyDatabase`), `backup.go` lo usa, `tests/empty_database_test.go`, README.
-- **auth/stories** (módulo nuevo dentro de `auth`, para que `auth` no cargue Chrome): `given.go`, `h_access_01_sign_in.go`, `go.mod` (`replace` apptest, postgres).
-- **server**: `httpd/static.go` + `httpd/shell.go` (`isShellAtRoot`: `/app/` → `/` cuando la app no tiene páginas públicas), `tests/shell_gate_test.go`, `docs/TESTS.md`. **Fallo real 1**: tras entrar, `auth` manda a `/app/`, que daba 404 en toda app sin páginas; el formulario lo mostraba como «Access not authorized on this device». `DEV_AUTOLOGIN` lo tapaba en desarrollo. El mismo repo trae cambios sin commit de otra ola (`strategies.go`, `restart_opid_test.go`: LOG_NOISE).
-- **staff_manager**: `first_admin.go` (`db.Tx` con los dos almacenes). **Fallo real 2**: el primer administrador de una instalación nueva no se podía crear en Postgres: el vínculo con el equipo se escribía fuera de la transacción del profesional y la llave foránea fallaba. Las pruebas del módulo usan `storage/mem`, que no revisa llaves foráneas: por eso no lo vieron. `docs/TESTS.md` (`TestUserByStaff`).
-- **layout**: `platformd` exporta `ClsNavItem` (la historia cuenta las entradas del menú).
-- **mjosefa-cms**: `tests/stories_test.go` (`//go:build stories`); `go.mod`: `replace` apptest, auth/stories, postgres, server (`go mod tidy` además subió appkit, auth, devtools, input y layout).
-- Publicar (tras revisión): postgres → server → layout → staff_manager → apptest → auth/stories → mjosefa-cms.
+- **auth/stories** (módulo aparte para que `auth` no cargue Chrome): `given.go` (`Given{MenuEntry, SignInMessage}`), `h_access_01_sign_in.go`, `h_access_02_unregistered_device.go`, `go.mod` (`replace` apptest, postgres).
+- **layout**: `login/login.go` exporta `ClsMessage` (dónde el login escribe la respuesta).
+- **mjosefa-cms**: `tests/stories_test.go` ya publicado; `go.mod` con `replace` apptest, auth/stories, postgres, layout.
+- Correr: `cd mjosefa-cms && go test -tags stories -run TestStories -v ./tests/` (2 historias, ~7 s).
+- Publicar (tras revisión): postgres → layout → apptest → auth/stories → mjosefa-cms.
+- Hallazgo (este dominio): las pruebas de los módulos usan `storage/mem`, que no revisa llaves foráneas; el fallo del primer administrador solo apareció contra Postgres.
 
 ## Bloqueos
 
