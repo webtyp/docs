@@ -1,5 +1,5 @@
 # Mapa de ocupación (`room_layout`): la configuración única del recinto — master plan
-> **Status:** IN PROGRESS · 2026-11-21 · sin preguntas; R1 y R3 (backend) hechos en local; sigue **R2** (la pantalla «Ocupación»), que deja verde H-ACCESS-03; D1 hecho en local (abre en «Operación»)
+> **Status:** IN PROGRESS · 2026-11-21 · esperan **P5** (especialidad del turno) y **P6** (horario de los bloques); R1, R2a y R3 hechos en local; R2b en curso; D1 hecho en local (abre en «Operación»)
 
 **Regla del dueño (2026-11-21):** `room_layout` es la pieza central: ahí se elige al profesional y se le asigna el
 box donde trabaja y qué días. Esa asignación es la única configuración y todo sale de ella: su agenda y desde qué
@@ -17,7 +17,29 @@ de usuario: todo por pantalla); probar en `veltylabs/mjosefa-cms` (MCP de webtyp
 
 ## Preguntas abiertas
 
-Ninguna.
+**P5 — Qué especialidad lleva un turno, y quién la habilita en el espacio (bloquea asignar por pantalla).** Lo que
+se ve: el administrador elige a la Dra. Rojas para el Box 2 los lunes y no puede guardar. La causa: un turno exige una
+especialidad (categoría del catálogo) que el espacio tenga habilitada (`room_layout/shift_tx.go:71-79`), y ninguna
+pantalla habilita especialidades en un espacio (`room_category` no tiene pantalla; ni el mapa ni «Boxes» la ofrecen).
+A) **en el diálogo de asignar se elige la especialidad del turno** (lista del catálogo), y al guardar el espacio queda
+habilitado para ella si no lo estaba: la asignación sigue siendo la única configuración; B) una sección
+«Especialidades» en el panel del espacio (marcar cuáles admite) y el diálogo ofrece solo esas; C) quitar la
+especialidad del turno. **Recomiendo A**: un paso menos y nada se configura dos veces; B sirve si quieres impedir, por
+ejemplo, odontología en un box sin sillón (se puede sumar después); C rompe la reserva, que ofrece horas por
+especialidad. ¿Cuál evita el acoplamiento y es más mantenible? A y B igual: `room_layout` sigue leyendo el catálogo por
+`CategoryReader`.
+```go
+// A — al crear el turno, la regla habilita la especialidad en el espacio si falta (en la misma transacción)
+if err := ensureRoomCategory(tx, s.RoomId, s.CategoryId); err != nil { return err } // en vez de checkRoomHasCategory
+// B — panel del espacio: casillas «Especialidades» → room_category create/delete; checkRoomHasCategory se queda
+```
+Respuesta:
+
+**P6 — Cuánto dura «mañana» y «tarde».** Hoy son 09:00–13:00 y 14:00–18:00, escritos a mano en la pantalla y el seed
+(los paso a constantes del dominio sin cambiarlos). A) **salen del horario de la clínica** (`business_calendar`,
+`HoursReader`): mañana = apertura → 13:00, tarde = 14:00 → cierre; B) quedan fijos. **Recomiendo A**: si la clínica
+abre a las 08:00 o cierra a las 20:00, el turno cubre lo que de verdad atiende, sin otra configuración.
+Respuesta:
 
 ## Decisiones por implementar
 
@@ -37,7 +59,7 @@ Ninguna.
 |---|---|---|---|
 | R1 | `room_layout` | D1: `NewMap` abre en `StageOperation` (constantes `StagePlan…StageOperation`), `tests/ui_start_test.go`, `docs/TESTS.md`; borrado `docs/PLAN.md` obsoleto (cumplido y publicado en v0.3.93) | 🟢 local, espera revisión |
 | R2a | `room_layout`, `device_manager`, `view`, `mjosefa-cms` | Hecho en local y verificado en vivo (PC `pc11` vinculado a «pc info1» en la base de desarrollo). **device_manager**: `queries.go` `DeviceOptions`, `tests/device_options_test.go`. **room_layout**: `interfaces.go` `DeviceReader`, `module.go` `Deps.Devices`, `definition.go` `DeviceOptionModel` + `rule_device_option_read.go`, `artifact.go` `KindHasNetwork`, `ui/stage3_artefactos.go` «Equipo de red», `ui/types.go` `DeviceID`/`DeviceData`, `ui/data.go` (carga equipos; **`save` crea con `Saver` y edita con `Updater`**: antes toda edición de algo existente en el mapa —piso, espacio, equipo— se rechazaba), `ui/rootview.go` (**la etapa activa se redibuja en cada `Refresh`**: antes tocar un equipo no mostraba su panel), `lang.json`, `tests/device_option_test.go`, `tests/artifact_save_test.go`. **view**: `view.go` (la documentación de `Saver` ya no promete «reemplazar»: solo crea). **mjosefa-cms**: `backend.go` (`Devices`, `devicesOf`), `go.mod` (`replace` device_manager). `definitionc` instalado desde el código (v0.1.49 generaba la firma vieja de `Search`) | 🟢 local |
-| R2b | `room_layout` | La asignación real en «Operación»: leer los turnos al abrir, el diálogo de la referencia (profesional → días × mañana/tarde → guardar con `room_shift` create), quitar un turno (delete); bloques mañana/tarde como constantes del dominio | 🟡 [Claude · 2026-11-21] siguiente |
+| R2b | `room_layout` | La asignación real en «Operación»: leer los turnos al abrir y quitar un turno (delete) — en curso; el diálogo de la referencia (profesional → días × mañana/tarde → guardar) espera P5 y P6 | 🟡 [Claude · 2026-11-21] |
 | R2c | `room_layout`, `staff_manager`, `mjosefa-cms` | D2 (dos pisos lado a lado) y D4 («+ Agregar profesional») | tras R2b |
 | R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | Hecho en local. **room_layout**: `artifact.go` (nuevo: funciones de artefacto, tipos `Artifact*` y estados `ArtifactStatus*` del dominio, `UsesDevice`), `definition.go` (`RoomArtifact.device_id`; fuera `Equipment`, `RoomEquipment`, sus temas; filtro del tablero `artifact_kind`), `definition_gen.go` (regenerado; `crud` subido a v0.0.19), `day.go` (tablero y libres leen artefactos), `checks.go`, `order.go`, `rows.go`, `view.go`, `migrate/migrate.go`, `seed/seed.go` (siembra artefactos), `ui/browser.go` (D6 y sin «Equipamiento»), `ui/svg.go`, `ui/types.go`, `lang.json`; borrados `equipment.go`, 5 `rule_room_*equipment*`, `tests/equipment_test.go`, `tests/equipment_device_test.go`; `tests/uses_device_test.go` nuevo; ajustados `rules_test`, `screen_save_test`, `view_test`, `widgets_test`, `seed_test`, `orm_coverage_test`, `ui_view_test`, `migrate_test`, `docs/TESTS.md`. **staff_manager**: `DeviceAssignments`, `Deps.Assignments`, `IsTrustedIP`, `tests/trust_assignment_test.go`. **mjosefa-cms**: `config/services/backend.go` (`roomAssignments`: busca `room_layout` al preguntar), `errors.go` (`errRoomsType`), `go.mod` (`replace` room_layout). Tablas `room_equipment` y `room_space_equipment` quedan en la base (vacías) hasta borrarlas con `migrate -drop` | 🟢 local, espera revisión |
 | R4 | `room_layout`, `staff_manager` | historias `H-ROOM-<NN>` (asignar en el mapa) y la «Dado» de H-ACCESS-03 por el mapa | tras R2, R3 |
