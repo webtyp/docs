@@ -54,7 +54,7 @@ Respuesta:
 |---|---|---|---|
 | R1 | `room_layout` | D1: `NewMap` abre en `StageOperation` (constantes `StagePlan…StageOperation`), `tests/ui_start_test.go`, `docs/TESTS.md`; borrado `docs/PLAN.md` obsoleto (cumplido y publicado en v0.3.93) | 🟢 local, espera revisión |
 | R2 | `room_layout` | D2, D4 y el flujo de asignar de la referencia (tocar profesional → ver dónde calza → diálogo de días), comparado con `ui-reference` | tras R3 |
-| R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | D6 hecho en local (`ui/browser.go`: «Ocupación», id `room_layout.occupancy`, ayuda nueva en 8 idiomas, clave «Map» borrada). D5: `staff_manager` en curso; `room_layout.UsesDevice` espera P4 | 🟡 [Claude · 2026-11-21] |
+| R3 | `staff_manager`, `room_layout`, `mjosefa-cms` | D6 hecho en local (`ui/browser.go`: «Ocupación», id `room_layout.occupancy`, ayuda nueva en 8 idiomas, clave «Map» borrada). D5 en `staff_manager` hecho en local (`interfaces.go` `DeviceAssignments`, `module.go` `Deps.Assignments` e `IsTrustedIP`: fila `staff_device` o turno; `tests/trust_assignment_test.go`, `docs/TESTS.md`). Falta `room_layout.UsesDevice` y el adaptador en `mjosefa-cms`: esperan P4 | 🟡 espera P4 |
 | R4 | `room_layout`, `staff_manager` | historias `H-ROOM-<NN>` (asignar en el mapa) y la «Dado» de H-ACCESS-03 por el mapa | tras R2, R3 |
 
 ## Bloqueos
