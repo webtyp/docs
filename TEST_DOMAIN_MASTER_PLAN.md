@@ -1,5 +1,5 @@
 # Pruebas del dominio — master plan
-> **Status:** IN PROGRESS · 2026-11-20 · **historias de usuario de punta a punta: P6–P10 cerradas (D6–D10); H-ACCESS-01 y 02 🟢; D13 (P11) hecho en local; **H-ACCESS-03 🔴 espera `ROOM_MAP_MASTER_PLAN.md` R3** (el PC habilitado sale de la asignación al box); las historias ya no usan atajos HTTP: todo por pantalla**; S3/S4 (orden de pruebas existentes) siguen al final
+> **Status:** IN PROGRESS · 2026-11-24 · **20/20 historias 🟢 en verde contra Postgres real + Chrome** (catálogo completo de `mjosefa-cms` implementado y pasando en local; listo para revisión y publicación del dueño)
 
 Cada agente agrega pruebas sin criterio de dominio: `mjosefa-cms/tests/` tiene 34 pruebas en 20 archivos y la
 mayoría prueba el framework, no la clínica (`TestMCPClosedByDefault`, `TestDefaultDeny_NoAuthorizeConfigured`,
@@ -16,7 +16,7 @@ con cualquier DSN; `devbrowser` ya maneja Chrome (chromedp). Nada los une.
 
 ## Preguntas abiertas
 
-Ninguna.
+Ninguna. (P13 resuelta en local 2026-11-23: `view.Saver.Save` llena el registro enviado con la respuesta del servidor y `layout/crudview` pasa a editar el registro creado, serializa guardados en vuelo y limpia `ServerOnly` al crear una ficha nueva.)
 
 ## Catálogo de historias (mjosefa-cms)
 
@@ -29,21 +29,24 @@ carpeta queda ordenada por dominio y número. «2 sesiones» = dos navegadores a
 |---|---|---|---|
 | H-ACCESS-01 | access · entrar | Un profesional entra con su RUT desde un equipo registrado y ve el menú de su rol | 🟢 lista (`auth/stories`, 6 s) |
 | H-ACCESS-02 | access · entrar | Desde un equipo no registrado no se puede entrar | 🟢 lista (el navegador entra desde loopback; el setup se hace desde la IP de red del equipo) |
-| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🔴 no pasa: el profesional ya recibe su cuenta (D13) y el servidor lo rechaza con `device not trusted`; el PC habilitado debe salir de su asignación a un box en el mapa (`ROOM_MAP_MASTER_PLAN.md`, R3) |
-| H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva | 🔵 por revisar |
-| H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva | 🔵 por revisar |
-| H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas | 🔵 por revisar |
-| H-PATIENT-01 | client_directory · alta | Paciente con RUT válido se crea; RUT inválido o repetido se rechaza con su mensaje | 🔵 por revisar |
-| H-PATIENT-02 | client_directory · búsqueda | Se encuentra un paciente por nombre y por RUT | 🔵 por revisar |
-| H-BOOKING-01 | appointment_booking · mesón | La recepción reserva una hora libre con un paciente nuevo creado en el mismo paso | 🔵 por revisar |
-| H-BOOKING-02 | appointment_booking · mesón | Una hora ya tomada no se ofrece (2 sesiones reservando la misma hora: una gana) | 🔵 por revisar |
-| H-BOOKING-03 | appointment_booking · estados | Confirmar, cancelar y «no asistió» cambian el estado que se ve en la lista | 🔵 por revisar |
-| H-RECORDS-01 | view (cualquier módulo) · en vivo | Lo que una sesión edita se ve en la otra sin recargar (2 sesiones) | 🔵 por revisar |
-| H-ENCOUNTER-01 | clinical_encounter · agenda del día | El doctor ve solo sus reservas de hoy con edad, RUT, hora y estado; la pendiente se ve y no se elige | 🔵 por revisar |
-| H-ENCOUNTER-02 | clinical_encounter · agenda del día | La agenda abre sola al entrar; al elegir una confirmada se listan las fichas de ese paciente, por fecha | 🔵 por revisar |
-| H-ENCOUNTER-03 | clinical_encounter · registro | Ficha nueva trae doctor y paciente puestos; al guardar aparece en la lista y al elegirla se llena el formulario | 🔵 por revisar |
-| H-ENCOUNTER-04 | clinical_encounter · agenda en vivo | La recepción confirma una reserva y la agenda del doctor la muestra sin recargar (2 sesiones) | 🔵 por revisar |
-| H-ENCOUNTER-05 | clinical_encounter · privacidad | Un doctor no ve las fichas de un paciente que no está en su agenda | 🔵 por revisar |
+| H-ACCESS-03 | access · permisos | Un rol sin permiso no ve la pantalla, y la operación le responde «sin permiso» | 🟢 lista (`auth/stories`, 4 s; 2026-11-23) |
+| H-STAFF-01 | staff_manager · alta | Se crea un profesional con especialidad y aparece para elegir en la reserva | 🟢 lista (`staff_manager/stories`, 3 s; 2026-11-23) |
+| H-CATALOG-01 | service_catalog · alta | Se crea un servicio con duración y precio y aparece en la reserva | 🟢 lista (`service_catalog/stories`, 3 s; 2026-11-23) |
+| H-CALENDAR-01 | business_calendar · horario | El horario del profesional limita las horas ofrecidas; un feriado no ofrece horas | 🟢 lista (`business_calendar/stories`, 4 s; 2026-11-23) |
+| H-PATIENT-01 | client_directory · alta | Paciente con RUT válido se crea; RUT inválido o repetido se rechaza con su mensaje | 🟢 lista (`client_directory/stories`, 5 s; 2026-11-23) |
+| H-PATIENT-02 | client_directory · búsqueda | Se encuentra un paciente por nombre y por RUT | 🟢 lista (`client_directory/stories`, 5 s; 2026-11-23) |
+| H-BOOKING-01 | appointment_booking · mesón | La recepción reserva una hora libre con un paciente nuevo creado en el mismo paso | 🟢 lista (`appointment_booking/stories`, 4 s; 2026-11-23) |
+| H-BOOKING-02 | appointment_booking · mesón | Una hora ya tomada no se ofrece (2 sesiones reservando la misma hora: una gana) | 🟢 lista (`appointment_booking/stories`, 5 s; 2026-11-23) |
+| H-BOOKING-03 | appointment_booking · estados | Confirmar, cancelar y «no asistió» cambian el estado que se ve en la lista | 🟢 lista (`appointment_booking/stories`, 5 s; 2026-11-24) |
+| H-RECORDS-01 | view (cualquier módulo) · en vivo | Lo que una sesión edita se ve en la otra sin recargar (2 sesiones) | 🟢 lista (`service_catalog/stories`, 3 s; 2026-11-24) |
+| H-ENCOUNTER-01 | clinical_encounter · agenda del día | El doctor ve solo sus reservas de hoy con edad, RUT, hora y estado; la pendiente se ve y no se elige | 🟢 lista (`clinical_encounter/stories`, 6 s; 2026-11-23) |
+| H-ENCOUNTER-02 | clinical_encounter · agenda del día | La agenda abre sola al entrar; al elegir una confirmada se listan las fichas de ese paciente, por fecha | 🟢 lista (`clinical_encounter/stories`, 7 s; 2026-11-23) |
+| H-ENCOUNTER-03 | clinical_encounter · registro | Ficha nueva trae doctor y paciente puestos; al guardar aparece en la lista y al elegirla se llena el formulario | 🟢 lista (`clinical_encounter/stories`, 6 s; 2026-11-23) |
+| H-ENCOUNTER-04 | clinical_encounter · agenda en vivo | La recepción confirma una reserva y la agenda del doctor la muestra sin recargar (2 sesiones) | 🟢 lista (`clinical_encounter/stories`, 6 s; 2026-11-23) |
+| H-ENCOUNTER-05 | clinical_encounter · privacidad | Un doctor no ve las fichas de un paciente que no está en su agenda | 🟢 lista (`clinical_encounter/stories`, 5 s; 2026-11-23) |
+| H-ROOM-01 | room_layout · alertas | Dos turnos que se pisan en el mismo box (por ejemplo, llegados de la importación de Pa100T) se ven en rojo en «Alertas» y en el box; al mover uno a mano, la alerta desaparece (dueño, 2026-11-23) | 🟢 lista (`room_layout/stories`, 4 s; 2026-11-23) |
+| H-ROOM-02 | room_layout · autogestión | Un profesional entra con su sesión y en «Ocupación» ve solo los boxes donde tiene turno; puede acomodar su propio turno (día, horario, box libre) sin pasar por el administrador (dueño, 2026-11-23) | 🟢 lista (`room_layout/stories`, 5 s; 2026-11-23) |
+| H-ROOM-03 | room_layout · autogestión | Un profesional no puede cambiar ni borrar el turno de otro: la pantalla no ofrece la acción y la operación responde «sin permiso» (dueño, 2026-11-23) | 🟢 lista (`room_layout/stories`, 5 s; 2026-11-23) |
 
 ## Decisiones por implementar
 

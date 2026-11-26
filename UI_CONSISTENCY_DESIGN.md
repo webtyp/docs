@@ -71,7 +71,7 @@ child's name) in the large size a module title always had, beside the app's **ma
 centred and smaller. The app's name and version are not in the header — they compete with the module's
 name — but one tap away, in a small panel the mark opens (the user menu's `<details>` pattern, no script);
 the same rule on every device: where I am, large, always; which app and version, on demand. The header is the primary
-surface at every width, with on-primary text; the user menu trigger reads on it. `rightpanel` draws
+surface at every width, with on-primary text; the user menu trigger reads on it. `twocolumns` draws
 no title band, so the form starts at the top of the frame, and the controls that used to sit beside the
 title moved: a control that picks **which records the list shows** is `crudview`'s `Scope`, in the list
 header above the search box (never wired to the filter); a control that is a **value of the record** is

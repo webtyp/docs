@@ -28,7 +28,7 @@ en la TUI. B) Fase 2 ya, y todo repo queda en rojo hasta migrarse (presión para
 | D5 (P6) | Sin excepciones en el código: si una regla se equivoca, se arregla la regla | `gocheck` |
 | D6 (P1) | README de `gocheck`: en palabras simples cada herramienta de Go que corre y cada regla webtyp: qué detecta, por qué ayuda, ejemplo malo/bueno | `gocheck` |
 | D7 | Salida: una línea `ruta:línea regla mensaje → acción` vía `fmt.Err`/`lang.Text`; `-json` para MCP; cada regla enlaza su skill | `gocheck` |
-| D8 | Reglas iniciales: `unused`, `perf` (concat en WriteString), `jsonlyindom` (`syscall/js` solo en `dom`/`js`), `interfacesfile`, `modelfile`, `nostdlib` (D16), `ifaceeq` (D20), `nomaps` (D23) | `gocheck` |
+| D8 | Reglas iniciales: `unused`, `perf` (concat en WriteString), `jsonlyindom` (`syscall/js` solo en `dom`/`js`), `interfacesfile`, `modelfile`, `nostdlib` (D16), `ifaceeq` (D20), `nomaps` (D23), `nostub` (D25) | `gocheck` |
 | D9 | Rendimiento: una carga por paquete, analizadores en paralelo, caché por hash de archivo | `gocheck` |
 | D10 | Elimina el parseo de texto de vet en `gotest.go:127-153` y los ítems manuales equivalentes de **plan-review** | `devflow`, devskills |
 | D16 (P8,P10) | `nostdlib` en **todo** el código (navegador, Worker `wasm` con límite de tamaño, servidor): una sola forma, sin código doble. Prohibidos (medido con TinyGo): `fmt`, `encoding/json`, `reflect`, `strconv`. Permitidos: `strings`, `errors` (salvo D20). **No** se crea `webtyp/errors` | `gocheck` |
@@ -36,6 +36,7 @@ en la TUI. B) Fase 2 ya, y todo repo queda en rojo hasta migrarse (presión para
 | D24 (P12) | `ifaceeq` mira el paquete del centinela: los de la stdlib o externos (`os.ErrNotExist`, `io.EOF`, `pgx.ErrNoRows`) se pueden comparar; los nuestros (`keyring.ErrNotFound`…) se marcan | `gocheck` |
 | D23 | Regla `nomaps` en todo el código: ni tipos `map` ni el paquete `maps` (TinyGo los maneja mal y suman runtime); acción: slice de pares o `switch` | `gocheck` |
 | D17 | Toda regla de peso cita su medición en `docs/STDLIB_WEIGHT.md`; un paquete nuevo entra a la lista solo con su programa en `benchmark/weight/` | `gocheck` |
+| D25 | Regla `nostub` (hallazgo 2026-11-23, **bug-fix-flow**): un método o función exportado cuyo cuerpo es solo `return <parámetro>, nil` o solo `return nil` teniendo parámetros (no escribe, no valida, no lee) es un stub y falla. Sin excepciones (D5): una implementación vacía legítima de interfaz no recibe datos que «guarda». Caso real: `service_catalog` tuvo 10 métodos así desde el 10-nov (`CreateService`, `UpsertSpecialty`…); la importación de `mjosefa-cms` creía guardar y no guardaba nada. Instancia arreglada en local (`service_catalog/writes.go`, prueba `TestWriteMethods_PersistWhatTheyReturn`); el barrido de `webtyp` y `veltylabs/modules` no encontró otros | `gocheck` |
 | D18 | `gonew` crea en `cdvelop` si no recibe `-owner`: debe deducir el dueño de los repos vecinos, como ya deduce la ruta del módulo (`gonew.go:206`) | `devflow` |
 
 ## Fases
